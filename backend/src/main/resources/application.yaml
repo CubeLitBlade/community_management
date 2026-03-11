@@ -1,0 +1,9 @@
+spring:
+  datasource:
+    url: jdbc:postgresql://localhost:5432/community_management_system
+    username: user
+    password: password
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
