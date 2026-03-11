@@ -27,6 +27,7 @@ dependencies {
     testAnnotationProcessor("org.projectlombok:lombok:1.18.42")
     testCompileOnly("org.projectlombok:lombok:1.18.42")
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
+    testImplementation("org.mockito:mockito-core:5.22.0")
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
