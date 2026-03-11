@@ -1,9 +1,12 @@
 package io.github.cubelitblade.entity;
 
+import com.baomidou.mybatisplus.annotation.TableField;
+import com.baomidou.mybatisplus.extension.handlers.JacksonTypeHandler;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import tools.jackson.databind.JsonNode;
 
 import java.time.LocalDateTime;
 
@@ -16,7 +19,8 @@ public class Event {
 
     private String type;
 
-    private String params;
+    @TableField(typeHandler = JacksonTypeHandler.class)
+    private JsonNode payload;
 
     @Builder.Default
     private String status = "pending";
