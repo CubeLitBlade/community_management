@@ -22,9 +22,7 @@ public class TestEventHandler extends EventHandler {
     }
 
     @Override
-    public void handleEvent(Event event) {
-        super.handleEvent(event);
-
+    public void process(Event event) {
         TestEventPayload payload = objectMapper.convertValue(event.getPayload(), TestEventPayload.class);
         Long eventId = event.getId();
 
@@ -64,18 +62,16 @@ public class TestEventHandler extends EventHandler {
             log.info("[Event #{}] DebugEvent finished with status = {}. ",
                     eventId, finalStatus);
         }
-
-        eventService.updateById(event);
     }
 
     private void simulateWork(Long eventId, Long executionDelayMilliseconds) {
         try {
-            log.debug("Event #{}] Simulating workload for {} ms...", eventId, executionDelayMilliseconds);
+            log.debug("[Event #{}] Simulating workload for {} ms...", eventId, executionDelayMilliseconds);
             Thread.sleep(executionDelayMilliseconds);
-            log.debug("Event #{}] Workload simulation finished.", eventId);
+            log.debug("[Event #{}] Workload simulation finished.", eventId);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.warn("Event #{}] Workload simulation was interrupted!", eventId);
+            log.warn("[Event #{}] Workload simulation was interrupted!", eventId);
         }
     }
 }

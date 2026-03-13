@@ -11,8 +11,11 @@ public abstract class EventHandler {
     protected final ObjectMapper objectMapper;
 
     public abstract Event.EventType getEventType();
+
+    public abstract void process(Event event);
+
     public void handleEvent(Event event) {
-        event.setStatus(Event.EventStatus.RUNNING);
+        process(event);
         eventService.updateById(event);
     }
 }
