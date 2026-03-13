@@ -31,7 +31,7 @@ public class EventService extends ServiceImpl<EventMapper, Event> {
         lambdaQueryWrapper.eq(Event::getStatus, Event.EventStatus.WAITING)
                 .le(Event::getNextRunAt, LocalDateTime.now())
                 .orderByAsc(Event::getNextRunAt)
-                .last("limit "+ limit + " for update skip locked");
+                .last("for update skip locked limit "+ limit);
         List<Event> eventList = eventMapper.selectList(lambdaQueryWrapper);
 
         for (Event event : eventList) {
