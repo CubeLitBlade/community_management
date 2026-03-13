@@ -1,2 +1,2 @@
-### PostgreSQL Volume ###
-postgres_data/
+### Environment ###
+.env
