@@ -8,6 +8,7 @@
       <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
     </list>
+    <list default="true" id="b12da902-8f8e-48bb-9fc0-731398ebe14e" name="更改" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -21,6 +22,9 @@
   <component name="ExternalProjectsManager">
     <system id="GRADLE">
       <state>
+        <task path="$PROJECT_DIR$">
+          <activation />
+        </task>
         <projects_view>
           <tree_state>
             <expand>
@@ -115,7 +119,7 @@
       <window_info anchor="bottom" id="Version Control" order="0" weight="0.32728165" />
       <window_info anchor="bottom" id="Problems" order="1" />
       <window_info anchor="bottom" id="Problems View" order="2" weight="0.3302257" />
-      <window_info anchor="bottom" id="Terminal" order="3" weight="0.3302257" />
+      <window_info active="true" anchor="bottom" id="Terminal" order="3" visible="true" weight="0.3302257" />
       <window_info anchor="bottom" id="Services" order="4" />
       <window_info active="true" anchor="bottom" id="Build" order="5" visible="true" weight="0.3302257" />
       <window_info anchor="bottom" id="Run" order="6" weight="0.3302257" />
