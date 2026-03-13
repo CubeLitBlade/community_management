@@ -19,6 +19,7 @@ jobs:
     runs-on: ubuntu-latest
     permissions:
       contents: read
+      packages: write
 
     steps:
     - uses: actions/checkout@v4
@@ -47,6 +48,15 @@ jobs:
     #
     # - name: Build with Gradle 8.9
     #   run: gradle build
+
+    - name: Build Docker image
+      run: docker build -t ghcr.io/${{ github.repository }}:latest .
+    
+    - name: Login to GHCR
+      run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u ${{ github.actor }} --password-stdin
+
+    - name: Push image
+      run: docker push ghcr.io/${{ github.repository }}:latest
 
   dependency-submission:
 
