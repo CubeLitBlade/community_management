@@ -4,12 +4,9 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="b12da902-8f8e-48bb-9fc0-731398ebe14e" name="更改" comment="">
-      <change afterPath="$PROJECT_DIR$/src/main/java/io/github/cubelitblade/configuration/AsyncConfig.java" afterDir="false" />
+    <list default="true" id="b12da902-8f8e-48bb-9fc0-731398ebe14e" name="更改" comment="Add TestEventHandler and TestEventPayload classes to support testing event handling.">
+      <change beforePath="$PROJECT_DIR$/.idea/gradle.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/gradle.xml" afterDir="false" />
       <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/io/github/cubelitblade/CommunityManagementSystemBackendApplication.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/io/github/cubelitblade/CommunityManagementSystemBackendApplication.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/io/github/cubelitblade/entity/Event.java" beforeDir="false" afterPath="$PROJECT_DIR$/src/main/java/io/github/cubelitblade/entity/Event.java" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/src/main/java/io/github/cubelitblade/service/Worker.java" beforeDir="false" />
     </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
@@ -41,7 +38,9 @@
   <component name="FileTemplateManagerImpl">
     <option name="RECENT_TEMPLATES">
       <list>
+        <option value="Interface" />
         <option value="Class" />
+        <option value="JUnit5 Test Class" />
       </list>
     </option>
   </component>
@@ -49,6 +48,9 @@
     <option name="RECENT_GIT_ROOT_PATH" value="$PROJECT_DIR$/.." />
   </component>
   <component name="GradleScriptDefinitionsStorage" workingDir="$PROJECT_DIR$" gradleHome="$USER_HOME$/.gradle/wrapper/dists/gradle-9.2.0-bin/11i5gvueggl8a5cioxuftxrik/gradle-9.2.0" javaHome="$USER_HOME$/.sdkman/candidates/java/current" gradleVersion="9.2.0" />
+  <component name="ProblemsViewState">
+    <option name="selectedTabId" value="CurrentFile" />
+  </component>
   <component name="ProjectColorInfo">{
   &quot;associatedIndex&quot;: 0
 }</component>
@@ -60,6 +62,8 @@
   <component name="PropertiesComponent"><![CDATA[{
   "keyToString": {
     "ASKED_SHARE_PROJECT_CONFIGURATION_FILES": "true",
+    "Gradle.TestEventHandlerTest.eventShouldSucceed.executor": "Run",
+    "Gradle.TestEventHandlerTest.executor": "Run",
     "Gradle.下载源代码.executor": "Run",
     "Gradle.构建 backend.executor": "Run",
     "ModuleVcsDetector.initialDetectionPerformed": "true",
@@ -73,6 +77,8 @@
     "RunOnceActivity.typescript.service.memoryLimit.init": "true",
     "SHARE_PROJECT_CONFIGURATION_FILES": "true",
     "Spring Boot.CommunityManagementSystemBackendApplication.executor": "Run",
+    "com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrary": "JUnit5",
+    "com.intellij.testIntegration.createTest.CreateTestDialog.defaultLibrarySuperClass.JUnit5": "",
     "kotlin-language-version-configured": "true",
     "node.js.detected.package.eslint": "true",
     "node.js.detected.package.tslint": "true",
@@ -99,34 +105,96 @@
       <window_info id="Backup and Sync History" />
       <window_info id="Pull Requests" />
       <window_info id="Learn" show_stripe_button="false" />
-      <window_info content_ui="combo" id="Project" order="0" weight="0.26801407" />
+      <window_info active="true" content_ui="combo" id="Project" order="0" visible="true" weight="0.26801407" />
       <window_info id="Commit" order="1" weight="0.26801407" />
       <window_info id="Structure" order="2" side_tool="true" weight="0.25" />
       <window_info anchor="bottom" id="Database Changes" />
       <window_info anchor="bottom" id="TypeScript" />
       <window_info anchor="bottom" id="TODO" />
       <window_info anchor="bottom" id="File Transfer" />
-      <window_info anchor="bottom" id="Find" />
       <window_info anchor="bottom" id="Version Control" order="0" weight="0.32728165" />
       <window_info anchor="bottom" id="Problems" order="1" />
       <window_info anchor="bottom" id="Problems View" order="2" weight="0.3302257" />
-      <window_info anchor="bottom" id="Terminal" order="3" weight="0.32728165" />
+      <window_info anchor="bottom" id="Terminal" order="3" weight="0.3302257" />
       <window_info anchor="bottom" id="Services" order="4" />
-      <window_info anchor="bottom" id="Build" order="5" weight="0.32728165" />
-      <window_info active="true" anchor="bottom" id="Run" order="6" visible="true" weight="0.32728165" />
+      <window_info active="true" anchor="bottom" id="Build" order="5" visible="true" weight="0.3302257" />
+      <window_info anchor="bottom" id="Run" order="6" weight="0.3302257" />
       <window_info anchor="bottom" id="Profiler" order="7" weight="0.32728165" />
+      <window_info anchor="bottom" id="Find" order="8" weight="0.3302257" />
       <window_info anchor="right" id="Code Provenance" side_tool="true" />
       <window_info anchor="right" id="Endpoints" />
       <window_info anchor="right" id="Coverage" side_tool="true" />
       <window_info anchor="right" id="Beans" />
       <window_info anchor="right" content_ui="combo" id="Notifications" order="0" weight="0.25" />
       <window_info anchor="right" id="AIAssistant" order="1" weight="0.25" />
-      <window_info active="true" anchor="right" id="Database" order="2" visible="true" weight="0.24985355" />
+      <window_info anchor="right" id="Database" order="2" weight="0.24985355" />
       <window_info anchor="right" id="Gradle" order="3" weight="0.24985355" />
       <window_info anchor="right" id="Maven" order="4" weight="0.25" />
     </layout>
   </component>
-  <component name="RunManager">
+  <component name="RecentsManager">
+    <key name="CreateTestDialog.Recents.Supers">
+      <recent name="" />
+    </key>
+    <key name="CreateTestDialog.RecentsKey">
+      <recent name="io.github.cubelitblade.event.handler" />
+    </key>
+  </component>
+  <component name="RunManager" selected="Spring Boot.CommunityManagementSystemBackendApplication">
+    <configuration name="TestEventHandlerTest" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":test" />
+            <option value="--tests" />
+            <option value="&quot;io.github.cubelitblade.event.handler.TestEventHandlerTest&quot;" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <GradleProfilingDisabled>false</GradleProfilingDisabled>
+      <GradleCoverageDisabled>false</GradleCoverageDisabled>
+      <method v="2" />
+    </configuration>
+    <configuration name="TestEventHandlerTest.eventShouldSucceed" type="GradleRunConfiguration" factoryName="Gradle" temporary="true">
+      <ExternalSystemSettings>
+        <option name="executionName" />
+        <option name="externalProjectPath" value="$PROJECT_DIR$" />
+        <option name="externalSystemIdString" value="GRADLE" />
+        <option name="scriptParameters" value="" />
+        <option name="taskDescriptions">
+          <list />
+        </option>
+        <option name="taskNames">
+          <list>
+            <option value=":test" />
+            <option value="--tests" />
+            <option value="&quot;io.github.cubelitblade.event.handler.TestEventHandlerTest.eventShouldSucceed&quot;" />
+          </list>
+        </option>
+        <option name="vmOptions" />
+      </ExternalSystemSettings>
+      <ExternalSystemDebugServerProcess>false</ExternalSystemDebugServerProcess>
+      <ExternalSystemReattachDebugProcess>true</ExternalSystemReattachDebugProcess>
+      <ExternalSystemDebugDisabled>false</ExternalSystemDebugDisabled>
+      <DebugAllEnabled>false</DebugAllEnabled>
+      <RunAsTest>true</RunAsTest>
+      <GradleProfilingDisabled>false</GradleProfilingDisabled>
+      <GradleCoverageDisabled>false</GradleCoverageDisabled>
+      <method v="2" />
+    </configuration>
     <configuration name="CommunityManagementSystemBackendApplication" type="SpringBootApplicationConfigurationType" factoryName="Spring Boot" temporary="true" nameIsGenerated="true">
       <module name="backend.main" />
       <option name="SPRING_BOOT_MAIN_CLASS" value="io.github.cubelitblade.CommunityManagementSystemBackendApplication" />
@@ -142,6 +210,8 @@
     </configuration>
     <recent_temporary>
       <list>
+        <item itemvalue="Gradle.TestEventHandlerTest" />
+        <item itemvalue="Gradle.TestEventHandlerTest.eventShouldSucceed" />
         <item itemvalue="Spring Boot.CommunityManagementSystemBackendApplication" />
       </list>
     </recent_temporary>
@@ -166,7 +236,9 @@
       <workItem from="1773154247311" duration="406000" />
       <workItem from="1773154666254" duration="4085000" />
       <workItem from="1773199481024" duration="2594000" />
-      <workItem from="1773237356279" duration="6503000" />
+      <workItem from="1773237356279" duration="7719000" />
+      <workItem from="1773321942166" duration="8503000" />
+      <workItem from="1773372898196" duration="18295000" />
     </task>
     <task id="LOCAL-00001" summary="initial commit">
       <option name="closed" value="true" />
@@ -176,7 +248,15 @@
       <option name="project" value="LOCAL" />
       <updated>1773200633630</updated>
     </task>
-    <option name="localTasksCounter" value="2" />
+    <task id="LOCAL-00002" summary="Add TestEventHandler and TestEventPayload classes to support testing event handling.">
+      <option name="closed" value="true" />
+      <created>1773387527954</created>
+      <option name="number" value="00002" />
+      <option name="presentableId" value="LOCAL-00002" />
+      <option name="project" value="LOCAL" />
+      <updated>1773387527954</updated>
+    </task>
+    <option name="localTasksCounter" value="3" />
     <servers />
   </component>
   <component name="TypeScriptGeneratedFilesManager">
@@ -195,7 +275,8 @@
   </component>
   <component name="VcsManagerConfiguration">
     <MESSAGE value="initial commit" />
-    <option name="LAST_COMMIT_MESSAGE" value="initial commit" />
+    <MESSAGE value="Add TestEventHandler and TestEventPayload classes to support testing event handling." />
+    <option name="LAST_COMMIT_MESSAGE" value="Add TestEventHandler and TestEventPayload classes to support testing event handling." />
   </component>
   <component name="XDebuggerManager">
     <breakpoint-manager>
