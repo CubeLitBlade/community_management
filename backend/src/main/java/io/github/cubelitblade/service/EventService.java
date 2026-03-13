@@ -35,7 +35,7 @@ public class EventService extends ServiceImpl<EventMapper, Event> {
         List<Event> eventList = eventMapper.selectList(lambdaQueryWrapper);
 
         for (Event event : eventList) {
-            event.setStatus(Event.EventStatus.PENDING);
+            event.setStatus(Event.EventStatus.RUNNING);
         }
 
         this.updateBatchById(eventList);
