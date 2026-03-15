@@ -1,8 +1,14 @@
 spring:
   datasource:
-    url: jdbc:postgresql://localhost:5432/community_management_system
-    username: user
-    password: password
+    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/community_management_system}
+    username: ${SPRING_DATASOURCE_USER:dev_user}
+    password: ${SPRING_DATASOURCE_PASSWORD:dev_password}
+
+  docker:
+    compose:
+      enabled: true
+      file: ../compose.yaml
+      lifecycle-management: start_and_stop
 
 mybatis-plus:
   configuration:
