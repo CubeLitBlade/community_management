@@ -3,16 +3,20 @@ services:
     image: docker.io/postgres:18-alpine
     container_name: community_db
     restart: always
-    network_mode: "host"
     environment:
-      POSTGRES_USER: user
-      POSTGRES_PASSWORD: password
-      POSTGRES_DB: community_management_system
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
     ports:
-      - "5432:5432"
+      - "${DB_EXTERNAL_PORT}:5432"
     volumes:
       - postgres_data_vol:/var/lib/postgresql/data
       - ./init_sql:/docker-entrypoint-initdb.d:ro,Z
-      
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U ${DB_USER} -d${DB_NAME}" ]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
 volumes:
   postgres_data_vol:
