@@ -17,22 +17,22 @@ repositories {
     mavenCentral()
 }
 
-// Temporary overrides for vulnerable transitive dependencies.
-// These versions will be removed once Spring Boot updates its BOM.
-dependencyManagement {
-    imports {
-        mavenBom("org.springframework.boot:spring-boot-dependencies:4.0.3")
-    }
-    dependencies {
-        dependency("tools.jackson.core:jackson-core:3.1.0") // fixes CVE-2025-52999
-        dependency("org.assertj:assertj-core:3.27.7") // fixes CWE-611 related issue
-        dependency("org.apache.commons:commons-lang3:3.20.0")
-        dependency("ch.qos.logback:logback-core:1.5.32")
-    }
-}
-
-
 dependencies {
+    constraints{
+        implementation("tools.jackson.core:jackson-core:3.1.0") {
+            because("Mitigates CVE-2025-52999 until Spring Boot BOM upgrades")
+        }
+        implementation("org.apache.commons:commons-lang3:3.20.0") {
+            because("Fixes security advisory")
+        }
+        implementation("ch.qos.logback:logback-core:1.5.32") {
+            because("Fixes security advisory")
+        }
+        testImplementation("org.assertj:assertj-core:3.27.7") {
+            because("Fixes CWE-611 related issue")
+        }
+    }
+
     annotationProcessor("org.projectlombok:lombok:1.18.42")
     compileOnly("org.projectlombok:lombok:1.18.42")
     implementation ("org.springframework.boot:spring-boot-starter")
