@@ -97,7 +97,6 @@ In this case, Compose will download the published image from GitHub and deploy i
 ## Troubleshooting
 
 ### Spring Boot Docker Compose does not work with Podman
-### Spring Boot Docker Compose does not work with Podman
 
 Spring Boot Docker Compose support expects a Docker-compatible CLI.
 When using Podman, the application may fail to start with an error similar to:
