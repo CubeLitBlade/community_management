@@ -40,6 +40,7 @@ The backend uses Spring Boot’s Docker Compose support. When you start the back
 > Spring Boot Docker Compose is designed for Docker.
 >
 > To use it with Podman, you may need to install `docker-compose`, map the socket file, and install `podman-docker` to emulate the Docker CLI.
+> For more information, see [Troubleshooting](#spring-boot-docker-compose-does-not-work-with-podman).
 
 If Podman does not work for you, or if you prefer to start the services manually, follow these steps:
 
@@ -94,7 +95,7 @@ In this case, Compose will download the published image from GitHub and deploy i
 
 ## Troubleshooting
 
-### Spring Boot Compose with Podman
+### Spring Boot Docker Compose does not work with Podman
 
 Spring Boot Docker Compose support expects a Docker-compatible CLI.
 When using Podman, the application may fail to start with an error similar to:
