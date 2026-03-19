@@ -1,3 +1,10 @@
+// Override Spring Boot managed Jackson version
+// Reason:
+//  - fixes critical bug in 3.0.4
+//  - mitigates CVE-2025-52999
+// Remove after Spring Boot upgrades its jackson.version
+extra["jackson.version"] = "3.1.0"
+
 plugins {
     id("java")
     id("org.springframework.boot") version "4.0.3"
@@ -19,9 +26,6 @@ repositories {
 
 dependencies {
     constraints{
-        implementation("tools.jackson.core:jackson-core:3.1.0") {
-            because("Mitigates CVE-2025-52999 until Spring Boot BOM upgrades")
-        }
         implementation("org.apache.commons:commons-lang3:3.20.0") {
             because("Fixes security advisory")
         }
