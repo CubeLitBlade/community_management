@@ -1,29 +1,28 @@
 package io.github.cubelitblade.event.handler;
 
+import io.github.cubelitblade.configuration.RetryConfig;
 import io.github.cubelitblade.entity.Event;
-import io.github.cubelitblade.event.payload.TestEventPayload;
+import io.github.cubelitblade.event.payload.DemoEventPayload;
 import io.github.cubelitblade.service.EventService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
-import java.time.LocalDateTime;
-
 @Slf4j
 @Component
-public class TestEventHandler extends EventHandler {
-    public TestEventHandler(EventService eventService, ObjectMapper objectMapper) {
-        super(eventService, objectMapper);
+public class DemoEventHandler extends EventHandler {
+    public DemoEventHandler(EventService eventService, ObjectMapper objectMapper, RetryConfig retryConfig) {
+        super(eventService, objectMapper, retryConfig);
     }
 
     @Override
     public Event.EventType getEventType() {
-        return Event.EventType.TEST_EVENT;
+        return Event.EventType.DEMO_EVENT;
     }
 
     @Override
     public void process(Event event) {
-        TestEventPayload payload = objectMapper.convertValue(event.getPayload(), TestEventPayload.class);
+        DemoEventPayload payload = objectMapper.convertValue(event.getPayload(), DemoEventPayload.class);
         Long eventId = event.getId();
 
         //
@@ -44,13 +43,7 @@ public class TestEventHandler extends EventHandler {
         int targetRetries = payload.getRequiredRetries();
 
         if (targetRetries > currentRetry) {
-            int nextRetry = currentRetry + 1;
-            log.debug("Event #{}] Retry {}/{} scheduled in {} s.",
-                    eventId, currentRetry, targetRetries, payload.getRetryDelaySeconds());
-
-            event.setRetryCount(nextRetry);
-            event.setNextRunAt(LocalDateTime.now().plusSeconds(payload.getRetryDelaySeconds()));
-            event.setStatus(Event.EventStatus.WAITING);
+            this.scheduleRetry(event);
         } else {
             Event.EventStatus finalStatus = payload.getShouldSucceed()
                     ? Event.EventStatus.SUCCEEDED

@@ -1,22 +1,44 @@
 package io.github.cubelitblade.entity;
 
-import com.baomidou.mybatisplus.annotation.EnumValue;
-import com.baomidou.mybatisplus.annotation.TableField;
-import com.baomidou.mybatisplus.annotation.TableName;
+import com.baomidou.mybatisplus.annotation.*;
 import io.github.cubelitblade.utils.JsonbTypeHandler;
 import lombok.*;
 import tools.jackson.databind.JsonNode;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 
 @Data
+@Builder
 @NoArgsConstructor
 @AllArgsConstructor
 @TableName(autoResultMap = true)
 public class Event {
+    @TableId(type = IdType.AUTO)
+    private Long id;
+
+    private EventType type;
+
+    @TableField(typeHandler = JsonbTypeHandler.class)
+    private JsonNode payload;
+
+    @Builder.Default
+    private EventStatus status = EventStatus.WAITING;
+
+    @Builder.Default
+    private Integer retryCount = 0;
+
+    private String errorMsg;
+
+    private Instant createdAt;
+
+    private Instant nextRunAt;
+
+    private Instant updatedAt;
+
+
     @Getter
     public enum EventType {
-        TEST_EVENT("test_event");
+        DEMO_EVENT("demo");
 
         @EnumValue
         private final String type;
@@ -32,7 +54,8 @@ public class Event {
         PENDING("pending"),
         RUNNING("running"),
         SUCCEEDED("succeeded"),
-        FAILED("failed");
+        FAILED("failed"),
+        DEAD("dead");
 
         @EnumValue
         private final String status;
@@ -41,23 +64,4 @@ public class Event {
             this.status = status;
         }
     }
-
-    private Long id;
-
-    private EventType type;
-
-    @TableField(typeHandler = JsonbTypeHandler.class)
-    private JsonNode payload;
-
-    private EventStatus status;
-
-    private Integer retryCount;
-
-    private String errorMsg;
-
-    private LocalDateTime createdAt;
-
-    private LocalDateTime nextRunAt;
-
-    private LocalDateTime updatedAt;
 }

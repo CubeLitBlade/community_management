@@ -13,3 +13,9 @@ spring:
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
+
+worker:
+  retry:
+    base-delay: 5s
+    max-delay: 300s
+    max-retries: 10
