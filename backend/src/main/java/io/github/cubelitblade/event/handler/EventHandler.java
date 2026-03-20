@@ -5,16 +5,19 @@ import io.github.cubelitblade.entity.Event;
 import io.github.cubelitblade.service.EventService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import tools.jackson.core.JacksonException;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.Instant;
 
 @Slf4j
 @RequiredArgsConstructor
-public abstract class EventHandler {
+public abstract class EventHandler<PayloadType> {
     protected final EventService eventService;
     protected final ObjectMapper objectMapper;
     protected final RetryConfig retryConfig;
+    protected final Class<PayloadType> payloadType;
 
     public abstract Event.EventType getEventType();
 
@@ -70,6 +73,71 @@ public abstract class EventHandler {
             event.setNextRunAt(null);
             event.setStatus(Event.EventStatus.DEAD);
             log.debug("Event #{}: The maximum number of retries has been reached, marked as dead. ",  event.getId());
+        }
+    }
+
+    /**
+     * Parses the payload of the given event into the expected {@code PayloadType}.
+     * <p>
+     * Uses Jackson's {@link ObjectMapper#convertValue(Object, Class)} internally to
+     * convert the {@link Event#getPayload()} JSONB data into the typed payload object.
+     * </p>
+     * <p>
+     * If the conversion fails (e.g., payload structure mismatch), a warning/error is logged
+     * and {@code null} is returned. Depending on your business logic, the caller may
+     * choose to handle a {@code null} payload or throw an exception.
+     * </p>
+     *
+     * @param event the event containing the JSONB payload to parse
+     * @return the payload object of type {@code PayloadType}, or {@code null} if parsing fails
+     */
+    public PayloadType parsePayload(Event event) {
+        try {
+            return objectMapper.convertValue(event.getPayload(), payloadType);
+        } catch (IllegalArgumentException e) {
+            log.error("Failed to parse payload for event #{}: {}", event.getId(), event.getPayload(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Serializes the given payload object into a Jackson {@link JsonNode}.
+     * <p>
+     * Useful for persisting or updating the event's payload in the database, which
+     * expects JSONB data. If the payload is {@code null}, this method returns {@code null}.
+     * </p>
+     * <p>
+     * Any serialization exceptions are logged and {@code null} is returned.
+     * </p>
+     *
+     * @param payload the payload object to serialize
+     * @return a {@link JsonNode} representing the payload, or {@code null} if serialization fails or payload is {@code null}
+     */
+    public JsonNode serializePayload(PayloadType payload) {
+        try {
+            return payload == null ? null : objectMapper.valueToTree(payload);
+        } catch (JacksonException e) {
+            log.error("Failed to serialize payload {}: {}", payload, e.getMessage(), e);
+            return null;
+        }
+    }
+
+    /**
+     * Converts the given payload object to its JSON string representation.
+     * <p>
+     * This is mainly for logging, debugging, or storing payloads as JSON strings.
+     * If the payload is {@code null} or serialization fails, {@code null} is returned.
+     * </p>
+     *
+     * @param payload the payload object to convert
+     * @return the JSON string representation of the payload, or {@code null} if serialization fails
+     */
+    public String payloadToString(PayloadType payload) {
+        try {
+            return objectMapper.writeValueAsString(payload);
+        } catch (JacksonException e) {
+            log.error("Failed to serialize payload {}: {}", payload, e.getMessage(), e);
+            return null;
         }
     }
 }

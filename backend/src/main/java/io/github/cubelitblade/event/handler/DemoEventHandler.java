@@ -10,9 +10,17 @@ import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Component
-public class DemoEventHandler extends EventHandler {
-    public DemoEventHandler(EventService eventService, ObjectMapper objectMapper, RetryConfig retryConfig) {
-        super(eventService, objectMapper, retryConfig);
+public class DemoEventHandler extends EventHandler<DemoEventPayload> {
+    public DemoEventHandler(
+            EventService eventService,
+            ObjectMapper objectMapper,
+            RetryConfig retryConfig
+    ) {
+        super(eventService,
+                objectMapper,
+                retryConfig,
+                DemoEventPayload.class
+        );
     }
 
     @Override
@@ -22,13 +30,13 @@ public class DemoEventHandler extends EventHandler {
 
     @Override
     public void process(Event event) {
-        DemoEventPayload payload = objectMapper.convertValue(event.getPayload(), DemoEventPayload.class);
+        DemoEventPayload payload = parsePayload(event);
         Long eventId = event.getId();
 
         //
         log.debug("[Event #{}] DebugEvent begins. payload = {}. ",
                 eventId,
-                objectMapper.writeValueAsString(payload)
+                payloadToString(payload)
         );
 
         if (payload.getExecutionDelayMilliseconds() != null && payload.getExecutionDelayMilliseconds() > 0) {
