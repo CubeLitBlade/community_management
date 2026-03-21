@@ -1,11 +1,12 @@
 package io.github.cubelitblade.event.handler;
 
+import org.springframework.stereotype.Component;
+
 import io.github.cubelitblade.configuration.RetryConfig;
 import io.github.cubelitblade.entity.Event;
 import io.github.cubelitblade.event.payload.DemoEventPayload;
 import io.github.cubelitblade.service.EventService;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.stereotype.Component;
 import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
@@ -16,9 +17,10 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
             ObjectMapper objectMapper,
             RetryConfig retryConfig
     ) {
-        super(eventService,
-                objectMapper,
-                retryConfig
+        super(
+            eventService,
+            objectMapper,
+            retryConfig
         );
     }
 
@@ -57,15 +59,14 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
         if (targetRetries > currentRetry) {
             this.scheduleRetry(event);
         } else {
-            Event.EventStatus finalStatus = payload.getShouldSucceed()
-                    ? Event.EventStatus.SUCCEEDED
-                    : Event.EventStatus.FAILED;
-
-            event.setStatus(finalStatus);
-            event.setNextRunAt(null);
+            if (payload.getShouldSucceed()) {
+                success(event);
+            } else {
+                fail(event, "The payload indicates this event to fail. ");
+            }
 
             log.info("[Event #{}] DebugEvent finished with status = {}. ",
-                    eventId, finalStatus);
+                    eventId, event.getStatus());
         }
     }
 

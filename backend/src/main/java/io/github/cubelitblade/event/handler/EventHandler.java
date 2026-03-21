@@ -20,7 +20,6 @@ public abstract class EventHandler<PayloadType> {
     protected final EventService eventService;
     protected final ObjectMapper objectMapper;
     protected final RetryConfig retryConfig;
-    protected final Class<PayloadType> payloadType;
 
     public abstract Class<PayloadType> getPayloadType();
     public abstract Event.EventType getEventType();
@@ -74,10 +73,26 @@ public abstract class EventHandler<PayloadType> {
             log.debug("Event #{}: Scheduled to retry at {} (after {} ms). ", event.getId(), event.getNextRunAt(), targetBackoffMills);
         }
         else {
-            event.setNextRunAt(null);
-            event.setStatus(Event.EventStatus.DEAD);
+            die(event, "The maximum number of retries has been reached. ");
             log.debug("Event #{}: The maximum number of retries has been reached, marked as dead. ",  event.getId());
         }
+    }
+
+    public void success(Event event) {
+        event.setStatus(Event.EventStatus.SUCCEEDED);
+        event.setNextRunAt(null);
+    }
+
+    public void fail(Event event, String reason) {
+        event.setStatus(Event.EventStatus.FAILED);
+        event.setErrorMsg(reason);
+        event.setNextRunAt(null);
+    }
+
+    public void die(Event event, String reason) {
+        event.setStatus(Event.EventStatus.DEAD);
+        event.setErrorMsg(reason);
+        event.setNextRunAt(null);
     }
 
     /**
