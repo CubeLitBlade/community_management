@@ -31,6 +31,7 @@ public class Event {
 
     private Instant createdAt;
 
+    @TableField(updateStrategy = FieldStrategy.ALWAYS)
     private Instant nextRunAt;
 
     private Instant updatedAt;
