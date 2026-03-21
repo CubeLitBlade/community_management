@@ -1,13 +1,6 @@
-// Override Spring Boot managed Jackson version
-// Reason:
-//  - fixes critical bug in 3.0.4
-//  - mitigates CVE-2025-52999
-// Remove after Spring Boot upgrades its jackson.version
-extra["jackson.version"] = "3.1.0"
-
 plugins {
     id("java")
-    id("org.springframework.boot") version "4.0.3"
+    id("org.springframework.boot") version "4.0.4"
     id("io.spring.dependency-management") version "1.1.7"
 }
 
@@ -25,18 +18,6 @@ repositories {
 }
 
 dependencies {
-    constraints{
-        implementation("org.apache.commons:commons-lang3:3.20.0") {
-            because("Fixes security advisory")
-        }
-        implementation("ch.qos.logback:logback-core:1.5.32") {
-            because("Fixes security advisory")
-        }
-        testImplementation("org.assertj:assertj-core:3.27.7") {
-            because("Fixes CWE-611 related issue")
-        }
-    }
-
     annotationProcessor("org.projectlombok:lombok:1.18.42")
     compileOnly("org.projectlombok:lombok:1.18.42")
     implementation ("org.springframework.boot:spring-boot-starter")
