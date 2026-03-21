@@ -18,14 +18,18 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
     ) {
         super(eventService,
                 objectMapper,
-                retryConfig,
-                DemoEventPayload.class
+                retryConfig
         );
     }
 
     @Override
     public Event.EventType getEventType() {
         return Event.EventType.DEMO_EVENT;
+    }
+
+    @Override
+    public Class<DemoEventPayload> getPayloadType() {
+        return DemoEventPayload.class;
     }
 
     @Override

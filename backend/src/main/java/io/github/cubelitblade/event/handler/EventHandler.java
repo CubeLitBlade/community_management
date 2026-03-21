@@ -1,5 +1,9 @@
 package io.github.cubelitblade.event.handler;
 
+import java.time.Instant;
+
+import org.springframework.stereotype.Component;
+
 import io.github.cubelitblade.configuration.RetryConfig;
 import io.github.cubelitblade.entity.Event;
 import io.github.cubelitblade.service.EventService;
@@ -9,9 +13,8 @@ import tools.jackson.core.JacksonException;
 import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
-import java.time.Instant;
-
 @Slf4j
+@Component
 @RequiredArgsConstructor
 public abstract class EventHandler<PayloadType> {
     protected final EventService eventService;
@@ -19,6 +22,7 @@ public abstract class EventHandler<PayloadType> {
     protected final RetryConfig retryConfig;
     protected final Class<PayloadType> payloadType;
 
+    public abstract Class<PayloadType> getPayloadType();
     public abstract Event.EventType getEventType();
 
     /**
@@ -93,7 +97,7 @@ public abstract class EventHandler<PayloadType> {
      */
     public PayloadType parsePayload(Event event) {
         try {
-            return objectMapper.convertValue(event.getPayload(), payloadType);
+            return objectMapper.convertValue(event.getPayload(), getPayloadType());
         } catch (IllegalArgumentException e) {
             log.error("Failed to parse payload for event #{}: {}", event.getId(), event.getPayload(), e);
             return null;

@@ -13,9 +13,9 @@ import java.util.stream.Collectors;
 @Slf4j
 @Component
 public class EventDispatcher {
-    private final Map<Event.EventType, EventHandler> eventHandlersMap;
+    private final Map<Event.EventType, EventHandler<?>> eventHandlersMap;
 
-    public EventDispatcher(List<EventHandler> handlers) {
+    public EventDispatcher(List<EventHandler<?>> handlers) {
         eventHandlersMap = handlers.stream().collect(
                 Collectors.toMap(
                         EventHandler::getEventType,
@@ -36,7 +36,7 @@ public class EventDispatcher {
             return;
         }
 
-        EventHandler handler = eventHandlersMap.get(type);
+        EventHandler<?> handler = eventHandlersMap.get(type);
 
         if (handler == null) {
             log.error("No handler for event type {}", type);
