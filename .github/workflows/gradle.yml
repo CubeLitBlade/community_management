@@ -18,11 +18,16 @@ env:
 
 jobs:
   build:
-
     runs-on: ubuntu-latest
     permissions:
       contents: read
       packages: write
+    
+    env:
+      DB_NAME: community_management_system
+      DB_USER: dev_user
+      DB_PASSWORD: dev_password
+      DB_EXTERNAL_PORT: 5432
 
     steps:
     - uses: actions/checkout@v4
