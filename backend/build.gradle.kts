@@ -17,6 +17,8 @@ repositories {
     mavenCentral()
 }
 
+
+val mockitoAgent = configurations.create("mockitoAgent")
 dependencies {
     annotationProcessor("org.projectlombok:lombok:1.18.42")
     compileOnly("org.projectlombok:lombok:1.18.42")
@@ -31,9 +33,17 @@ dependencies {
     testImplementation("org.junit.jupiter:junit-jupiter")
     testImplementation("org.springframework.boot:spring-boot-starter-test")
     testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    developmentOnly("org.springframework.boot:spring-boot-docker-compose:4.1.0-M2")
+    testAndDevelopmentOnly("org.springframework.boot:spring-boot-docker-compose:4.1.0-M2")
+
+    mockitoAgent("org.mockito:mockito-core:5.22.0") {
+        isTransitive = false
+    }
 }
 
 tasks.test {
     useJUnitPlatform()
+    jvmArgs = listOf(
+        "-javaagent:${mockitoAgent.asPath}",
+        "-Xshare:off"
+    )
 }
