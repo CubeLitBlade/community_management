@@ -1,5 +1,6 @@
 package io.github.cubelitblade.event.handler;
 
+import io.github.cubelitblade.service.SseService;
 import org.springframework.stereotype.Component;
 
 import io.github.cubelitblade.configuration.RetryConfig;
@@ -12,16 +13,20 @@ import tools.jackson.databind.ObjectMapper;
 @Slf4j
 @Component
 public class DemoEventHandler extends EventHandler<DemoEventPayload> {
+    private final SseService sseService;
+
     public DemoEventHandler(
             EventService eventService,
             ObjectMapper objectMapper,
-            RetryConfig retryConfig
+            RetryConfig retryConfig,
+            SseService sseService
     ) {
         super(
             eventService,
             objectMapper,
             retryConfig
         );
+        this.sseService = sseService;
     }
 
     @Override
@@ -39,7 +44,6 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
         DemoEventPayload payload = parsePayload(event);
         Long eventId = event.getId();
 
-        //
         log.debug("[Event #{}] DebugEvent begins. payload = {}. ",
                 eventId,
                 payloadToString(payload)
@@ -50,7 +54,8 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
         }
 
         if (payload.getMessage() != null) {
-            log.info("[Event #{}] {}", eventId, payload.getMessage());
+            log.debug("[Event #{}] {}", eventId, payload.getMessage());
+            sseService.broadcast(payload.getMessage());
         }
 
         int currentRetry = event.getRetryCount();

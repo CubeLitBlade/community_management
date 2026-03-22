@@ -3,11 +3,13 @@ package io.github.cubelitblade.service;
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
 import io.github.cubelitblade.entity.Event;
+import io.github.cubelitblade.event.payload.DemoEventPayload;
 import io.github.cubelitblade.mapper.EventMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import tools.jackson.databind.ObjectMapper;
 
 import java.time.LocalDateTime;
 import java.util.List;
@@ -17,6 +19,7 @@ import java.util.List;
 @RequiredArgsConstructor
 public class EventService extends ServiceImpl<EventMapper, Event> {
     private final EventMapper eventMapper;
+    private final ObjectMapper objectMapper;
 
     /**
      * 领取事件表中处于 {@code waiting} 状态的事件。
@@ -40,5 +43,16 @@ public class EventService extends ServiceImpl<EventMapper, Event> {
 
         this.updateBatchById(eventList);
         return eventList;
+    }
+
+    @Transactional
+    public void createDemoEvent(DemoEventPayload payload) {
+        Event event = Event.builder()
+                .type(Event.EventType.DEMO_EVENT)
+                .status(Event.EventStatus.WAITING)
+                .payload(objectMapper.valueToTree(payload))
+                .build();
+
+        this.save(event);
     }
 }
