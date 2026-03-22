@@ -1,9 +1,9 @@
 package io.github.cubelitblade.event.handler;
 
 import io.github.cubelitblade.configuration.RetryConfig;
-import io.github.cubelitblade.entity.Event;
+import io.github.cubelitblade.event.Event;
 import io.github.cubelitblade.event.payload.DemoEventPayload;
-import io.github.cubelitblade.service.EventService;
+import io.github.cubelitblade.event.EventService;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;

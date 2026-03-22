@@ -1,6 +1,6 @@
-package io.github.cubelitblade.worker;
+package io.github.cubelitblade.event.worker;
 
-import io.github.cubelitblade.entity.Event;
+import io.github.cubelitblade.event.Event;
 import io.github.cubelitblade.event.handler.EventHandler;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.scheduling.annotation.Async;

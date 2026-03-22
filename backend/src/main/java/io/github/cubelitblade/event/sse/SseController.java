@@ -1,6 +1,5 @@
-package io.github.cubelitblade.controller;
+package io.github.cubelitblade.event.sse;
 
-import io.github.cubelitblade.service.SseService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.web.bind.annotation.GetMapping;

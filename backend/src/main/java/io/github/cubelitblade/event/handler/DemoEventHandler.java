@@ -1,12 +1,12 @@
 package io.github.cubelitblade.event.handler;
 
-import io.github.cubelitblade.service.SseService;
+import io.github.cubelitblade.event.sse.SseService;
 import org.springframework.stereotype.Component;
 
 import io.github.cubelitblade.configuration.RetryConfig;
-import io.github.cubelitblade.entity.Event;
+import io.github.cubelitblade.event.Event;
 import io.github.cubelitblade.event.payload.DemoEventPayload;
-import io.github.cubelitblade.service.EventService;
+import io.github.cubelitblade.event.EventService;
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.ObjectMapper;
 

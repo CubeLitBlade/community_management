@@ -1,10 +1,8 @@
-package io.github.cubelitblade.service;
+package io.github.cubelitblade.event;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.extension.service.impl.ServiceImpl;
-import io.github.cubelitblade.entity.Event;
 import io.github.cubelitblade.event.payload.DemoEventPayload;
-import io.github.cubelitblade.mapper.EventMapper;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;

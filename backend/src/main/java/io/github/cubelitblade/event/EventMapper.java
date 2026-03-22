@@ -1,7 +1,6 @@
-package io.github.cubelitblade.mapper;
+package io.github.cubelitblade.event;
 
 import com.baomidou.mybatisplus.core.mapper.BaseMapper;
-import io.github.cubelitblade.entity.Event;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper

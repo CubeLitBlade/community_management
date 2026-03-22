@@ -1,7 +1,6 @@
-package io.github.cubelitblade.controller;
+package io.github.cubelitblade.event;
 
 import io.github.cubelitblade.event.payload.DemoEventPayload;
-import io.github.cubelitblade.service.EventService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;

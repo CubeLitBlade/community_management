@@ -1,7 +1,7 @@
-package io.github.cubelitblade.entity;
+package io.github.cubelitblade.event;
 
 import com.baomidou.mybatisplus.annotation.*;
-import io.github.cubelitblade.utils.JsonbTypeHandler;
+import io.github.cubelitblade.common.typehandler.JsonbTypeHandler;
 import lombok.*;
 import tools.jackson.databind.JsonNode;
 

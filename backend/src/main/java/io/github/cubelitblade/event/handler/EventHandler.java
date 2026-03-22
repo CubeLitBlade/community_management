@@ -5,8 +5,8 @@ import java.time.Instant;
 import org.springframework.stereotype.Component;
 
 import io.github.cubelitblade.configuration.RetryConfig;
-import io.github.cubelitblade.entity.Event;
-import io.github.cubelitblade.service.EventService;
+import io.github.cubelitblade.event.Event;
+import io.github.cubelitblade.event.EventService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.core.JacksonException;

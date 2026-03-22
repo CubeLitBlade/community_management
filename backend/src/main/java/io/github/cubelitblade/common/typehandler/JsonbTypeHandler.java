@@ -1,4 +1,4 @@
-package io.github.cubelitblade.utils;
+package io.github.cubelitblade.common.typehandler;
 
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
 import org.apache.ibatis.type.JdbcType;

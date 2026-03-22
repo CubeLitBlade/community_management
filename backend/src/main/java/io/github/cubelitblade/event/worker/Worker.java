@@ -1,7 +1,7 @@
-package io.github.cubelitblade.worker;
+package io.github.cubelitblade.event.worker;
 
-import io.github.cubelitblade.entity.Event;
-import io.github.cubelitblade.service.EventService;
+import io.github.cubelitblade.event.Event;
+import io.github.cubelitblade.event.EventService;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Component;
 
