@@ -1,10 +1,9 @@
-package io.github.cubelitblade.worker;
+package io.github.cubelitblade.event.worker;
 
 import io.github.cubelitblade.configuration.RetryConfig;
 import io.github.cubelitblade.event.Event;
 import io.github.cubelitblade.event.handler.DemoEventHandler;
 import io.github.cubelitblade.event.payload.DemoEventPayload;
-import io.github.cubelitblade.event.worker.Worker;
 import io.github.cubelitblade.event.EventService;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
