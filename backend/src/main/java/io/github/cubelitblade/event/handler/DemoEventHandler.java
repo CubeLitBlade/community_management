@@ -1,11 +1,10 @@
 package io.github.cubelitblade.event.handler;
 
-import io.github.cubelitblade.event.sse.SseService;
-import org.springframework.stereotype.Component;
-
 import io.github.cubelitblade.event.Event;
 import io.github.cubelitblade.event.payload.DemoEventPayload;
+import io.github.cubelitblade.event.sse.SseService;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.stereotype.Component;
 
 @Slf4j
 @Component
@@ -32,38 +31,39 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
         DemoEventPayload payload = parsePayload(event);
         Long eventId = event.getId();
 
-        log.debug("[Event #{}] DebugEvent begins. payload = {}. ",
+        log.debug("[Event #{}] DemoEvent begins. payload = {}. ",
                 eventId,
                 payloadToString(payload)
         );
 
+        // simulate time-consuming tasks
         if (payload.getExecutionDelayMilliseconds() != null && payload.getExecutionDelayMilliseconds() > 0) {
-            simulateWork(eventId, payload.getExecutionDelayMilliseconds());
+            doTimeConsumingWork(eventId, payload.getExecutionDelayMilliseconds());
         }
 
+        // broadcast message
         if (payload.getMessage() != null) {
             log.debug("[Event #{}] {}", eventId, payload.getMessage());
             sseService.broadcast(payload.getMessage());
         }
 
+        // use exceptions to allow the parent class to retry (if necessary)
         int currentRetry = event.getRetryCount();
         int targetRetries = payload.getRequiredRetries();
-
         if (targetRetries > currentRetry) {
-            this.scheduleRetry(event);
-        } else {
-            if (payload.getShouldSucceed()) {
-                success(event);
-            } else {
-                fail(event, "The payload indicates this event to fail. ");
-            }
-
-            log.info("[Event #{}] DebugEvent finished with status = {}. ",
-                    eventId, event.getStatus());
+            throw new RuntimeException(String.format("The required number of repetitions has not been reached (%d/%d).", currentRetry, targetRetries));
         }
+
+        // determine the result of the event
+        if (payload.getShouldSucceed()) {
+            success(event);
+        } else {
+            fail(event, "The payload indicates this event to fail. ");
+        }
+        log.info("[Event #{}] DemoEvent finished with status = {}. ", eventId, event.getStatus());
     }
 
-    private void simulateWork(Long eventId, Long executionDelayMilliseconds) {
+    private void doTimeConsumingWork(Long eventId, Long executionDelayMilliseconds) {
         try {
             log.debug("[Event #{}] Simulating workload for {} ms...", eventId, executionDelayMilliseconds);
             Thread.sleep(executionDelayMilliseconds);
