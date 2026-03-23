@@ -13,7 +13,7 @@ import lombok.NoArgsConstructor;
 @NoArgsConstructor
 @AllArgsConstructor
 @JsonIgnoreProperties(ignoreUnknown = true)
-public class DemoEventPayload {
+public class DemoEventPayload implements EventPayload {
     private String message;
 
     @Builder.Default
