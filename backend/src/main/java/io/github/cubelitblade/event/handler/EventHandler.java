@@ -1,5 +1,6 @@
 package io.github.cubelitblade.event.handler;
 
+import io.github.cubelitblade.common.exception.UnrecoverableEventException;
 import io.github.cubelitblade.event.Event;
 import io.github.cubelitblade.event.payload.EventPayload;
 import lombok.RequiredArgsConstructor;
@@ -57,8 +58,21 @@ public abstract class EventHandler<PayloadType extends EventPayload> {
      * @param event the event to handle
      */
     public void handleEvent(Event event) {
-        if (event.getStatus() == Event.EventStatus.RUNNING) {
+        if (event.getStatus() != Event.EventStatus.RUNNING) {
+            return;
+        }
+        try {
             process(event);
+            if (event.getStatus() == Event.EventStatus.RUNNING) {
+                event.setStatus(Event.EventStatus.SUCCEEDED);
+            }
+        } catch (UnrecoverableEventException e) {
+            die(event, e.getMessage());
+            log.error(e.getMessage(), e);
+        } catch (RuntimeException e) {
+            scheduleRetry(event, e.getMessage());
+            log.error(e.getMessage(), e);
+        } finally {
             context.getEventService().updateById(event);
         }
     }
@@ -76,7 +90,7 @@ public abstract class EventHandler<PayloadType extends EventPayload> {
      *
      * @param event the event to schedule for retry
      */
-    public void scheduleRetry(Event event) {
+    public void scheduleRetry(Event event, String reason) {
         int retryCount = event.getRetryCount();
 
         if (retryCount < context.getRetryConfig().getMaxRetries()) {
@@ -84,11 +98,11 @@ public abstract class EventHandler<PayloadType extends EventPayload> {
             event.setNextRunAt(Instant.now().plusMillis(Math.min(targetBackoffMills, context.getRetryConfig().getMaxDelay().toMillis())));
             event.setRetryCount(retryCount + 1);
             event.setStatus(Event.EventStatus.WAITING);
-            log.debug("Event #{}: Scheduled to retry at {} (after {} ms). ", event.getId(), event.getNextRunAt(), targetBackoffMills);
+            log.warn("Event #{}: Scheduled to retry at {} (after {} ms), because {}. ", event.getId(), event.getNextRunAt(), targetBackoffMills, reason);
         }
         else {
-            die(event, "The maximum number of retries has been reached. ");
-            log.debug("Event #{}: The maximum number of retries has been reached, marked as dead. ",  event.getId());
+            die(event, "The maximum number of retries has been reached, because " + reason);
+            log.error("Event #{}: The maximum number of retries has been reached, marked as dead. ", event.getId());
         }
     }
 
