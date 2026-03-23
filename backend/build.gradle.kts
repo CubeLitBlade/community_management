@@ -20,14 +20,14 @@ repositories {
 
 val mockitoAgent = configurations.create("mockitoAgent")
 dependencies {
-    annotationProcessor("org.projectlombok:lombok:1.18.42")
-    compileOnly("org.projectlombok:lombok:1.18.42")
+    annotationProcessor("org.projectlombok:lombok:1.18.44")
+    compileOnly("org.projectlombok:lombok:1.18.44")
     implementation ("org.springframework.boot:spring-boot-starter")
     implementation("org.springframework.boot:spring-boot-starter-web")
     implementation ("com.baomidou:mybatis-plus-spring-boot4-starter:3.5.16")
     implementation("org.postgresql:postgresql")
-    testAnnotationProcessor("org.projectlombok:lombok:1.18.42")
-    testCompileOnly("org.projectlombok:lombok:1.18.42")
+    testAnnotationProcessor("org.projectlombok:lombok:1.18.44")
+    testCompileOnly("org.projectlombok:lombok:1.18.44")
     testImplementation(platform("org.junit:junit-bom:5.10.0"))
     testImplementation("org.mockito:mockito-core:5.22.0")
     testImplementation("org.junit.jupiter:junit-jupiter")
