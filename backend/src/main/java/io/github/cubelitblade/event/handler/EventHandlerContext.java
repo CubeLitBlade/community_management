@@ -1,0 +1,19 @@
+package io.github.cubelitblade.event.handler;
+
+import io.github.cubelitblade.configuration.RetryConfig;
+import io.github.cubelitblade.event.EventService;
+import io.github.cubelitblade.event.payload.EventPayloadMapper;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Component;
+import tools.jackson.databind.ObjectMapper;
+
+@Data
+@Component
+@RequiredArgsConstructor
+public class EventHandlerContext {
+    private final EventService eventService;
+    private final ObjectMapper objectMapper;
+    private final RetryConfig retryConfig;
+    private final EventPayloadMapper eventPayloadMapper;
+}

@@ -3,29 +3,17 @@ package io.github.cubelitblade.event.handler;
 import io.github.cubelitblade.event.sse.SseService;
 import org.springframework.stereotype.Component;
 
-import io.github.cubelitblade.configuration.RetryConfig;
 import io.github.cubelitblade.event.Event;
 import io.github.cubelitblade.event.payload.DemoEventPayload;
-import io.github.cubelitblade.event.EventService;
 import lombok.extern.slf4j.Slf4j;
-import tools.jackson.databind.ObjectMapper;
 
 @Slf4j
 @Component
 public class DemoEventHandler extends EventHandler<DemoEventPayload> {
     private final SseService sseService;
 
-    public DemoEventHandler(
-            EventService eventService,
-            ObjectMapper objectMapper,
-            RetryConfig retryConfig,
-            SseService sseService
-    ) {
-        super(
-            eventService,
-            objectMapper,
-            retryConfig
-        );
+    public DemoEventHandler(EventHandlerContext context, SseService sseService) {
+        super(context);
         this.sseService = sseService;
     }
 
