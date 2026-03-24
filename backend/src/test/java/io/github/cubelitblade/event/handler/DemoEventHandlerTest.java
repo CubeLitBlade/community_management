@@ -2,10 +2,9 @@ package io.github.cubelitblade.event.handler;
 
 import io.github.cubelitblade.configuration.RetryConfig;
 import io.github.cubelitblade.event.Event;
-import io.github.cubelitblade.event.payload.DemoEventPayload;
 import io.github.cubelitblade.event.EventService;
+import io.github.cubelitblade.event.payload.DemoEventPayload;
 import io.github.cubelitblade.event.payload.EventPayloadMapper;
-import io.github.cubelitblade.event.sse.SseService;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -13,7 +12,6 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 import tools.jackson.databind.JsonNode;
-import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
 import java.time.Instant;
@@ -178,7 +176,7 @@ class DemoEventHandlerTest {
                 .thenReturn(demoEventPayload);
 
         // when: the handler processes the event repeatedly
-        for (int i = 0; i < demoEventPayload.getRequiredRetries(); i++ ) {
+        for (int i = 0; i < demoEventPayload.getRequiredRetries(); i++) {
             if (event.getStatus() == Event.EventStatus.WAITING) {
                 event.setStatus(Event.EventStatus.RUNNING);
             }

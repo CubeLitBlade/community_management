@@ -1,6 +1,5 @@
 package io.github.cubelitblade.event;
 
-import io.github.cubelitblade.common.exception.InvalidParameterException;
 import io.github.cubelitblade.event.payload.DemoEventPayload;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -17,7 +16,7 @@ public class EventController {
 
     @PostMapping("/{type}")
     public ResponseEntity<?> createEvent(@PathVariable("type") String eventType, @RequestBody DemoEventPayload payload) {
-        Event event = eventService.enqueueEvent(eventType , payload);
+        Event event = eventService.enqueueEvent(eventType, payload);
         URI location = ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(event.getId()).toUri();
         return ResponseEntity.created(location).build();
     }

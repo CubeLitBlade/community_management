@@ -1,8 +1,6 @@
 package io.github.cubelitblade.common.exception;
 
-import lombok.Builder;
 import lombok.Getter;
-import org.springframework.context.MessageSource;
 
 @Getter
 public class InvalidParameterException extends IllegalArgumentException {
