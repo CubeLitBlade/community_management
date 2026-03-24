@@ -2,11 +2,10 @@ package io.github.cubelitblade.event.worker;
 
 import io.github.cubelitblade.event.Event;
 import io.github.cubelitblade.event.EventService;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
-
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 import java.util.List;
 

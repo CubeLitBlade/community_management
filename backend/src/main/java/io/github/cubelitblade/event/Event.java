@@ -7,9 +7,7 @@ import tools.jackson.databind.JsonNode;
 
 import java.time.Instant;
 import java.util.Arrays;
-import java.util.HashMap;
 import java.util.Map;
-import java.util.stream.Collector;
 import java.util.stream.Collectors;
 
 @Data
@@ -49,12 +47,11 @@ public class Event {
     public enum EventType {
         DEMO_EVENT("demo");
 
-        @EnumValue
-        private final String type;
-
         private static final Map<String, EventType> map = Arrays.stream(EventType.values()).collect(
                 Collectors.toMap(EventType::getType, v -> v)
         );
+        @EnumValue
+        private final String type;
 
         EventType(String type) {
             this.type = type;

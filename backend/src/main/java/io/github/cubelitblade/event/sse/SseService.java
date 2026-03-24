@@ -29,7 +29,7 @@ public class SseService {
                         .data(message)
                 );
             } catch (IOException e) {
-                log.error("Failed to push message. " , e);
+                log.error("Failed to push message. ", e);
                 emitters.remove(emitter);
             }
         }

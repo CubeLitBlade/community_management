@@ -11,7 +11,7 @@ import org.springframework.web.bind.annotation.RestControllerAdvice;
 public class GlobalExceptionHandler {
     @ExceptionHandler(value = InvalidParameterException.class)
     public ResponseEntity<ProblemDetail> handleIllegalArgument(InvalidParameterException e) {
-        ProblemDetail problem =  ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
 
         if (e.getMessage() != null && !e.getMessage().isEmpty()) {
             problem.setTitle(e.getMessage());
