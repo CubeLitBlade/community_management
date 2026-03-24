@@ -1,6 +1,7 @@
 package io.github.cubelitblade.event.handler;
 
-import io.github.cubelitblade.common.exception.UnrecoverableEventException;
+import io.github.cubelitblade.common.exception.TransientEventException;
+import io.github.cubelitblade.common.exception.FatalEventException;
 import io.github.cubelitblade.event.Event;
 import io.github.cubelitblade.event.payload.EventPayload;
 import lombok.RequiredArgsConstructor;
@@ -66,14 +67,18 @@ public abstract class EventHandler<PayloadType extends EventPayload> {
             if (event.getStatus() == Event.EventStatus.RUNNING) {
                 event.setStatus(Event.EventStatus.SUCCEEDED);
             }
-        } catch (UnrecoverableEventException e) {
+        } catch (FatalEventException e) {
             die(event, e.getMessage());
             log.error(e.getMessage(), e);
-        } catch (RuntimeException e) {
+        } catch (TransientEventException e) {
             scheduleRetry(event, e.getMessage());
             log.error(e.getMessage(), e);
-        } finally {
-            context.getEventService().updateById(event);
+        } catch (Exception e) {
+            fail(event, e.getMessage());
+            log.error(e.getMessage(), e);
+        }
+        finally {
+            context.getEventService().updateEvent(event);
         }
     }
 

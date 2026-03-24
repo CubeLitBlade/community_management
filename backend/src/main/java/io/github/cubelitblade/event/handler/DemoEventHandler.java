@@ -1,5 +1,6 @@
 package io.github.cubelitblade.event.handler;
 
+import io.github.cubelitblade.common.exception.TransientEventException;
 import io.github.cubelitblade.event.Event;
 import io.github.cubelitblade.event.payload.DemoEventPayload;
 import io.github.cubelitblade.event.sse.SseService;
@@ -51,7 +52,7 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
         int currentRetry = event.getRetryCount();
         int targetRetries = payload.getRequiredRetries();
         if (targetRetries > currentRetry) {
-            throw new RuntimeException(String.format("The required number of repetitions has not been reached (%d/%d).", currentRetry, targetRetries));
+            throw new TransientEventException(String.format("The required number of repetitions has not been reached (%d/%d).", currentRetry, targetRetries));
         }
 
         // determine the result of the event
