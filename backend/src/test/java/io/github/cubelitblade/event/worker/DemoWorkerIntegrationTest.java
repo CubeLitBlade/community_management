@@ -114,7 +114,7 @@ public class DemoWorkerIntegrationTest {
                 .build()
         );
         event.setNextRunAt(Instant.now().plusSeconds(60));
-        eventService.updateById(event);
+        eventService.updateEvent(event);
 
         worker.run();
 
@@ -129,13 +129,13 @@ public class DemoWorkerIntegrationTest {
                 .build();
 
         event.setPayload(demoEventHandler.serializePayload(payload));
-        eventService.save(event);
+        eventService.enqueueEvent(event);
 
         return event;
     }
 
     private Event reloadEvent(Event event) {
-        return eventService.getById(event.getId());
+        return eventService.find(event.getId());
     }
 
     @TestConfiguration

@@ -4,11 +4,15 @@ import io.github.cubelitblade.configuration.RetryConfig;
 import io.github.cubelitblade.event.Event;
 import io.github.cubelitblade.event.payload.DemoEventPayload;
 import io.github.cubelitblade.event.EventService;
+import io.github.cubelitblade.event.payload.EventPayloadMapper;
+import io.github.cubelitblade.event.sse.SseService;
+import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import tools.jackson.databind.JsonNode;
 import tools.jackson.databind.ObjectMapper;
 
 import java.time.Duration;
@@ -21,20 +25,32 @@ import static org.mockito.Mockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class DemoEventHandlerTest {
-
     @Mock
     EventService eventService;
 
     @Mock
-    ObjectMapper objectMapper;
+    RetryConfig retryConfig;
 
     @Mock
-    RetryConfig retryConfig;
+    EventPayloadMapper eventPayloadMapper;
+
+    @Mock
+    EventHandlerContext context;
+
+    @Mock
+    JsonNode payloadJson;
 
     @InjectMocks
     DemoEventHandler demoEventHandler;
 
+    @BeforeEach
+    void setUp() {
+        when(context.getEventService()).thenReturn(eventService);
+        when(context.getEventPayloadMapper()).thenReturn(eventPayloadMapper);
+    }
+
     private void mockRetryConfig() {
+        when(context.getRetryConfig()).thenReturn(retryConfig);
         when(retryConfig.getBaseDelay()).thenReturn(Duration.ofSeconds(1));
         when(retryConfig.getMaxDelay()).thenReturn(Duration.ofSeconds(10));
         when(retryConfig.getMaxRetries()).thenReturn(3);
@@ -47,13 +63,15 @@ class DemoEventHandlerTest {
                 .id(1L)
                 .type(Event.EventType.DEMO_EVENT)
                 .status(Event.EventStatus.RUNNING)
+                .payload(payloadJson)
                 .build();
 
         DemoEventPayload demoEventPayload = DemoEventPayload.builder()
                 .shouldSucceed(true)
                 .build();
 
-        when(objectMapper.convertValue(any(), eq(DemoEventPayload.class))).thenReturn(demoEventPayload);
+        when(eventPayloadMapper.fromJsonNode(any(JsonNode.class), eq(DemoEventPayload.class)))
+                .thenReturn(demoEventPayload);
 
         // when: the handler processes the event
         demoEventHandler.handleEvent(event);
@@ -62,7 +80,7 @@ class DemoEventHandlerTest {
         assertEquals(Event.EventStatus.SUCCEEDED, event.getStatus());
         assertNull(event.getNextRunAt());
 
-        verify(eventService).updateById(event);
+        verify(eventService).updateEvent(event);
     }
 
     @Test
@@ -72,13 +90,15 @@ class DemoEventHandlerTest {
                 .id(2L)
                 .type(Event.EventType.DEMO_EVENT)
                 .status(Event.EventStatus.RUNNING)
+                .payload(payloadJson)
                 .build();
 
         DemoEventPayload demoEventPayload = DemoEventPayload.builder()
                 .shouldSucceed(false)
                 .build();
 
-        when(objectMapper.convertValue(any(), eq(DemoEventPayload.class))).thenReturn(demoEventPayload);
+        when(eventPayloadMapper.fromJsonNode(any(JsonNode.class), eq(DemoEventPayload.class)))
+                .thenReturn(demoEventPayload);
 
         // when: the handler processes the event
         demoEventHandler.handleEvent(event);
@@ -87,7 +107,7 @@ class DemoEventHandlerTest {
         assertEquals(Event.EventStatus.FAILED, event.getStatus());
         assertNull(event.getNextRunAt());
 
-        verify(eventService).updateById(event);
+        verify(eventService).updateEvent(event);
     }
 
     @Test
@@ -99,6 +119,7 @@ class DemoEventHandlerTest {
                 .id(3L)
                 .type(Event.EventType.DEMO_EVENT)
                 .status(Event.EventStatus.RUNNING)
+                .payload(payloadJson)
                 .build();
 
         DemoEventPayload demoEventPayload = DemoEventPayload.builder()
@@ -106,7 +127,7 @@ class DemoEventHandlerTest {
                 .shouldSucceed(true)
                 .build();
 
-        when(objectMapper.convertValue(any(), eq(DemoEventPayload.class)))
+        when(eventPayloadMapper.fromJsonNode(any(JsonNode.class), eq(DemoEventPayload.class)))
                 .thenReturn(demoEventPayload);
 
         // when: the event is handled for the first time
@@ -121,7 +142,7 @@ class DemoEventHandlerTest {
         assertNotNull(event.getNextRunAt());
         assertTrue(event.getNextRunAt().isAfter(before));
 
-        verify(eventService).updateById(event);
+        verify(eventService).updateEvent(event);
 
         // when: the event is handled again
         event.setStatus(Event.EventStatus.RUNNING);
@@ -132,7 +153,7 @@ class DemoEventHandlerTest {
         assertEquals(1, event.getRetryCount());
         assertNull(event.getNextRunAt());
 
-        verify(eventService, times(2)).updateById(event);
+        verify(eventService, times(2)).updateEvent(event);
     }
 
 
@@ -145,6 +166,7 @@ class DemoEventHandlerTest {
                 .id(4L)
                 .type(Event.EventType.DEMO_EVENT)
                 .status(Event.EventStatus.RUNNING)
+                .payload(payloadJson)
                 .build();
 
         DemoEventPayload demoEventPayload = DemoEventPayload.builder()
@@ -152,7 +174,7 @@ class DemoEventHandlerTest {
                 .shouldSucceed(true)
                 .build();
 
-        when(objectMapper.convertValue(any(), eq(DemoEventPayload.class)))
+        when(eventPayloadMapper.fromJsonNode(any(JsonNode.class), eq(DemoEventPayload.class)))
                 .thenReturn(demoEventPayload);
 
         // when: the handler processes the event repeatedly
@@ -171,6 +193,6 @@ class DemoEventHandlerTest {
         assertEquals(retryConfig.getMaxRetries(), event.getRetryCount());
         assertNull(event.getNextRunAt());
 
-        verify(eventService, times(retryConfig.getMaxRetries() + 1)).updateById(event);
+        verify(eventService, times(retryConfig.getMaxRetries() + 1)).updateEvent(event);
     }
 }
