@@ -6,6 +6,11 @@ import lombok.*;
 import tools.jackson.databind.JsonNode;
 
 import java.time.Instant;
+import java.util.Arrays;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.stream.Collector;
+import java.util.stream.Collectors;
 
 @Data
 @Builder
@@ -14,6 +19,7 @@ import java.time.Instant;
 @TableName(autoResultMap = true)
 public class Event {
     @TableId(type = IdType.AUTO)
+    @Setter(AccessLevel.NONE)
     private Long id;
 
     private EventType type;
@@ -36,6 +42,8 @@ public class Event {
 
     private Instant updatedAt;
 
+    private String currentStep;
+
 
     @Getter
     public enum EventType {
@@ -44,8 +52,20 @@ public class Event {
         @EnumValue
         private final String type;
 
+        private static final Map<String, EventType> map = Arrays.stream(EventType.values()).collect(
+                Collectors.toMap(EventType::getType, v -> v)
+        );
+
         EventType(String type) {
             this.type = type;
+        }
+
+        public static EventType from(String type) {
+            EventType eventType = map.get(type);
+            if (eventType == null) {
+                throw new IllegalArgumentException("Unknown event type: " + type);
+            }
+            return eventType;
         }
     }
 
