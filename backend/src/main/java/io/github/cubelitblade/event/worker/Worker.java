@@ -21,7 +21,7 @@ public class Worker {
     public void run() {
         log.info("Worker running...");
 
-        List<Event> eventList = eventService.claimEvents(10);
+        List<Event> eventList = eventService.claimWaitingEvents(10);
 
         log.info("Event list size: {}", eventList.size());
 
