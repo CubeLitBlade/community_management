@@ -1,9 +1,11 @@
 package io.github.cubelitblade.event;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
+import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.ibatis.executor.BatchResult;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 import java.time.LocalDateTime;
@@ -20,7 +22,7 @@ public class EventRepository {
         lambdaQueryWrapper.eq(Event::getStatus, Event.EventStatus.WAITING)
                 .le(Event::getNextRunAt, LocalDateTime.now())
                 .orderByAsc(Event::getNextRunAt)
-                .last("for update skip locked limit "+ count);
+                .last("for update skip locked limit " + count);
         List<Event> eventList = eventMapper.selectList(lambdaQueryWrapper);
 
         for (Event event : eventList) {
@@ -37,7 +39,7 @@ public class EventRepository {
     }
 
     public void saveOrThrow(Event event) {
-        if(eventMapper.insert(event) != 1) {
+        if (eventMapper.insert(event) != 1) {
             throw new RuntimeException("Failed to save event: " + event);
         }
     }
@@ -52,7 +54,7 @@ public class EventRepository {
     }
 
     public void updateOrThrow(Event event) {
-        if(eventMapper.updateById(event) != 1) {
+        if (eventMapper.updateById(event) != 1) {
             throw new RuntimeException("Failed to update event: " + event);
         }
     }
@@ -64,6 +66,15 @@ public class EventRepository {
             if (result.getUpdateCounts()[0] != 1) {
                 throw new RuntimeException("Failed to update event: " + result);
             }
+        }
+    }
+
+    @Transactional(propagation = Propagation.REQUIRES_NEW)
+    public void updateEventStep(Event event) {
+        LambdaUpdateWrapper<Event> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
+        lambdaUpdateWrapper.eq(Event::getId, event.getId()).set(Event::getCurrentStep, event.getCurrentStep());
+        if (eventMapper.update(lambdaUpdateWrapper) != 1) {
+            throw new RuntimeException("Failed to update event: " + event);
         }
     }
 

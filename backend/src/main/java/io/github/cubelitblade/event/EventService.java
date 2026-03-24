@@ -1,7 +1,6 @@
 package io.github.cubelitblade.event;
 
 import io.github.cubelitblade.common.exception.ExceptionFactory;
-import io.github.cubelitblade.common.exception.InvalidParameterException;
 import io.github.cubelitblade.event.payload.DemoEventPayload;
 import io.github.cubelitblade.event.payload.EventPayloadMapper;
 import lombok.RequiredArgsConstructor;
@@ -55,6 +54,10 @@ public class EventService {
 
     public void updateEvent(Event event) {
         eventRepository.updateOrThrow(event);
+    }
+
+    public void updateEventStep(Event event) {
+        eventRepository.updateEventStep(event);
     }
 
     public Event find(long id) {
