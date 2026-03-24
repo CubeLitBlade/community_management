@@ -114,6 +114,7 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
     private void broadcastMessage(DemoEventPayload payload) {
         if (payload.getMessage() == null) {
             log.info("No message provided, skipping broadcast.");
+            return;
         }
         sseService.broadcast(payload.getMessage());
     }
