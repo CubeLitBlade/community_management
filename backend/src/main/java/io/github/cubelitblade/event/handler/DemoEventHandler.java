@@ -3,6 +3,7 @@ package io.github.cubelitblade.event.handler;
 import io.github.cubelitblade.common.exception.TransientEventException;
 import io.github.cubelitblade.event.Event;
 import io.github.cubelitblade.event.payload.DemoEventPayload;
+import io.github.cubelitblade.event.payload.EventPayloadMapper;
 import io.github.cubelitblade.event.sse.SseService;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -18,12 +19,15 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
 
     private final SseService sseService;
     private final TransactionTemplate transactionTemplate;
+    private final EventPayloadMapper eventPayloadMapper;
 
-    public DemoEventHandler(EventHandlerContext context, SseService sseService, TransactionTemplate transactionTemplate) {
-        super(context);
+    public DemoEventHandler(EventWorkflow workflow, SseService sseService, TransactionTemplate transactionTemplate, EventPayloadMapper eventPayloadMapper) {
+        super(workflow);
         this.sseService = sseService;
         this.transactionTemplate = transactionTemplate;
+        this.eventPayloadMapper = eventPayloadMapper;
     }
+
 
     @Override
     public Event.EventType getEventType() {
@@ -38,28 +42,28 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
     @Override
     public void process(Event event) {
         Long eventId = event.getId();
-        DemoEventPayload payload = parsePayload(event);
+        DemoEventPayload payload = eventPayloadMapper.fromJsonNode(event.getPayload(), getPayloadType());
 
         // Step 1: Initialize event and perform lightweight tasks
         if (event.getCurrentStep() == null) {
-            log.debug("[Event #{}] Starting DemoEvent. Payload = {}", eventId, payloadToString(payload));
+            log.debug("[Event #{}] Starting DemoEvent. Payload = {}", eventId, eventPayloadMapper.toJsonString(payload));
 
             broadcastMessage(payload);
-            checkpoint(event, STEP_INIT);   // save the progress
+            workflow.checkpoint(event, STEP_INIT);   // save the progress
         } else {
-            log.debug("[Event #{}] Resuming DemoEvent from step '{}'. Payload = {}", eventId, event.getCurrentStep(), payloadToString(payload));
+            log.debug("[Event #{}] Resuming DemoEvent from step '{}'. Payload = {}", eventId, event.getCurrentStep(), eventPayloadMapper.toJsonString(payload));
         }
 
         // Step 2: Perform heavy, time-consuming work atomically
         if (event.getCurrentStep().equals(STEP_INIT)) {
             doTimeConsumingWork(eventId, payload);
-            checkpoint(event, STEP_TIME_CONSUMING_WORK_DONE);  // save the progress
+            workflow.checkpoint(event, STEP_TIME_CONSUMING_WORK_DONE);  // save the progress
         }
 
         // Step 3: Execute transactional operations
         if (event.getCurrentStep().equals(STEP_TIME_CONSUMING_WORK_DONE)) {
             transactionTemplate.executeWithoutResult(_ -> scheduleRetry(event, payload));
-            checkpoint(event, STEP_TX_VALIDATED);   // save the progress
+            workflow.checkpoint(event, STEP_TX_VALIDATED);   // save the progress
         }
 
         // Step 4: Finalize the event outcome
@@ -147,9 +151,9 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
      */
     private void decideResult(Event event, DemoEventPayload payload) {
         if (payload.getShouldSucceed()) {
-            success(event);
+            workflow.succeed(event);
         } else {
-            fail(event, "Payload indicates that this event should fail.");
+            workflow.fail(event, "Payload indicates that this event should fail.");
         }
     }
 }

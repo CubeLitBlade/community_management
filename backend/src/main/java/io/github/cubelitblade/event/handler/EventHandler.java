@@ -6,20 +6,14 @@ import io.github.cubelitblade.event.Event;
 import io.github.cubelitblade.event.payload.EventPayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import tools.jackson.databind.JsonNode;
-
-import java.time.Instant;
 
 @Slf4j
 @RequiredArgsConstructor
 public abstract class EventHandler<PayloadType extends EventPayload> {
-    protected final EventHandlerContext context;
+    protected final EventWorkflow workflow;
 
     /**
      * Returns the concrete class of the payload type.
-     * <p>
-     * This is primarily used for JSON deserialization in {@link #parsePayload(Event)}.
-     * </p>
      *
      * @return the {@link Class} object of {@code PayloadType}
      */
@@ -37,7 +31,6 @@ public abstract class EventHandler<PayloadType extends EventPayload> {
      * <p>
      * This method is called by {@link #handleEvent(Event)} when the event status is {@code RUNNING}.
      * Implementations should perform business operations and update the event entity state
-     * (e.g., call {@link #success(Event)} or modify payload).
      * </p>
      * <p>
      * <b>Note:</b> If this method throws an exception, the transaction in {@link #handleEvent(Event)}
@@ -68,148 +61,16 @@ public abstract class EventHandler<PayloadType extends EventPayload> {
                 event.setStatus(Event.EventStatus.SUCCEEDED);
             }
         } catch (FatalEventException e) {
-            die(event, e.getMessage());
+            workflow.die(event, e.getMessage());
             log.error(e.getMessage(), e);
         } catch (TransientEventException e) {
-            scheduleRetry(event, e.getMessage());
+            workflow.scheduleRetry(event, e.getMessage());
             log.error(e.getMessage(), e);
         } catch (Exception e) {
-            fail(event, e.getMessage());
+            workflow.fail(event, e.getMessage());
             log.error(e.getMessage(), e);
         } finally {
-            context.getEventService().updateEvent(event);
+            workflow.commit(event);
         }
-    }
-
-    /**
-     * Schedules the next retry for the event using an exponential backoff algorithm.
-     * <p>
-     * Logic:
-     * <ul>
-     *     <li>If retries are not exhausted: calculates next run time ({@code baseDelay * 2^retryCount}),
-     *         increments retry count, sets status to {@code WAITING}.</li>
-     *     <li>If max retries reached: marks the event as {@code DEAD} via {@link #die(Event, String)}.</li>
-     * </ul>
-     * </p>
-     *
-     * @param event the event to schedule for retry
-     */
-    public void scheduleRetry(Event event, String reason) {
-        int retryCount = event.getRetryCount();
-
-        if (retryCount < context.getRetryConfig().getMaxRetries()) {
-            long targetBackoffMills = context.getRetryConfig().getBaseDelay().toMillis() * (1L << retryCount);
-            event.setNextRunAt(Instant.now().plusMillis(Math.min(targetBackoffMills, context.getRetryConfig().getMaxDelay().toMillis())));
-            event.setRetryCount(retryCount + 1);
-            event.setStatus(Event.EventStatus.WAITING);
-            event.setCurrentStep(null);
-            log.warn("Event #{}: Scheduled to retry at {} (after {} ms), because {}. ", event.getId(), event.getNextRunAt(), targetBackoffMills, reason);
-        } else {
-            die(event, "The maximum number of retries has been reached, because " + reason);
-            log.error("[Event #{}]: The maximum number of retries has been reached, marked as dead. ", event.getId());
-        }
-    }
-
-    /**
-     * Marks the event as successfully processed.
-     * <p>
-     * Sets status to {@code SUCCEEDED} and clears {@code nextRunAt}.
-     * </p>
-     *
-     * @param event the event to update
-     */
-    public void success(Event event) {
-        event.setStatus(Event.EventStatus.SUCCEEDED);
-        event.setNextRunAt(null);
-    }
-
-    /**
-     * Marks the event as permanently failed (non-recoverable).
-     * <p>
-     * Sets status to {@code FAILED}, records the error reason, and clears {@code nextRunAt}.
-     * </p>
-     *
-     * @param event  the event to update
-     * @param reason the error message describing the failure
-     */
-    public void fail(Event event, String reason) {
-        event.setStatus(Event.EventStatus.FAILED);
-        event.setErrorMsg(reason);
-        event.setNextRunAt(null);
-    }
-
-    /**
-     * Marks the event as dead (exhausted retries).
-     * <p>
-     * Sets status to {@code DEAD}, records the error reason, and clears {@code nextRunAt}.
-     * </p>
-     *
-     * @param event  the event to update
-     * @param reason the error message describing why the event is dead
-     */
-    public void die(Event event, String reason) {
-        event.setStatus(Event.EventStatus.DEAD);
-        event.setErrorMsg(reason);
-        event.setNextRunAt(null);
-    }
-
-    /**
-     * Deserializes the event's payload JSONB data into the typed payload object.
-     * <p>
-     * This method delegates to {@link io.github.cubelitblade.event.payload.EventPayloadMapper#fromJsonNode(JsonNode, Class)},
-     * using the type provided by {@link #getPayloadType()}.
-     * </p>
-     *
-     * @param event the event containing the payload JSONB data
-     * @return the deserialized payload object of type {@code PayloadType}
-     * @throws RuntimeException if the payload structure is invalid or deserialization fails
-     */
-    public PayloadType parsePayload(Event event) {
-        return context.getEventPayloadMapper().fromJsonNode(event.getPayload(), getPayloadType());
-    }
-
-    /**
-     * Serializes the given payload object into a Jackson {@link JsonNode}.
-     * <p>
-     * Useful for persisting or updating the event's payload in the database.
-     * Handles {@code null} payloads gracefully by returning {@code null}.
-     * </p>
-     *
-     * @param payload the payload object to serialize
-     * @return a {@link JsonNode} representing the payload, or {@code null} if payload is {@code null}
-     * @throws RuntimeException if serialization fails
-     */
-    public JsonNode serializePayload(PayloadType payload) {
-        return context.getEventPayloadMapper().toJsonNode(payload);
-    }
-
-    /**
-     * Converts the given payload object to its JSON string representation.
-     * <p>
-     * Useful for logging or debugging.
-     * </p>
-     *
-     * @param payload the payload object to convert
-     * @return the JSON string representation, or {@code null} if payload is {@code null}
-     * @throws RuntimeException if serialization fails
-     */
-    public String payloadToString(PayloadType payload) {
-        return context.getEventPayloadMapper().toJsonString(payload);
-    }
-
-    /**
-     * Advance the event to a critical step and persist it.
-     *
-     * <p><b>Note:</b> This method should <u>only</u> be used for key steps
-     * in the event workflow that must be persisted immediately to support
-     * resume/recovery. Avoid using this for trivial or intermediate steps
-     * to prevent excessive database writes.</p>
-     *
-     * @param event the event to update
-     * @param step  the critical step to set
-     */
-    public void checkpoint(Event event, String step) {
-        event.setCurrentStep(step);
-        context.getEventService().updateEventStep(event);
     }
 }
