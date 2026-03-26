@@ -7,6 +7,7 @@ import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
+import java.time.Clock;
 import java.util.List;
 
 @Slf4j
@@ -22,23 +23,14 @@ public class EventService {
     }
 
     public Event enqueueEvent(Event.EventType eventType, DemoEventPayload eventPayload) {
-        Event event = Event.builder()
-                .type(eventType)
-                .status(Event.EventStatus.WAITING)
-                .payload(eventPayloadMapper.toJsonNode(eventPayload))
-                .build();
-
+        Event event = Event.create(eventType, eventPayloadMapper.toJsonNode(eventPayload), Clock.systemDefaultZone());
         eventRepository.saveOrThrow(event);
         return event;
     }
 
     public Event enqueueEvent(String eventType, DemoEventPayload eventPayload) {
         try {
-            Event event = Event.builder()
-                    .type(Event.EventType.from(eventType))
-                    .status(Event.EventStatus.WAITING)
-                    .payload(eventPayloadMapper.toJsonNode(eventPayload))
-                    .build();
+            Event event = Event.create(eventType, eventPayloadMapper.toJsonNode(eventPayload), Clock.systemDefaultZone());
             eventRepository.saveOrThrow(event);
             return event;
         } catch (IllegalArgumentException e) {

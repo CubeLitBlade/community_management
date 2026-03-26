@@ -2,32 +2,33 @@ package io.github.cubelitblade.event;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
+import io.github.cubelitblade.configuration.TimeConfig;
 import lombok.RequiredArgsConstructor;
 import org.apache.ibatis.executor.BatchResult;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
-import java.time.LocalDateTime;
+import java.time.Instant;
 import java.util.List;
 
 @Repository
 @RequiredArgsConstructor
 public class EventRepository {
     private final EventMapper eventMapper;
+    private final TimeConfig timeConfig;
 
     @Transactional
     public List<Event> claimWaitingEvents(int count) {
         LambdaQueryWrapper<Event> lambdaQueryWrapper = new LambdaQueryWrapper<>();
         lambdaQueryWrapper.eq(Event::getStatus, Event.EventStatus.WAITING)
-                .le(Event::getNextRunAt, LocalDateTime.now())
+                .le(Event::getNextRunAt, Instant.now())
                 .orderByAsc(Event::getNextRunAt)
                 .last("for update skip locked limit " + count);
         List<Event> eventList = eventMapper.selectList(lambdaQueryWrapper);
 
         for (Event event : eventList) {
-            event.setStatus(Event.EventStatus.RUNNING);
-            event.setNextRunAt(null);
+            event.run(timeConfig.now());
         }
 
         updateOrThrow(eventList);

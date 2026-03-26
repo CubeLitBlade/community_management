@@ -62,7 +62,7 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
 
         // Step 3: Execute transactional operations
         if (event.getCurrentStep().equals(STEP_TIME_CONSUMING_WORK_DONE)) {
-            transactionTemplate.executeWithoutResult(_ -> scheduleRetry(event, payload));
+            transactionTemplate.executeWithoutResult(_ -> validateRetryCondition(event, payload));
             workflow.checkpoint(event, STEP_TX_VALIDATED);   // save the progress
         }
 
@@ -133,7 +133,7 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
      * @param event   Event.
      * @param payload Payload of the event.
      */
-    private void scheduleRetry(Event event, DemoEventPayload payload) {
+    private void validateRetryCondition(Event event, DemoEventPayload payload) {
         int currentRetry = event.getRetryCount();
         int requiredRetries = payload.getRequiredRetries();
         if (requiredRetries > currentRetry) {
@@ -151,9 +151,9 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
      */
     private void decideResult(Event event, DemoEventPayload payload) {
         if (payload.getShouldSucceed()) {
-            workflow.succeed(event);
+            workflow.complete(event);
         } else {
-            workflow.fail(event, "Payload indicates that this event should fail.");
+            workflow.abort(event, "Payload indicates that this event should fail.");
         }
     }
 }

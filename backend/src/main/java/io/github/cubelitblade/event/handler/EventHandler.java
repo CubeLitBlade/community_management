@@ -58,16 +58,16 @@ public abstract class EventHandler<PayloadType extends EventPayload> {
         try {
             process(event);
             if (event.getStatus() == Event.EventStatus.RUNNING) {
-                event.setStatus(Event.EventStatus.SUCCEEDED);
+                workflow.complete(event);
             }
         } catch (FatalEventException e) {
-            workflow.die(event, e.getMessage());
+            workflow.giveUp(event, e.getMessage());
             log.error(e.getMessage(), e);
         } catch (TransientEventException e) {
-            workflow.scheduleRetry(event, e.getMessage());
+            workflow.reschedule(event, e.getMessage());
             log.error(e.getMessage(), e);
         } catch (Exception e) {
-            workflow.fail(event, e.getMessage());
+            workflow.abort(event, e.getMessage());
             log.error(e.getMessage(), e);
         } finally {
             workflow.commit(event);
