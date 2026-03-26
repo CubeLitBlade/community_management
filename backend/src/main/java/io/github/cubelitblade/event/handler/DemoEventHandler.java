@@ -90,7 +90,7 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
      * @param payload Event payload
      */
     private void doTimeConsumingWork(long eventId, DemoEventPayload payload) {
-        Long delay = payload.getExecutionDelayMilliseconds();
+        Long delay = payload.durationMs();
         if (delay == null || delay <= 0) {
             log.info("[Event #{}] No execution delay specified, skipping time-consuming work.", eventId);
             return;
@@ -116,11 +116,11 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
      * @param payload Payload of the event.
      */
     private void broadcastMessage(DemoEventPayload payload) {
-        if (payload.getMessage() == null) {
+        if (payload.message() == null) {
             log.info("No message provided, skipping broadcast.");
             return;
         }
-        sseService.broadcast(payload.getMessage());
+        sseService.broadcast(payload.message());
     }
 
     /**
@@ -135,7 +135,7 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
      */
     private void validateRetryCondition(Event event, DemoEventPayload payload) {
         int currentRetry = event.getRetryCount();
-        int requiredRetries = payload.getRequiredRetries();
+        int requiredRetries = payload.failures();
         if (requiredRetries > currentRetry) {
             throw new TransientEventException(
                     String.format("Retry threshold not reached (%d/%d).", currentRetry, requiredRetries)
@@ -150,7 +150,7 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
      * @param payload Payload of the event.
      */
     private void decideResult(Event event, DemoEventPayload payload) {
-        if (payload.getShouldSucceed()) {
+        if (payload.expectSuccess()) {
             workflow.complete(event);
         } else {
             workflow.abort(event, "Payload indicates that this event should fail.");
