@@ -3,20 +3,21 @@ package io.github.cubelitblade.event.worker;
 import io.github.cubelitblade.configuration.RetryConfig;
 import io.github.cubelitblade.event.Event;
 import io.github.cubelitblade.event.EventService;
-import io.github.cubelitblade.event.handler.DemoEventHandler;
 import io.github.cubelitblade.event.payload.DemoEventPayload;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
-import org.springframework.transaction.annotation.Transactional;
+import org.springframework.jdbc.core.JdbcTemplate;
 
 import java.time.Instant;
 import java.util.concurrent.Executor;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = {
         "spring.main.allow-bean-definition-overriding=true",
@@ -24,126 +25,132 @@ import static org.junit.jupiter.api.Assertions.*;
         "worker.retry.max-delay=0s",
         "worker.retry.max-retries=3"
 })
-@Transactional
-public class DemoWorkerIntegrationTest {
+class DemoWorkerIntegrationTest {
+
     @Autowired
-    Worker worker;
+    private Worker worker;
 
     @Autowired
     private EventService eventService;
 
     @Autowired
-    private DemoEventHandler demoEventHandler;
-
-    @Autowired
     private RetryConfig retryConfig;
 
-    @Test
-    void shouldProcessEventSuccessfully() {
-        Event event = createEvent(DemoEventPayload.builder()
-                .shouldSucceed(true)
-                .build()
-        );
+    @Autowired
+    private JdbcTemplate jdbcTemplate;
 
-        worker.run();
-
-        event = reloadEvent(event);
-        assertEquals(Event.EventStatus.SUCCEEDED, event.getStatus());
-        assertNull(event.getNextRunAt());
+    @BeforeEach
+    void cleanTable() {
+        jdbcTemplate.execute("TRUNCATE TABLE event RESTART IDENTITY");
     }
 
     @Test
-    void shouldMarkEventAsFailed() {
-        Event event = createEvent(DemoEventPayload.builder()
-                .shouldSucceed(false)
-                .build()
-        );
+    @DisplayName("Process: should mark event as SUCCEEDED")
+    void should_mark_event_as_succeeded() {
+        // Given
+        Event event = enqueueDemoEvent(new DemoEventPayload("ok", 0L, 0, true));
 
+        // When
         worker.run();
 
-        event = reloadEvent(event);
-        assertEquals(Event.EventStatus.FAILED, event.getStatus());
-        assertNull(event.getNextRunAt());
+        // Then
+        Event updated = reload(event);
+        assertThat(updated)
+                .extracting(Event::getStatus, Event::getNextRunAt)
+                .containsExactly(Event.EventStatus.SUCCEEDED, null);
     }
 
     @Test
-    void shouldRetryEventAndEventuallySucceed() {
-        Event event = createEvent(DemoEventPayload.builder()
-                .requiredRetries(1)
-                .shouldSucceed(true)
-                .build()
-        );
+    @DisplayName("Decision: should mark event as FAILED when payload indicates failure")
+    void should_mark_event_as_failed_when_payload_requires_failure() {
+        // Given
+        Event event = enqueueDemoEvent(new DemoEventPayload("fail", 0L, 0, false));
 
+        // When
         worker.run();
 
-        event = reloadEvent(event);
-        assertEquals(Event.EventStatus.WAITING, event.getStatus());
-        assertNotNull(event.getNextRunAt());
-
-        worker.run();
-
-        event = reloadEvent(event);
-        assertEquals(Event.EventStatus.SUCCEEDED, event.getStatus());
-        assertEquals(1, event.getRetryCount());
-        assertNull(event.getNextRunAt());
+        // Then
+        Event updated = reload(event);
+        assertThat(updated)
+                .extracting(Event::getStatus, Event::getNextRunAt)
+                .containsExactly(Event.EventStatus.FAILED, null);
     }
 
     @Test
-    void shouldRetryEventAndEventuallyMarkAsDead() {
-        int retries = retryConfig.getMaxRetries() + 1;
-        Event event = createEvent(DemoEventPayload.builder()
-                .requiredRetries(retries)
-                .shouldSucceed(true)
-                .build()
-        );
+    @DisplayName("Retry: should reschedule once then succeed")
+    void should_reschedule_once_then_succeed() {
+        // Given
+        Event event = enqueueDemoEvent(new DemoEventPayload("retry", 0L, 1, true));
 
-        for (int i = 0; i < retries; i++) {
+        // When
+        worker.run();
+
+        // Then
+        Event afterFirstRun = reload(event);
+        assertThat(afterFirstRun.getStatus()).isEqualTo(Event.EventStatus.WAITING);
+        assertThat(afterFirstRun.getRetryCount()).isEqualTo(1);
+        assertThat(afterFirstRun.getNextRunAt()).isNotNull();
+
+        // When
+        worker.run();
+
+        // Then
+        Event afterSecondRun = reload(event);
+        assertThat(afterSecondRun)
+                .extracting(Event::getStatus, Event::getRetryCount, Event::getNextRunAt)
+                .containsExactly(Event.EventStatus.SUCCEEDED, 1, null);
+    }
+
+    @Test
+    @DisplayName("Retry: should mark event as DEAD after max retries")
+    void should_mark_event_as_dead_after_max_retries() {
+        // Given
+        int requiredFailures = retryConfig.getMaxRetries() + 1;
+        Event event = enqueueDemoEvent(new DemoEventPayload("dead", 0L, requiredFailures, true));
+
+        // When
+        for (int i = 0; i < requiredFailures; i++) {
             worker.run();
         }
 
-        event = reloadEvent(event);
-        assertEquals(Event.EventStatus.DEAD, event.getStatus());
-        assertEquals(retryConfig.getMaxRetries(), event.getRetryCount());
-        assertNull(event.getNextRunAt());
+        // Then
+        Event updated = reload(event);
+        assertThat(updated)
+                .extracting(Event::getStatus, Event::getRetryCount, Event::getNextRunAt)
+                .containsExactly(Event.EventStatus.DEAD, retryConfig.getMaxRetries(), null);
     }
 
     @Test
-    void shouldSkipEventScheduledInFuture() {
-        Event event = createEvent(DemoEventPayload.builder()
-                .shouldSucceed(true)
-                .build()
-        );
-        event.setNextRunAt(Instant.now().plusSeconds(60));
+    @DisplayName("Schedule: should skip event scheduled in the future")
+    void should_skip_event_scheduled_in_future() {
+        // Given
+        Event event = enqueueDemoEvent(new DemoEventPayload("future", 0L, 0, true));
+        event.await(Instant.now(), Instant.now().plusSeconds(60));
         eventService.updateEvent(event);
 
+        // When
         worker.run();
 
-        event = reloadEvent(event);
-        assertEquals(Event.EventStatus.WAITING, event.getStatus());
+        // Then
+        Event updated = reload(event);
+        assertThat(updated)
+                .extracting(Event::getStatus, Event::getRetryCount)
+                .containsExactly(Event.EventStatus.WAITING, 0);
     }
 
-    private Event createEvent(DemoEventPayload payload) {
-        Event event = Event.builder()
-                .type(Event.EventType.DEMO_EVENT)
-                .status(Event.EventStatus.WAITING)
-                .build();
-
-        event.setPayload(demoEventHandler.serializePayload(payload));
-        eventService.enqueueEvent(event);
-
-        return event;
+    private Event enqueueDemoEvent(DemoEventPayload payload) {
+        return eventService.enqueueEvent(Event.EventType.DEMO_EVENT, payload);
     }
 
-    private Event reloadEvent(Event event) {
+    private Event reload(Event event) {
         return eventService.find(event.getId());
     }
 
     @TestConfiguration
-    public static class SyncExecutorConfig {
-
+    static class SyncExecutorConfig {
         @Bean("workerExecutor")
         @Primary
-        public Executor syncExecutor() {
+        Executor syncExecutor() {
             return Runnable::run;
         }
     }
