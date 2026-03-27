@@ -32,6 +32,7 @@ public class EventWorkflow {
      *
      * @param event the event to schedule for retry
      */
+    @Transactional
     public void reschedule(Event event, String reason) {
         int retryCount = event.getRetryCount();
 
@@ -42,11 +43,13 @@ public class EventWorkflow {
             );
 
             event.prepareForRetry(timeConfig.now().plusMillis(backoffMills), reason, timeConfig.now());
-            log.warn("Event #{}: Scheduled to retry at {} (after {} ms), because {}. ", event.getId(), event.getNextRunAt(), backoffMills, reason);
+            log.warn("[Event #{}]: Scheduled to retry at {} (after {} ms), because {}. ", event.getId(), event.getNextRunAt(), backoffMills, reason);
         } else {
-            giveUp(event, "The maximum number of retries has been reached, because " + reason);
+            event.die("The maximum number of retries has been reached, because " + reason, timeConfig.now());
             log.error("[Event #{}]: The maximum number of retries has been reached, marked as dead. ", event.getId());
         }
+
+        this.commit(event);
     }
 
     /**
@@ -57,8 +60,10 @@ public class EventWorkflow {
      *
      * @param event the event to update
      */
+    @Transactional
     public void complete(Event event) {
         event.succeed(timeConfig.now());
+        this.commit(event);
     }
 
     /**
@@ -70,8 +75,10 @@ public class EventWorkflow {
      * @param event  the event to update
      * @param reason the error message describing the failure
      */
+    @Transactional
     public void abort(Event event, String reason) {
         event.fail(reason, timeConfig.now());
+        this.commit(event);
     }
 
     /**
@@ -83,8 +90,10 @@ public class EventWorkflow {
      * @param event  the event to update
      * @param reason the error message describing why the event is dead
      */
+    @Transactional
     public void giveUp(Event event, String reason) {
         event.die(reason, timeConfig.now());
+        this.commit(event);
     }
 
     /**

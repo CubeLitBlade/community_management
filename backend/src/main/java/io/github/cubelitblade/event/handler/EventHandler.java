@@ -69,8 +69,6 @@ public abstract class EventHandler<PayloadType extends EventPayload> {
         } catch (Exception e) {
             workflow.abort(event, e.getMessage());
             log.error(e.getMessage(), e);
-        } finally {
-            workflow.commit(event);
         }
     }
 }
