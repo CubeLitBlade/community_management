@@ -21,6 +21,7 @@ import static org.assertj.core.api.Assertions.assertThat;
 
 @SpringBootTest(properties = {
         "spring.main.allow-bean-definition-overriding=true",
+        "spring.docker.compose.file=../compose.yaml",
         "worker.retry.base-delay=0s",
         "worker.retry.max-delay=0s",
         "worker.retry.max-retries=3"
