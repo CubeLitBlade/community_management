@@ -35,6 +35,22 @@ public class EventRepository {
         return eventList;
     }
 
+    @Transactional
+    public void resetZombieEvents(Instant threshold) {
+        LambdaQueryWrapper<Event> lambdaQueryWrapper = new LambdaQueryWrapper<>();
+        lambdaQueryWrapper.eq(Event::getStatus, Event.EventStatus.RUNNING)
+                .le(Event::getUpdatedAt, threshold)
+                .orderByAsc(Event::getUpdatedAt)
+                .last("for update skip locked");
+        List<Event> eventList = eventMapper.selectList(lambdaQueryWrapper);
+
+        for (Event event : eventList) {
+            event.await(timeConfig.now(), timeConfig.now());
+        }
+
+        updateOrThrow(eventList);
+    }
+
     public void save(Event event) {
         eventMapper.insert(event);
     }

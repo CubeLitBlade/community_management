@@ -1,5 +1,6 @@
 package io.github.cubelitblade.event.worker;
 
+import io.github.cubelitblade.configuration.TimeConfig;
 import io.github.cubelitblade.event.Event;
 import io.github.cubelitblade.event.EventService;
 import lombok.RequiredArgsConstructor;
@@ -15,14 +16,16 @@ import java.util.List;
 public class Worker {
     private final EventService eventService;
     private final EventDispatcher eventDispatcher;
+    private final TimeConfig timeConfig;
 
     @Scheduled(fixedDelay = 5000)
     public void run() {
-        log.info("Worker running...");
-
+        eventService.resetZombieEvents(timeConfig.now().minusSeconds(600));
         List<Event> eventList = eventService.claimWaitingEvents(10);
 
-        log.info("Event list size: {}", eventList.size());
+        if (!eventList.isEmpty()) {
+            log.debug("Event list size: {}", eventList.size());
+        }
 
         for (Event event : eventList) {
             eventDispatcher.dispatch(event);

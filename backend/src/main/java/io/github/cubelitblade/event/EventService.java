@@ -8,6 +8,7 @@ import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
 
 import java.time.Clock;
+import java.time.Instant;
 import java.util.List;
 
 @Slf4j
@@ -20,6 +21,10 @@ public class EventService {
 
     public List<Event> claimWaitingEvents(int count) {
         return eventRepository.claimWaitingEvents(count);
+    }
+
+    public void resetZombieEvents(Instant threshold) {
+        eventRepository.resetZombieEvents(threshold);
     }
 
     public Event enqueueEvent(Event.EventType eventType, DemoEventPayload eventPayload) {
