@@ -28,18 +28,23 @@ import static org.mockito.BDDMockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class DemoEventHandlerTest {
-
     private final Clock clock = Clock.fixed(Instant.parse("2026-03-26T15:30:00Z"), ZoneId.of("UTC"));
+
     @Mock
     private EventWorkflow workflow;
+
     @Mock
     private SseService sseService;
+
     @Mock
     private TransactionTemplate transactionTemplate;
+
     @Mock
     private EventPayloadMapper eventPayloadMapper;
+
     @InjectMocks
     private DemoEventHandler handler;
+
     private Event event;
 
     @BeforeEach
