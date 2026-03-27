@@ -71,6 +71,14 @@ public class Event {
         return event;
     }
 
+    public void await(Instant now, Instant nextRunAt) {
+        this.status = EventStatus.WAITING;
+        this.errorMsg = null;
+        this.nextRunAt = nextRunAt;
+        this.retryCount = 0;
+        this.touch(now);
+    }
+
     public void succeed(Instant now) {
         this.status = EventStatus.SUCCEEDED;
         this.errorMsg = null;
