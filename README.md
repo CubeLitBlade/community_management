@@ -9,6 +9,12 @@
 
 This project can be run with Docker or Podman. This guide assumes Podman. If you use Docker, replace `podman` with `docker` in the commands below.
 
+### Repository Layout
+
+- The repository root is the Gradle build root.
+- The `backend` directory is a Gradle subproject.
+- Run Gradle commands from the repository root with `./gradlew`.
+
 ### Prerequisites
 
 The following runtime environment is recommended:
@@ -45,7 +51,7 @@ The backend uses Spring Boot’s Docker Compose support. When you start the back
 
 If Podman does not work for you, or if you prefer to start the services manually, follow these steps:
 
-1. Open `/backend/src/main/resources/application.yaml`;
+1. Open `backend/src/main/resources/application.yaml`;
 
 2. Set `spring.docker.compose.enabled` to `false`;
 
@@ -61,13 +67,20 @@ podman compose up
 
 To build the application JAR and run it in a container:
 
-1. Change to the `/backend` to build the JAR;
+1. Run the Gradle build from the project root;
 
     ```bash
-    ./gradlew bootJar
+    ./gradlew :backend:bootJar
     ```
 
-2. Confirm that the generated JAR exists in `/backend/build/libs` ;
+You can also run the common development checks from the project root:
+
+```bash
+./gradlew :backend:test
+./gradlew :backend:build
+```
+
+2. Confirm that the generated JAR exists in `backend/build/libs` ;
 
 3. Run the following command from the project root.
 
@@ -75,14 +88,14 @@ To build the application JAR and run it in a container:
 podman compose -f compose.yaml -f compose.override.yaml up
 ```
 
-This command builds an image from `/backend/Dockerfile`, copies the JAR into the container, and starts the application.
+This command builds an image from `backend/Dockerfile`, copies the JAR into the container, and starts the application.
 
 > [!WARNING]
 >
 > The default Dockerfile uses a Docker Hardened Image (DHI) as the Java runtime, so authentication is required.
 >
 > - If you have credentials, log in to `dhi.org` before running the command;
-> - If that fails, modify the `FROM` instruction in `/backend/Dockerfile` to use a public JRE image.
+> - If that fails, modify the `FROM` instruction in `backend/Dockerfile` to use a public JRE image.
 
 ### Production Simulation
 
@@ -136,7 +149,7 @@ This is usually caused by IntelliJ IDEA’s remote JMX agent port rather than yo
 Recommended workaround for local development:
 
 1. Open the Spring Boot run configuration;
-2. Disable `Enable JMX agent`;
+2. Enable `Disable JMX endpoints`;
 3. Add VM option: `-Dspring.jmx.enabled=false`;
 4. Run the backend.
 

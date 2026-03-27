@@ -1,7 +1,7 @@
 plugins {
     id("java")
-    id("org.springframework.boot") version "4.0.4"
-    id("io.spring.dependency-management") version "1.1.7"
+    alias(libs.plugins.spring.boot)
+    alias(libs.plugins.spring.dependency.management)
 }
 
 group = "io.github.cubelitblade"
@@ -13,37 +13,54 @@ java {
     }
 }
 
-repositories {
-    mavenCentral()
+val mockitoAgent = configurations.create("mockitoAgent")
+
+dependencies {
+    // Lombok
+    annotationProcessor(libs.lombok)
+    compileOnly(libs.lombok)
+    testAnnotationProcessor(libs.lombok)
+    testCompileOnly(libs.lombok)
+
+    // Spring Boot
+    implementation(libs.spring.boot.starter)
+    implementation(libs.spring.boot.starter.web)
+
+    // MyBatis-Plus & PostgreSQL
+    implementation(libs.mybatis.plus)
+    implementation(libs.postgresql)
+
+    // Testing
+    testImplementation(libs.spring.boot.starter.test)
+    testImplementation(libs.mockito.core)
+    testImplementation(libs.junit.jupiter)
+    testRuntimeOnly(libs.junit.platform.launcher)
+
+    // Development Only
+    testAndDevelopmentOnly(libs.spring.boot.docker.compose)
+
+    // Mockito Agent Configuration
+    mockitoAgent(libs.mockito.core) { isTransitive = false }
 }
 
-
-val mockitoAgent = configurations.create("mockitoAgent")
-dependencies {
-    annotationProcessor("org.projectlombok:lombok:1.18.44")
-    compileOnly("org.projectlombok:lombok:1.18.44")
-    implementation("org.springframework.boot:spring-boot-starter")
-    implementation("org.springframework.boot:spring-boot-starter-web")
-    implementation("com.baomidou:mybatis-plus-spring-boot4-starter:3.5.16")
-    implementation("org.postgresql:postgresql")
-    testAnnotationProcessor("org.projectlombok:lombok:1.18.44")
-    testCompileOnly("org.projectlombok:lombok:1.18.44")
-    testImplementation(platform("org.junit:junit-bom:5.10.0"))
-    testImplementation("org.mockito:mockito-core:5.22.0")
-    testImplementation("org.junit.jupiter:junit-jupiter")
-    testImplementation("org.springframework.boot:spring-boot-starter-test")
-    testRuntimeOnly("org.junit.platform:junit-platform-launcher")
-    testAndDevelopmentOnly("org.springframework.boot:spring-boot-docker-compose:4.1.0-M2")
-
-    mockitoAgent("org.mockito:mockito-core:5.22.0") {
-        isTransitive = false
-    }
+val mockitoAgentPath: Provider<String> = mockitoAgent.elements.map {
+    it.single().asFile.absolutePath
 }
 
 tasks.test {
     useJUnitPlatform()
-    jvmArgs = listOf(
-        "-javaagent:${mockitoAgent.asPath}",
-        "-Xshare:off"
-    )
+
+    jvmArgumentProviders.add(object : CommandLineArgumentProvider {
+        @get:InputFile
+        @get:PathSensitive(PathSensitivity.NONE)
+        val agentFile = mockitoAgent.elements.map {
+            it.single()
+        }
+
+        override fun asArguments(): Iterable<String> {
+            return listOf("-javaagent:${agentFile.get().asFile.absolutePath}")
+        }
+    })
+
+    jvmArgs("-Xshare:off")
 }

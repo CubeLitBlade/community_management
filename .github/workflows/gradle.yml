@@ -47,8 +47,7 @@ jobs:
         build-scan-terms-of-use-agree: 'yes'
 
     - name: Build with Gradle Wrapper
-      working-directory: backend
-      run: ./gradlew build
+      run: ./gradlew :backend:build
 
     # NOTE: The Gradle Wrapper is the default and recommended way to run Gradle (https://docs.gradle.org/current/userguide/gradle_wrapper.html).
     # If your project does not have the Gradle Wrapper configured, you can use the following configuration to run Gradle with a specified version.
@@ -96,8 +95,8 @@ jobs:
     # See: https://github.com/gradle/actions/blob/main/dependency-submission/README.md
     - name: Generate and submit dependency graph
       uses: gradle/actions/dependency-submission@af1da67850ed9a4cedd57bfd976089dd991e2582 # v4.0.0
-      with: 
-        build-root-directory: backend
+      with:
+        build-root-directory: .
         build-scan-publish: true
         build-scan-terms-of-use-url: 'https://gradle.com/terms-of-service'
         build-scan-terms-of-use-agree: 'yes'

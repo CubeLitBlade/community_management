@@ -7,7 +7,7 @@ spring:
   docker:
     compose:
       enabled: true
-      file: ../compose.yaml
+      file: compose.yaml
       lifecycle-management: start_and_stop
       skip:
         in-tests: false
