@@ -1,196 +1,127 @@
 package io.github.cubelitblade.event.handler;
 
-import io.github.cubelitblade.configuration.RetryConfig;
+import io.github.cubelitblade.common.exception.TransientEventException;
 import io.github.cubelitblade.event.Event;
-import io.github.cubelitblade.event.EventService;
 import io.github.cubelitblade.event.payload.DemoEventPayload;
 import io.github.cubelitblade.event.payload.EventPayloadMapper;
+import io.github.cubelitblade.event.sse.SseService;
 import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.transaction.support.TransactionTemplate;
 import tools.jackson.databind.JsonNode;
+import tools.jackson.databind.node.JsonNodeFactory;
 
-import java.time.Duration;
+import java.time.Clock;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.util.function.Consumer;
 
-import static org.junit.jupiter.api.Assertions.*;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
-import static org.mockito.Mockito.*;
+import static org.mockito.BDDMockito.*;
 
 @ExtendWith(MockitoExtension.class)
 class DemoEventHandlerTest {
-    @Mock
-    EventService eventService;
 
+    private final Clock clock = Clock.fixed(Instant.parse("2026-03-26T15:30:00Z"), ZoneId.of("UTC"));
     @Mock
-    RetryConfig retryConfig;
-
+    private EventWorkflow workflow;
     @Mock
-    EventPayloadMapper eventPayloadMapper;
-
+    private SseService sseService;
     @Mock
-    EventHandlerContext context;
-
+    private TransactionTemplate transactionTemplate;
     @Mock
-    JsonNode payloadJson;
-
+    private EventPayloadMapper eventPayloadMapper;
     @InjectMocks
-    DemoEventHandler demoEventHandler;
+    private DemoEventHandler handler;
+    private Event event;
 
     @BeforeEach
     void setUp() {
-        when(context.getEventService()).thenReturn(eventService);
-        when(context.getEventPayloadMapper()).thenReturn(eventPayloadMapper);
-    }
+        event = Event.create(Event.EventType.DEMO_EVENT, JsonNodeFactory.instance.nullNode(), clock);
+        event.run(Instant.now(clock));
 
-    private void mockRetryConfig() {
-        when(context.getRetryConfig()).thenReturn(retryConfig);
-        when(retryConfig.getBaseDelay()).thenReturn(Duration.ofSeconds(1));
-        when(retryConfig.getMaxDelay()).thenReturn(Duration.ofSeconds(10));
-        when(retryConfig.getMaxRetries()).thenReturn(3);
-    }
+        willAnswer(inv -> {
+            Event e = inv.getArgument(0);
+            String step = inv.getArgument(1);
+            e.toStep(step, Instant.now(clock));
+            return null;
+        }).given(workflow).checkpoint(any(Event.class), any(String.class));
 
-    @Test
-    void handleEvent_shouldMarkEventAsSucceeded_whenPayloadIndicatesSuccess() {
-        // given: a running event whose payload indicates success
-        Event event = Event.builder()
-                .id(1L)
-                .type(Event.EventType.DEMO_EVENT)
-                .status(Event.EventStatus.RUNNING)
-                .payload(payloadJson)
-                .build();
-
-        DemoEventPayload demoEventPayload = DemoEventPayload.builder()
-                .shouldSucceed(true)
-                .build();
-
-        when(eventPayloadMapper.fromJsonNode(any(JsonNode.class), eq(DemoEventPayload.class)))
-                .thenReturn(demoEventPayload);
-
-        // when: the handler processes the event
-        demoEventHandler.handleEvent(event);
-
-        // then: the event should be marked as SUCCEEDED and persisted
-        assertEquals(Event.EventStatus.SUCCEEDED, event.getStatus());
-        assertNull(event.getNextRunAt());
-
-        verify(eventService).updateEvent(event);
+        willAnswer(inv -> {
+            Consumer<?> action = inv.getArgument(0);
+            action.accept(null);
+            return null;
+        }).given(transactionTemplate).executeWithoutResult(any());
     }
 
     @Test
-    void handleEvent_shouldMarkEventAsFailed_whenPayloadIndicatesFailure() {
-        // given: a running event whose payload indicates failure
-        Event event = Event.builder()
-                .id(2L)
-                .type(Event.EventType.DEMO_EVENT)
-                .status(Event.EventStatus.RUNNING)
-                .payload(payloadJson)
-                .build();
+    @DisplayName("Process: should execute all steps and complete")
+    void should_execute_all_steps_and_complete() {
+        // Given
+        DemoEventPayload payload = new DemoEventPayload("hello", 0L, 0, true);
+        given(eventPayloadMapper.fromJsonNode(any(JsonNode.class), eq(DemoEventPayload.class))).willReturn(payload);
 
-        DemoEventPayload demoEventPayload = DemoEventPayload.builder()
-                .shouldSucceed(false)
-                .build();
+        // When
+        handler.process(event);
 
-        when(eventPayloadMapper.fromJsonNode(any(JsonNode.class), eq(DemoEventPayload.class)))
-                .thenReturn(demoEventPayload);
-
-        // when: the handler processes the event
-        demoEventHandler.handleEvent(event);
-
-        // then: the event should be marked as FAILED and persisted
-        assertEquals(Event.EventStatus.FAILED, event.getStatus());
-        assertNull(event.getNextRunAt());
-
-        verify(eventService).updateEvent(event);
+        // Then
+        then(sseService).should().broadcast("hello");
+        then(workflow).should().checkpoint(event, "init");
+        then(workflow).should().checkpoint(event, "time-consuming-work-done");
+        then(workflow).should().checkpoint(event, "tx-validated");
+        then(workflow).should().complete(event);
     }
 
     @Test
-    void handleEvent_shouldScheduleRetry_whenPayloadRequiresRetries() {
-        mockRetryConfig();
+    @DisplayName("Resume: should skip completed steps")
+    void should_skip_completed_steps_when_resuming() {
+        // Given
+        DemoEventPayload payload = new DemoEventPayload("hello", 9999L, 0, true);
+        given(eventPayloadMapper.fromJsonNode(any(JsonNode.class), eq(DemoEventPayload.class))).willReturn(payload);
+        event.toStep("time-consuming-work-done", Instant.now(clock));
 
-        // given: a running event that requires one retry before success
-        Event event = Event.builder()
-                .id(3L)
-                .type(Event.EventType.DEMO_EVENT)
-                .status(Event.EventStatus.RUNNING)
-                .payload(payloadJson)
-                .build();
+        // When
+        handler.process(event);
 
-        DemoEventPayload demoEventPayload = DemoEventPayload.builder()
-                .requiredRetries(1)
-                .shouldSucceed(true)
-                .build();
-
-        when(eventPayloadMapper.fromJsonNode(any(JsonNode.class), eq(DemoEventPayload.class)))
-                .thenReturn(demoEventPayload);
-
-        // when: the event is handled for the first time
-        event.setStatus(Event.EventStatus.RUNNING);
-        Instant before = Instant.now();
-        demoEventHandler.handleEvent(event);
-
-        // then: the event should be scheduled for retry
-
-        assertEquals(Event.EventStatus.WAITING, event.getStatus());
-        assertEquals(1, event.getRetryCount());
-        assertNotNull(event.getNextRunAt());
-        assertTrue(event.getNextRunAt().isAfter(before));
-
-        verify(eventService).updateEvent(event);
-
-        // when: the event is handled again
-        event.setStatus(Event.EventStatus.RUNNING);
-        demoEventHandler.handleEvent(event);
-
-        // then: the event should succeed
-        assertEquals(Event.EventStatus.SUCCEEDED, event.getStatus());
-        assertEquals(1, event.getRetryCount());
-        assertNull(event.getNextRunAt());
-
-        verify(eventService, times(2)).updateEvent(event);
+        // Then
+        then(sseService).shouldHaveNoInteractions();
+        then(workflow).should(never()).checkpoint(event, "init");
+        then(workflow).should().checkpoint(event, "tx-validated");
+        then(workflow).should().complete(event);
     }
 
+    @Test
+    @DisplayName("Decision: should abort on payload failure")
+    void should_abort_when_payload_indicates_failure() {
+        // Given
+        DemoEventPayload payload = new DemoEventPayload(null, 0L, 0, false);
+        given(eventPayloadMapper.fromJsonNode(any(JsonNode.class), eq(DemoEventPayload.class))).willReturn(payload);
+
+        // When
+        handler.process(event);
+
+        // Then
+        then(workflow).should().abort(eq(event), any(String.class));
+        then(workflow).should(never()).complete(event);
+    }
 
     @Test
-    void handleEvent_shouldMarkEventAsDead_whenRetriesExceeded() {
-        mockRetryConfig();
+    @DisplayName("Retry: should throw TransientException if threshold not met")
+    void should_throw_exception_when_retry_threshold_not_met() {
+        // Given
+        DemoEventPayload payload = new DemoEventPayload(null, 0L, 1, true);
+        given(eventPayloadMapper.fromJsonNode(any(JsonNode.class), eq(DemoEventPayload.class))).willReturn(payload);
 
-        // given: a running event whose required retries exceed the configured max retries
-        Event event = Event.builder()
-                .id(4L)
-                .type(Event.EventType.DEMO_EVENT)
-                .status(Event.EventStatus.RUNNING)
-                .payload(payloadJson)
-                .build();
-
-        DemoEventPayload demoEventPayload = DemoEventPayload.builder()
-                .requiredRetries(retryConfig.getMaxRetries() + 1)
-                .shouldSucceed(true)
-                .build();
-
-        when(eventPayloadMapper.fromJsonNode(any(JsonNode.class), eq(DemoEventPayload.class)))
-                .thenReturn(demoEventPayload);
-
-        // when: the handler processes the event repeatedly
-        for (int i = 0; i < demoEventPayload.getRequiredRetries(); i++) {
-            if (event.getStatus() == Event.EventStatus.WAITING) {
-                event.setStatus(Event.EventStatus.RUNNING);
-            }
-            demoEventHandler.handleEvent(event);
-            if (event.getStatus() == Event.EventStatus.DEAD) {
-                break;
-            }
-        }
-
-        // then: the event should eventually be marked as DEAD after reaching the retry limit
-        assertEquals(Event.EventStatus.DEAD, event.getStatus());
-        assertEquals(retryConfig.getMaxRetries(), event.getRetryCount());
-        assertNull(event.getNextRunAt());
-
-        verify(eventService, times(retryConfig.getMaxRetries() + 1)).updateEvent(event);
+        // When & Then
+        assertThatThrownBy(() -> handler.process(event))
+                .isInstanceOf(TransientEventException.class)
+                .hasMessageContaining("Retry threshold not reached");
     }
 }

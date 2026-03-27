@@ -56,7 +56,7 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
 
         // Step 2: Perform heavy, time-consuming work atomically
         if (event.getCurrentStep().equals(STEP_INIT)) {
-            doTimeConsumingWork(eventId, payload);
+            doTimeConsumingWork(event, payload);
             workflow.checkpoint(event, STEP_TIME_CONSUMING_WORK_DONE);  // save the progress
         }
 
@@ -86,22 +86,22 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
      * Checkpoints should be used to persist progress safely and allow idempotent retries.
      * </p>
      *
-     * @param eventId Event identifier
+     * @param event   Event
      * @param payload Event payload
      */
-    private void doTimeConsumingWork(long eventId, DemoEventPayload payload) {
+    private void doTimeConsumingWork(Event event, DemoEventPayload payload) {
         Long delay = payload.durationMs();
         if (delay == null || delay <= 0) {
-            log.info("[Event #{}] No execution delay specified, skipping time-consuming work.", eventId);
+            log.info("[Event #{}] No execution delay specified, skipping time-consuming work.", event.getId());
             return;
         }
         try {
-            log.debug("[Event #{}] Heavy work begins. The system will simulate a task that takes {} ms...", eventId, delay);
+            log.debug("[Event #{}] Heavy work begins. The system will simulate a task that takes {} ms...", event.getId(), delay);
             Thread.sleep(delay);
-            log.debug("[Event #{}] Heavy work completed.", eventId);
+            log.debug("[Event #{}] Heavy work completed.", event);
         } catch (InterruptedException e) {
             Thread.currentThread().interrupt();
-            log.warn("[Event #{}] Heavy work was unexpectedly interrupted! Any side effects are assumed reverted or safe to retry. ", eventId);
+            log.warn("[Event #{}] Heavy work was unexpectedly interrupted! Any side effects are assumed reverted or safe to retry. ", event.getId());
             throw new TransientEventException("Simulation of heavy work was interrupted");
         }
     }
