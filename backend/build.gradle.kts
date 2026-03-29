@@ -25,6 +25,7 @@ dependencies {
     // Spring Boot
     implementation(libs.spring.boot.starter)
     implementation(libs.spring.boot.starter.web)
+    implementation(libs.spring.boot.starter.security)
 
     // MyBatis-Plus & PostgreSQL
     implementation(libs.mybatis.plus)
