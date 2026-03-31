@@ -2,14 +2,12 @@ package io.github.cubelitblade.common.typehandler;
 
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
 import org.apache.ibatis.type.JdbcType;
-import org.apache.ibatis.type.MappedTypes;
 import org.postgresql.util.PGobject;
 
 import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
 
-@MappedTypes({Object.class})
 public class JsonbTypeHandler extends Jackson3TypeHandler {
     public JsonbTypeHandler(Class<?> type) {
         super(type);
