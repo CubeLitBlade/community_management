@@ -5,6 +5,7 @@ import io.github.cubelitblade.user.domain.exception.AccountSuspendedException;
 import io.github.cubelitblade.user.domain.exception.InvalidCredentialsException;
 import io.github.cubelitblade.user.domain.service.PasswordService;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
@@ -17,10 +18,7 @@ import java.util.Objects;
 public class Account {
     private Long id;
     private Username username;
-
-    @Getter(AccessLevel.PROTECTED)
     private PasswordHash passwordHash;
-
     private String nickname;
     private Email email;
     private Phone phone;
@@ -43,11 +41,32 @@ public class Account {
         return account;
     }
 
+    public static Account reconstitute(Snapshot snapshot) {
+        if (snapshot == null) return null;
+
+        Account account = new Account();
+        account.id = snapshot.id;
+        account.username = snapshot.username;
+        account.passwordHash = snapshot.passwordHash;
+        account.nickname = snapshot.nickname;
+        account.email = snapshot.email;
+        account.phone = snapshot.phone;
+        account.profile = snapshot.profile;
+        account.role = snapshot.role;
+        account.status = snapshot.status;
+        account.createdAt = snapshot.createdAt;
+        account.updatedAt = snapshot.updatedAt;
+        account.lastLoginAt = snapshot.lastLoginAt;
+        account.lastLoginIp = snapshot.lastLoginIp;
+
+        return account;
+    }
+
     /**
      * Verifies the submitted plaintext password against the stored hash.
      *
-     * @throws AccountArchivedException if the account has been archived.
-     * @throws AccountSuspendedException if the account has been suspended.
+     * @throws AccountArchivedException    if the account has been archived.
+     * @throws AccountSuspendedException   if the account has been suspended.
      * @throws InvalidCredentialsException if the password is incorrect.
      */
     public void verifyPassword(String submittedPassword, PasswordService passwordService) {
@@ -170,8 +189,26 @@ public class Account {
         return this.status == Status.NORMAL;
     }
 
-
     private void touch(Instant now) {
         this.updatedAt = now;
+    }
+
+    @Builder
+    public record Snapshot(
+            Long id,
+            Username username,
+            PasswordHash passwordHash,
+            String nickname,
+            Email email,
+            Phone phone,
+            Profile profile,
+            Role role,
+            Status status,
+            Instant createdAt,
+            Instant updatedAt,
+            Instant lastLoginAt,
+            InetAddress lastLoginIp
+
+    ) {
     }
 }

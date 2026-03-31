@@ -33,6 +33,10 @@ public final class Username {
         return new Username(value);
     }
 
+    public static Username reconstitute(String value) {
+        return new Username(value);
+    }
+
     public String value() {
         return this.value;
     }

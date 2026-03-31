@@ -1,6 +1,5 @@
 package io.github.cubelitblade.user.domain.model;
 
-import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.Getter;
 
 import java.util.Arrays;
@@ -14,13 +13,12 @@ public enum Status {
     ARCHIVED("archived");
 
     private static final Map<String, Status> map = Arrays.stream(Status.values()).collect(
-            Collectors.toMap(Status::getStatus, v -> v)
+            Collectors.toMap(Status::getValue, v -> v)
     );
-    @EnumValue
-    private final String status;
+    private final String value;
 
-    Status(String status) {
-        this.status = status;
+    Status(String value) {
+        this.value = value;
     }
 
     public static Status from(String statusName) {

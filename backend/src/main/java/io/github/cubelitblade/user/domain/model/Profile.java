@@ -1,6 +1,6 @@
 package io.github.cubelitblade.user.domain.model;
 
-import java.util.Objects;
+import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 
 /**
  * Represents the profile details of an account.
@@ -17,12 +17,13 @@ import java.util.Objects;
  *               </ul>
  * @see <a href="https://openstd.samr.gov.cn/bzgk/std/newGbInfo?hcno=0FC942D542BC6EE3C707B2647EF81CD8">GB/T 2261.1-2003</a>
  */
+@JsonIgnoreProperties(ignoreUnknown = true)
 public record Profile(Integer gender) {
     public Profile(Integer gender) {
-        gender = Objects.requireNonNullElse(gender, 0);
-        switch (gender) {
-            case 0, 1, 2, 9 -> this.gender = gender;
+        this.gender = switch (gender) {
+            case null -> 0;
+            case 0, 1, 2, 9 -> gender;
             default -> throw new IllegalArgumentException("Invalid gender code: " + gender);
-        }
+        };
     }
 }

@@ -1,6 +1,5 @@
 package io.github.cubelitblade.user.domain.model;
 
-import com.baomidou.mybatisplus.annotation.EnumValue;
 import lombok.Getter;
 
 import java.util.Arrays;
@@ -14,13 +13,12 @@ public enum Role {
     USER("user");
 
     private static final Map<String, Role> map = Arrays.stream(Role.values()).collect(
-            Collectors.toMap(Role::getRole, v -> v)
+            Collectors.toMap(Role::getValue, v -> v)
     );
-    @EnumValue
-    private final String role;
+    private final String value;
 
-    Role(String role) {
-        this.role = role;
+    Role(String value) {
+        this.value = value;
     }
 
     public static Role from(String roleName) {
