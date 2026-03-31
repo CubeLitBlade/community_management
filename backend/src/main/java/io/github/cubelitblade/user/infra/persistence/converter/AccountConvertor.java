@@ -12,6 +12,9 @@ import java.util.function.Function;
 public class AccountConvertor {
 
     public static AccountPo toPo(Account account) {
+        if (account == null) {
+            return null;
+        }
         return AccountPo.builder()
                 .id(account.getId())
                 .username(mapIfNotNull(account.getUsername(), Username::value))
@@ -30,6 +33,9 @@ public class AccountConvertor {
     }
 
     public static Account toDomain(AccountPo accountPo) {
+        if (accountPo == null) {
+            return null;
+        }
         Account.Snapshot snapshot = Account.Snapshot.builder()
                 .id(accountPo.getId())
                 .username(mapIfNotNull(accountPo.getUsername(), Username::reconstitute))

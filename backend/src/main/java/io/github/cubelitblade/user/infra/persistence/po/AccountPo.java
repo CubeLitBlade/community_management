@@ -6,13 +6,17 @@ import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
 import io.github.cubelitblade.common.typehandler.JsonbTypeHandler;
 import io.github.cubelitblade.user.domain.model.Profile;
+import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
+import lombok.NoArgsConstructor;
 
 import java.time.Instant;
 
 @Data
 @Builder
+@NoArgsConstructor
+@AllArgsConstructor
 @TableName("account")
 public class AccountPo {
 

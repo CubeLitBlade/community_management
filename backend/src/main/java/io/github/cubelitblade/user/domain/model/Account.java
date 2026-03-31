@@ -185,6 +185,16 @@ public class Account {
         this.touch(now);
     }
 
+    public void initIdentifier(long id) {
+        if (this.id != null) {
+            throw new IllegalStateException("Identifier already initialized.");
+        }
+        if (id <= 0) {
+            throw new IllegalArgumentException("Identifier must be greater than zero, got: " + id);
+        }
+        this.id = id;
+    }
+
     public boolean canLogin() {
         return this.status == Status.NORMAL;
     }
