@@ -4,7 +4,13 @@ import io.github.cubelitblade.user.domain.model.Account;
 
 public interface AccountRepository {
     Account getAccountById(Long id);
+
     Account register(Account account);
+
     boolean existsUserByUsername(String username);
+
     // Account existsUserByEmail(String email);
+    Account findByUsername(String username);
+
+    void updateAccount(Account account);
 }

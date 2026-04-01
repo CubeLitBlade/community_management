@@ -39,4 +39,18 @@ public class MyBatisAccountRepository implements AccountRepository {
         AccountPo accountPo = accountMapper.selectOne(queryWrapper);
         return accountPo != null;
     }
+
+    @Override
+    public Account findByUsername(String username) {
+        LambdaQueryWrapper<AccountPo> queryWrapper = Wrappers.lambdaQuery();
+        queryWrapper.eq(AccountPo::getUsername, username);
+
+        AccountPo accountPo = accountMapper.selectOne(queryWrapper);
+        return AccountConvertor.toDomain(accountPo);
+    }
+
+    @Override
+    public void updateAccount(Account account) {
+        accountMapper.updateById(AccountConvertor.toPo(account));
+    }
 }
