@@ -5,6 +5,7 @@ import io.github.cubelitblade.user.application.dto.AccountRegisterRequest;
 import io.github.cubelitblade.user.application.dto.TokenResponse;
 import io.github.cubelitblade.user.application.service.AccountService;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
@@ -23,7 +24,7 @@ public class AuthController {
     private final AccountService accountService;
 
     @PostMapping("/register")
-    public ResponseEntity<?> register(@RequestBody AccountRegisterRequest request) {
+    public ResponseEntity<Void> register(@Valid @RequestBody AccountRegisterRequest request) {
         // TODO: Add @Valid annotation for input validation
 
         Long id = accountService.register(request).getId();
@@ -37,7 +38,7 @@ public class AuthController {
 
     @PostMapping("/login")
     public ResponseEntity<TokenResponse> login(
-            @RequestBody AccountLoginRequest request,
+            @Valid @RequestBody AccountLoginRequest request,
             @RequestHeader(value = "X-Forwarded-For", required = false) String xForwardedFor,
             HttpServletRequest httpServletRequest
     ) {
