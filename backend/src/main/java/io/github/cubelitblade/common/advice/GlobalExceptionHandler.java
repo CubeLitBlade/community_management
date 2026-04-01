@@ -5,8 +5,11 @@ import io.github.cubelitblade.user.domain.exception.UsernameAlreadyExistsExcepti
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.MethodArgumentNotValidException;
 import org.springframework.web.bind.annotation.ExceptionHandler;
 import org.springframework.web.bind.annotation.RestControllerAdvice;
+
+import java.util.Objects;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
@@ -34,5 +37,15 @@ public class GlobalExceptionHandler {
         problem.setProperty("code", UsernameAlreadyExistsException.ERROR_CODE);
 
         return ResponseEntity.status(HttpStatus.CONFLICT).body(problem);
+    }
+
+    @ExceptionHandler(value = MethodArgumentNotValidException.class)
+    public ResponseEntity<ProblemDetail> handleMethodArgumentNotValid(MethodArgumentNotValidException e) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+
+        problem.setTitle("Method argument not valid");
+        problem.setDetail(Objects.requireNonNull(e.getBindingResult().getFieldError()).getDefaultMessage());
+
+        return ResponseEntity.badRequest().body(problem);
     }
 }
