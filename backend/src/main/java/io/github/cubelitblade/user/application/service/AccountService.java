@@ -1,14 +1,20 @@
 package io.github.cubelitblade.user.application.service;
 
 import io.github.cubelitblade.configuration.TimeConfig;
+import io.github.cubelitblade.user.application.dto.AccountLoginRequest;
 import io.github.cubelitblade.user.application.dto.AccountRegisterRequest;
+import io.github.cubelitblade.user.application.dto.TokenResponse;
+import io.github.cubelitblade.user.domain.exception.InvalidCredentialsException;
 import io.github.cubelitblade.user.domain.exception.UsernameAlreadyExistsException;
 import io.github.cubelitblade.user.domain.model.Account;
 import io.github.cubelitblade.user.domain.model.Username;
 import io.github.cubelitblade.user.domain.repository.AccountRepository;
 import io.github.cubelitblade.user.domain.service.PasswordService;
+import io.github.cubelitblade.user.infra.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+
+import java.net.InetAddress;
 
 @Service
 @RequiredArgsConstructor
@@ -16,6 +22,7 @@ public class AccountService {
     private final AccountRepository accountRepository;
     private final PasswordService passwordService;
     private final TimeConfig timeConfig;
+    private final JwtTokenProvider jwtTokenProvider;
 
     public Account register(AccountRegisterRequest request) {
         if (accountRepository.existsUserByUsername(request.username())) {
@@ -24,12 +31,34 @@ public class AccountService {
 
         Account account = Account.register(
                 Username.of(request.username()),
-                request.rawPassword(),
+                request.password(),
                 passwordService,
                 timeConfig.now()
         );
 
         accountRepository.register(account);
         return account;
+    }
+
+    public TokenResponse login(AccountLoginRequest request, InetAddress clientIpAddress) {
+        Account candidate = accountRepository.findByUsername(request.username());
+
+        if (candidate == null) {
+            throw new InvalidCredentialsException();
+        }
+
+        if(!candidate.passwordMatches(request.password(), passwordService))
+        {
+            throw new InvalidCredentialsException();
+        }
+
+        candidate.requireNormalStatus();
+
+        candidate.recordLoginSuccess(clientIpAddress, timeConfig.now());
+        accountRepository.updateAccount(candidate);
+
+        return new TokenResponse(
+                jwtTokenProvider.generateToken(candidate.getId(), candidate.getRole(), timeConfig.now())
+        );
     }
 }
