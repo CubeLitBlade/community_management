@@ -4,8 +4,6 @@ import io.github.cubelitblade.user.domain.model.*;
 import io.github.cubelitblade.user.infra.persistence.po.AccountPo;
 import lombok.extern.slf4j.Slf4j;
 
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.function.Function;
 
 @Slf4j
@@ -28,7 +26,7 @@ public class AccountConvertor {
                 .createdAt(account.getCreatedAt())
                 .updatedAt(account.getUpdatedAt())
                 .lastLoginAt(account.getLastLoginAt())
-                .lastLoginIp(mapIfNotNull(account.getLastLoginIp(), InetAddress::getHostAddress))
+                .lastLoginIp(account.getLastLoginIp())
                 .build();
     }
 
@@ -49,20 +47,10 @@ public class AccountConvertor {
                 .createdAt(accountPo.getCreatedAt())
                 .updatedAt(accountPo.getUpdatedAt())
                 .lastLoginAt(accountPo.getLastLoginAt())
-                .lastLoginIp(mapIfNotNull(accountPo.getLastLoginIp(), AccountConvertor::parseInetAddress))
+                .lastLoginIp(accountPo.getLastLoginIp())
                 .build();
 
         return Account.reconstitute(snapshot);
-    }
-
-    private static InetAddress parseInetAddress(String ipStr) {
-        if (ipStr == null) return null;
-        try {
-            return InetAddress.getByName(ipStr);
-        } catch (UnknownHostException e) {
-            log.warn("Invalid IP address: \"{}\" from database", ipStr, e);
-            return null;
-        }
     }
 
     private static <S, T> T mapIfNotNull(S source, Function<S, T> mapper) {

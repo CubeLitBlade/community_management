@@ -4,13 +4,16 @@ import com.baomidou.mybatisplus.annotation.IdType;
 import com.baomidou.mybatisplus.annotation.TableField;
 import com.baomidou.mybatisplus.annotation.TableId;
 import com.baomidou.mybatisplus.annotation.TableName;
+import io.github.cubelitblade.common.typehandler.InetAddressTypeHandler;
 import io.github.cubelitblade.common.typehandler.JsonbTypeHandler;
 import io.github.cubelitblade.user.domain.model.Profile;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.Data;
 import lombok.NoArgsConstructor;
+import org.apache.ibatis.type.JdbcType;
 
+import java.net.InetAddress;
 import java.time.Instant;
 
 @Data
@@ -37,5 +40,7 @@ public class AccountPo {
     private Instant createdAt;
     private Instant updatedAt;
     private Instant lastLoginAt;
-    private String lastLoginIp;
+
+    @TableField(typeHandler = InetAddressTypeHandler.class, jdbcType = JdbcType.OTHER)
+    private InetAddress lastLoginIp;
 }
