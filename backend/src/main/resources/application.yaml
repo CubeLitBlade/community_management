@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: ${SPRING_DATASOURCE_URL:jdbc:postgresql://localhost:5432/community_management_system}
-    username: ${SPRING_DATASOURCE_USER:dev_user}
-    password: ${SPRING_DATASOURCE_PASSWORD:dev_password}
+    url: jdbc:postgresql://db:${DB_EXTERNAL_PORT}/${DB_NAME}
+    username: ${DB_USER}
+    password: ${DB_PASSWORD}
 
   docker:
     compose:
@@ -15,6 +15,10 @@ spring:
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true
+
+jwt:
+  secret: ${JWT_SECRET}
+  expiration: 1d
 
 worker:
   retry:
