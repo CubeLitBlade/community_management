@@ -1,17 +1,21 @@
 package io.github.cubelitblade.user.interfaces;
 
+import io.github.cubelitblade.user.application.dto.AccountLoginRequest;
 import io.github.cubelitblade.user.application.dto.AccountRegisterRequest;
+import io.github.cubelitblade.user.application.dto.TokenResponse;
 import io.github.cubelitblade.user.application.service.AccountService;
+import jakarta.servlet.http.HttpServletRequest;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
+import java.net.InetAddress;
 import java.net.URI;
+import java.net.UnknownHostException;
 
+@Slf4j
 @RestController
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
@@ -29,5 +33,30 @@ public class AuthController {
                 .buildAndExpand(id)
                 .toUri();
         return ResponseEntity.created(url).build();
+    }
+
+    @PostMapping("/login")
+    public ResponseEntity<TokenResponse> login(
+            @RequestBody AccountLoginRequest request,
+            @RequestHeader(value = "X-Forwarded-For", required = false) String xForwardedFor,
+            HttpServletRequest httpServletRequest
+    ) {
+        InetAddress inetAddress = null;
+
+        try {
+            String ip;
+
+            if (xForwardedFor == null || xForwardedFor.isBlank()) {
+                ip = httpServletRequest.getRemoteAddr();
+            } else {
+                ip = xForwardedFor.split(",")[0].trim();
+            }
+
+            inetAddress = InetAddress.getByName(ip);
+        } catch (UnknownHostException e) {
+            log.warn("Unknown host: ", e);
+        }
+
+        return ResponseEntity.ok(accountService.login(request, inetAddress));
     }
 }
