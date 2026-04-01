@@ -1,6 +1,6 @@
 package io.github.cubelitblade.user.application.dto;
 
-public record AccountRegisterRequest(
+public record AccountLoginRequest(
         String username,
         String password
 ) {
