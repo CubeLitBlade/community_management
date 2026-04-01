@@ -63,23 +63,22 @@ public class Account {
     }
 
     /**
-     * Verifies the submitted plaintext password against the stored hash.
+     * Requires this account to be in {@link Status#NORMAL} status.
      *
-     * @throws AccountArchivedException    if the account has been archived.
-     * @throws AccountSuspendedException   if the account has been suspended.
-     * @throws InvalidCredentialsException if the password is incorrect.
+     * @throws AccountArchivedException  if the account has been archived.
+     * @throws AccountSuspendedException if the account has been suspended.
      */
-    public void verifyPassword(String submittedPassword, PasswordService passwordService) {
+    public void requireNormalStatus() {
         if (this.status == Status.ARCHIVED) {
             throw new AccountArchivedException();
         }
         if (this.status == Status.SUSPENDED) {
             throw new AccountSuspendedException();
         }
+    }
 
-        if (!passwordService.matches(submittedPassword, this.passwordHash)) {
-            throw new InvalidCredentialsException();
-        }
+    public boolean passwordMatches(String submittedPassword, PasswordService passwordService) {
+        return passwordService.matches(submittedPassword, this.passwordHash);
     }
 
     public void recordLoginSuccess(InetAddress ip, Instant now) {
@@ -195,10 +194,6 @@ public class Account {
         this.id = id;
     }
 
-    public boolean canLogin() {
-        return this.status == Status.NORMAL;
-    }
-
     private void touch(Instant now) {
         this.updatedAt = now;
     }
@@ -218,7 +213,6 @@ public class Account {
             Instant updatedAt,
             Instant lastLoginAt,
             InetAddress lastLoginIp
-
     ) {
     }
 }
