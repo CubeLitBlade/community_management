@@ -16,6 +16,11 @@ java {
 val mockitoAgent = configurations.create("mockitoAgent")
 
 dependencies {
+    // JJWT
+    implementation(libs.jjwt.api)
+    runtimeOnly(libs.jjwt.impl)
+    runtimeOnly(libs.jjwt.jackson)
+
     // Lombok
     annotationProcessor(libs.lombok)
     compileOnly(libs.lombok)
