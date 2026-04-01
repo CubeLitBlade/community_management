@@ -7,82 +7,104 @@
 
 ## Quick Start
 
-This project can be run with Docker or Podman. This guide assumes Podman. If you use Docker, replace `podman` with `docker` in the commands below.
-
-### Repository Layout
-
-- The repository root is the Gradle build root.
-- The `backend` directory is a Gradle subproject.
-- Run Gradle commands from the repository root with `./gradlew`.
+This project can be run with Docker or Podman. This guide assumes Podman. If you use Docker, replace `podman` with
+`docker` in the commands below.
 
 ### Prerequisites
 
 The following runtime environment is recommended:
 
 | Environment       | Notes                                   |
-| ----------------- | --------------------------------------- |
+|-------------------|-----------------------------------------|
 | Docker / Podman   | Container runtime                       |
 | Docker Compose    | Compose engine                          |
 | JDK 25 (optional) | Required only if developing the backend |
 
-Before you start, complete the following steps.
+### 1. Prepare Environment Variables
 
-1. Copy the `.env.template` in the root directory and rename it to `.env`;
+Environment variables are defined in the `.env` file at the repository root.
+Copy the template file.
 
-    ```bash
-    cp .env.template .env
-    ```
+```bash
+cp .env.template .env
+```
 
-2. Update `.env` to match your local environment.
+And then update the values according to your local environment.
 
-### Development
+> [!IMPORTANT]
+>
+> `JWT_SECRET` **must be configured manually**, as the template doesn't provide a default value.
+>
+> The application will not start if it is empty.
+>
+> If you don't have a secure JWT secret, here are examples for generating a secure Base64 value:
+>
+> **Linux/Mac OS**
+>
+> ```bash
+> openssl rand -base64 32
+> ```
+>
+> or
+>
+> ```bash
+> head -c 32 /dev/urandom | base64
+> ```
+>
+> **Windows Powershell**
+>
+> ```powershell
+> [Convert]::ToBase64String((1..32 | ForEach-Object { Get-Random -Maximum 256 }))
+> ```
 
-During development, you usually only need to start the dependent services, such as the database.
+### 2. Start the backend
 
-The backend uses Spring Boot’s Docker Compose support. When you start the backend from your IDE, it will start the required containers and load database settings from `.env`.
+#### From an IDE
+
+First, **configure the IDE to load environment variables**.
+
+> [!TIP]
+>
+> Here is a way to load environment variables in IntelliJ IDEA.
+>
+> 1. Open the run widget's menu. From the menu, select **Edit Configurations**.
+> 2. Enable the **Environment Variables** option;
+> 3. Click the **Browse for .env files and scripts** icon (a folder), then select the `.env` file created before.
+
+Then, start the backend from IDE, Spring Boot Docker Compose would start the required containers automatically.
 
 > [!IMPORTANT]
 >
 > Spring Boot Docker Compose is designed for Docker.
 >
-> To use it with Podman, you may need to install `docker-compose`, map the socket file, and install `podman-docker` to emulate the Docker CLI.
+> To use it with Podman, you may need to install `docker-compose`, map the socket file, and install `podman-docker` to
+> emulate the Docker CLI.
 >
 > For more information, see [Troubleshooting](#spring-boot-docker-compose-does-not-work-with-podman).
 
-If Podman does not work for you, or if you prefer to start the services manually, follow these steps:
+If Podman does not work for you, or if you prefer to start the services manually, you can follow the following steps
+alternatively:
 
 1. Open `backend/src/main/resources/application.yaml`;
 
 2. Set `spring.docker.compose.enabled` to `false`;
 
-3. Configure the `spring.datasource` properties to point to your database;
-
-4. Run the following command from the project root to start the database.
+3. Run the following command from the project root to start the database.
 
 ```bash
 podman compose up
 ```
 
-### Local Testing
+#### From a built JAR
 
-To build the application JAR and run it in a container:
+First, run the Gradle build from the project root;
 
-1. Run the Gradle build from the project root;
-
-    ```bash
-    ./gradlew :backend:bootJar
-    ```
-
-You can also run the common development checks from the project root:
-
-```bash
-./gradlew :backend:test
-./gradlew :backend:build
+ ```bash
+./gradlew :backend:bootJar
 ```
 
-2. Confirm that the generated JAR exists in `backend/build/libs` ;
-
-3. Run the following command from the project root.
+Confirm that the generated JAR exists in `backend/build/libs`. If it does, run the following command to start compose
+from the project root.
 
 ```bash
 podman compose -f compose.yaml -f compose.override.yaml up
@@ -97,15 +119,14 @@ This command builds an image from `backend/Dockerfile`, copies the JAR into the 
 > - If you have credentials, log in to `dhi.org` before running the command;
 > - If that fails, modify the `FROM` instruction in `backend/Dockerfile` to use a public JRE image.
 
-### Production Simulation
+#### From GitHub Packages
 
-Run the following command.
+CI-tested images have been published on GitHub Packages. Just run the command below.
+Compose will pull the required image and deploy it automatically.
 
 ```bash
 podman compose -f compose.yaml -f compose.prod.yaml up
 ```
-
-In this case, Compose will download the published image from GitHub and deploy it automatically.
 
 ## Troubleshooting
 
@@ -123,23 +144,26 @@ This happens because Spring Boot invokes the `docker` command directly.
 A possible solution is to install a Docker-compatible wrapper and
 enable the Podman socket.
 
-Example (Fedora):
-
-```bash
-# Install a Docker-compatible CLI and a Compose engine
-# Spring Boot Docker Compose invokes the `docker` command directly
-sudo dnf install podman-docker docker-compose
-
-# Enable the Podman API socket so Docker-compatible clients can connect
-systemctl --user enable --now podman.socket
-
-# Tell Docker-compatible tools to use the Podman socket
-export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/$UID/podman/podman.sock
-```
+> [!TIP]
+>
+> Here is a way to do so with Fedora.
+>
+> ```bash
+> # Install a Docker-compatible CLI and a Compose engine
+> # Spring Boot Docker Compose invokes the `docker` command directly
+> sudo dnf install podman-docker docker-compose
+> 
+> # Enable the Podman API socket so Docker-compatible clients can connect
+> systemctl --user enable --now podman.socket
+>
+> # Tell Docker-compatible tools to use the Podman socket
+> export DOCKER_HOST=unix://$XDG_RUNTIME_DIR/$UID/podman/podman.sock
+> ```
 
 ### JMX port conflict when running with WSL2 and IntelliJ IDEA
 
-If the backend is run from IntelliJ IDEA on Windows while the project is stored in WSL2, the following errors may appear:
+If the backend is run from IntelliJ IDEA on Windows while the project is stored in WSL2, the following errors may
+appear:
 
 - `JMX connector server communication error`
 - `Port already in use` (random high port)
