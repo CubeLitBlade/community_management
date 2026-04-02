@@ -14,4 +14,4 @@ worker:
     max-retries: 3
 
 jwt:
-  secret: TestTestTestTestTestTestTestTestTestTest==
+  secret: TestTestTestTestTestTestTestTestTestTestTest

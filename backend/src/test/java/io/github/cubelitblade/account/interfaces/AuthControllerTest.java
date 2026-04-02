@@ -4,6 +4,7 @@ import io.github.cubelitblade.account.application.dto.AccountRegisterRequest;
 import io.github.cubelitblade.account.application.service.AccountService;
 import io.github.cubelitblade.account.domain.exception.UsernameAlreadyExistsException;
 import io.github.cubelitblade.account.domain.model.Account;
+import io.github.cubelitblade.account.infra.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -33,6 +34,9 @@ class AuthControllerTest {
 
     @MockitoBean
     private AccountService accountService;
+
+    @MockitoBean
+    private JwtTokenProvider jwtTokenProvider;
 
     private String serialize(Object obj) {
         return objectMapper.writeValueAsString(obj);
