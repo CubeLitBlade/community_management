@@ -6,16 +6,13 @@ import io.github.cubelitblade.user.domain.exception.UsernameAlreadyExistsExcepti
 import io.github.cubelitblade.user.domain.model.Account;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-import org.junit.jupiter.api.extension.ExtendWith;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.restdocs.test.autoconfigure.AutoConfigureRestDocs;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
-import org.springframework.restdocs.RestDocumentationExtension;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
-import org.springframework.test.context.junit.jupiter.SpringExtension;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
 import tools.jackson.databind.ObjectMapper;
 
@@ -45,7 +42,7 @@ class AuthControllerTest {
     class register {
 
         @Test
-        void success() throws Exception {
+        void success() {
 
             AccountRegisterRequest request =
                     new AccountRegisterRequest("user", "password123");
@@ -67,7 +64,7 @@ class AuthControllerTest {
         }
 
         @Test
-        void duplicateUsername() throws Exception {
+        void duplicateUsername() {
             AccountRegisterRequest request = new AccountRegisterRequest(
                     "duplicate",
                     "password123"
@@ -86,5 +83,4 @@ class AuthControllerTest {
                     .apply(document("auth-register-duplicate-username"));
         }
     }
-
 }
