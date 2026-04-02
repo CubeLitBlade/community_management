@@ -13,19 +13,15 @@ import org.springframework.boot.test.context.TestConfiguration;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.test.context.ActiveProfiles;
 
 import java.time.Instant;
 import java.util.concurrent.Executor;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@SpringBootTest(properties = {
-        "spring.main.allow-bean-definition-overriding=true",
-        "spring.docker.compose.file=../compose.yaml",
-        "worker.retry.base-delay=0s",
-        "worker.retry.max-delay=0s",
-        "worker.retry.max-retries=3"
-})
+@SpringBootTest
+@ActiveProfiles("test")
 class DemoWorkerIntegrationTest {
 
     @Autowired

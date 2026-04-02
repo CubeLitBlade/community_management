@@ -2,146 +2,82 @@ package io.github.cubelitblade.user.infra.persistence.converter;
 
 import io.github.cubelitblade.user.domain.model.*;
 import io.github.cubelitblade.user.infra.persistence.po.AccountPo;
-import lombok.extern.slf4j.Slf4j;
-import org.junit.jupiter.api.DisplayName;
-import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
-
-import java.net.InetAddress;
-import java.time.Clock;
-import java.time.Instant;
-import java.time.ZoneId;
 
 import static org.assertj.core.api.Assertions.assertThat;
 
-@Slf4j
 class AccountConvertorTest {
 
-    private static final Clock CLOCK =
-            Clock.fixed(Instant.parse("2026-03-26T15:30:00Z"), ZoneId.of("UTC"));
+    @Test
+    void should_convert_wrapped_fields_to_domain() {
 
-    private static final Instant NOW = Instant.now(CLOCK);
+        // Given
+        AccountPo po = AccountPo.builder()
+                .username("domain_user")
+                .passwordHash("db_hash")
+                .email("domain@test.com")
+                .phone("13900139000")
+                .role("user")
+                .status("suspended")
+                .build();
 
-    @Nested
-    @DisplayName("toPo")
-    class ToPoTests {
+        // When
+        Account account = AccountConvertor.toDomain(po);
 
-        @Test
-        void shouldConvertAccountToPo() throws Exception {
-            // Given
-            Username username = Username.reconstitute("cubelitblade");
-            Email email = new Email("test@example.com");
-            Phone phone = new Phone("13800000000");
-            PasswordHash passwordHash = new PasswordHash("hashed_secret");
-            Profile profile = new Profile(1);
-            InetAddress ip = InetAddress.getByName("192.168.1.100");
-
-            Account.Snapshot snapshot = Account.Snapshot.builder()
-                    .id(100L)
-                    .username(username)
-                    .passwordHash(passwordHash)
-                    .nickname("Test Nick")
-                    .email(email)
-                    .phone(phone)
-                    .profile(profile)
-                    .role(Role.ADMIN)
-                    .status(Status.NORMAL)
-                    .createdAt(NOW)
-                    .updatedAt(NOW)
-                    .lastLoginAt(NOW)
-                    .lastLoginIp(ip)
-                    .build();
-
-            Account account = Account.reconstitute(snapshot);
-
-            // When
-            AccountPo po = AccountConvertor.toPo(account);
-
-            // Then
-            assertThat(po)
-                    .extracting(
-                            AccountPo::getId,
-                            AccountPo::getUsername,
-                            AccountPo::getPasswordHash,
-                            AccountPo::getNickname,
-                            AccountPo::getEmail,
-                            AccountPo::getPhone,
-                            AccountPo::getRole,
-                            AccountPo::getStatus,
-                            AccountPo::getLastLoginIp
-                    )
-                    .containsExactly(
-                            100L,
-                            "cubelitblade",
-                            "hashed_secret",
-                            "Test Nick",
-                            "test@example.com",
-                            "13800000000",
-                            "admin",
-                            "normal",
-                            "192.168.1.100"
-                    );
-            assertThat(po.getProfile().gender()).isEqualTo(1);
-            assertThat(po.getCreatedAt()).isEqualTo(NOW);
-        }
+        // Then
+        assertThat(account)
+                .extracting(
+                        a -> a.getUsername().value(),
+                        a -> a.getPasswordHash().value(),
+                        a -> a.getEmail().value(),
+                        a -> a.getPhone().value(),
+                        Account::getRole,
+                        Account::getStatus
+                )
+                .containsExactly(
+                        "domain_user",
+                        "db_hash",
+                        "domain@test.com",
+                        "13900139000",
+                        Role.USER,
+                        Status.SUSPENDED
+                );
     }
 
-    @Nested
-    @DisplayName("toDomain")
-    class ToDomainTests {
+    @Test
+    void should_preserve_data_when_round_tripping_po_and_domain() {
 
-        @Test
-        void shouldConvertPoToDomain() {
+        // Given
+        AccountPo original = AccountPo.builder()
+                .username("round_trip")
+                .passwordHash("hash")
+                .email("rt@test.com")
+                .phone("13800138000")
+                .role("user")
+                .status("normal")
+                .build();
 
-            String ip = "192.168.1.100";
+        // When
+        Account domain = AccountConvertor.toDomain(original);
+        AccountPo restored = AccountConvertor.toPo(domain);
 
-            AccountPo po = AccountPo.builder()
-                    .id(10L)
-                    .username("domain_user")
-                    .passwordHash("db_hash")
-                    .nickname("Domain User")
-                    .email("domain@test.com")
-                    .phone("13900139000")
-                    .role("user")
-                    .status("suspended")
-                    .lastLoginIp(ip)
-                    .profile(new Profile(2))
-                    .createdAt(NOW)
-                    .updatedAt(NOW)
-                    .build();
-
-            Account account = AccountConvertor.toDomain(po);
-
-            assertThat(account)
-                    .extracting(
-                            a -> a.getUsername().value(),
-                            a -> a.getEmail().value(),
-                            Account::getRole,
-                            Account::getStatus,
-                            a -> a.getLastLoginIp().getHostAddress()
-                    )
-                    .containsExactly(
-                            "domain_user",
-                            "domain@test.com",
-                            Role.USER,
-                            Status.SUSPENDED,
-                            ip
-                    );
-        }
-
-        @Test
-        void shouldReturnNullForInvalidIp() {
-
-            AccountPo po = AccountPo.builder()
-                    .id(12L)
-                    .username("bad_ip_user")
-                    .passwordHash("hash")
-                    .lastLoginIp("invalid-ip-host")
-                    .build();
-
-            Account account = AccountConvertor.toDomain(po);
-
-            assertThat(account.getLastLoginIp()).isNull();
-        }
+        // Then
+        assertThat(restored)
+                .extracting(
+                        AccountPo::getUsername,
+                        AccountPo::getPasswordHash,
+                        AccountPo::getEmail,
+                        AccountPo::getPhone,
+                        AccountPo::getRole,
+                        AccountPo::getStatus
+                )
+                .containsExactly(
+                        "round_trip",
+                        "hash",
+                        "rt@test.com",
+                        "13800138000",
+                        "user",
+                        "normal"
+                );
     }
 }

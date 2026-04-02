@@ -1,0 +1,17 @@
+spring:
+  main:
+    allow-bean-definition-overriding: true
+  docker:
+    compose:
+      file: ../compose.yaml
+      skip:
+        in-tests: false
+
+worker:
+  retry:
+    base-delay: 0s
+    max-delay: 0s
+    max-retries: 3
+
+jwt:
+  secret: TestTestTestTestTestTestTestTestTestTest==
