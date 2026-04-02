@@ -15,6 +15,7 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.net.InetAddress;
+import java.time.Instant;
 
 @Service
 @RequiredArgsConstructor
@@ -41,24 +42,25 @@ public class AccountService {
     }
 
     public TokenResponse login(AccountLoginRequest request, InetAddress clientIpAddress) {
+        Instant now = timeConfig.now();
         Account candidate = accountRepository.findByUsername(request.username());
 
         if (candidate == null) {
             throw new InvalidCredentialsException();
         }
 
-        if(!candidate.passwordMatches(request.password(), passwordService))
-        {
+        if (!candidate.passwordMatches(request.password(), passwordService)) {
             throw new InvalidCredentialsException();
         }
 
         candidate.requireNormalStatus();
 
-        candidate.recordLoginSuccess(clientIpAddress, timeConfig.now());
+        candidate.recordLoginSuccess(clientIpAddress, now);
         accountRepository.updateAccount(candidate);
 
         return new TokenResponse(
-                jwtTokenProvider.generateToken(candidate.getId(), candidate.getRole(), timeConfig.now())
+                jwtTokenProvider.generateToken(candidate.getId(), candidate.getRole(), now)
         );
     }
 }
+

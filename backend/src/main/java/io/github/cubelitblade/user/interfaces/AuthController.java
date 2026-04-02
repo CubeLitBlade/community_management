@@ -25,8 +25,6 @@ public class AuthController {
 
     @PostMapping("/register")
     public ResponseEntity<Void> register(@Valid @RequestBody AccountRegisterRequest request) {
-        // TODO: Add @Valid annotation for input validation
-
         Long id = accountService.register(request).getId();
         URI url = ServletUriComponentsBuilder
                 .fromCurrentContextPath()
