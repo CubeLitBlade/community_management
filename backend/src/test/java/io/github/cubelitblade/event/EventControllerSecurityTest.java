@@ -1,9 +1,9 @@
 package io.github.cubelitblade.event;
 
 import io.github.cubelitblade.event.payload.DemoEventPayload;
-import io.github.cubelitblade.user.domain.model.Role;
-import io.github.cubelitblade.user.infra.security.jwt.JwtAuthenticatedUser;
-import io.github.cubelitblade.user.infra.security.jwt.JwtTokenProvider;
+import io.github.cubelitblade.account.domain.model.Role;
+import io.github.cubelitblade.account.infra.security.jwt.JwtAuthenticatedUser;
+import io.github.cubelitblade.account.infra.security.jwt.JwtTokenProvider;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.webmvc.test.autoconfigure.AutoConfigureMockMvc;

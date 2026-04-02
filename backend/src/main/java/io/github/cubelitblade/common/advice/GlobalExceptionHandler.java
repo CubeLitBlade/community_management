@@ -1,10 +1,10 @@
 package io.github.cubelitblade.common.advice;
 
 import io.github.cubelitblade.common.exception.InvalidParameterException;
-import io.github.cubelitblade.user.domain.exception.AccountArchivedException;
-import io.github.cubelitblade.user.domain.exception.AccountSuspendedException;
-import io.github.cubelitblade.user.domain.exception.InvalidCredentialsException;
-import io.github.cubelitblade.user.domain.exception.UsernameAlreadyExistsException;
+import io.github.cubelitblade.account.domain.exception.AccountArchivedException;
+import io.github.cubelitblade.account.domain.exception.AccountSuspendedException;
+import io.github.cubelitblade.account.domain.exception.InvalidCredentialsException;
+import io.github.cubelitblade.account.domain.exception.UsernameAlreadyExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
