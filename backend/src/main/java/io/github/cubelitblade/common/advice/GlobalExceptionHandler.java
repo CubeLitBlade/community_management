@@ -1,6 +1,9 @@
 package io.github.cubelitblade.common.advice;
 
 import io.github.cubelitblade.common.exception.InvalidParameterException;
+import io.github.cubelitblade.user.domain.exception.AccountArchivedException;
+import io.github.cubelitblade.user.domain.exception.AccountSuspendedException;
+import io.github.cubelitblade.user.domain.exception.InvalidCredentialsException;
 import io.github.cubelitblade.user.domain.exception.UsernameAlreadyExistsException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
@@ -26,6 +29,39 @@ public class GlobalExceptionHandler {
         }
 
         return ResponseEntity.badRequest().body(problem);
+    }
+
+    @ExceptionHandler(value = AccountArchivedException.class)
+    public ResponseEntity<ProblemDetail> handleAccountArchived(AccountArchivedException e) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
+
+        problem.setTitle("Account archived");
+        problem.setDetail(e.getMessage());
+        problem.setProperty("code", AccountArchivedException.ERROR_CODE);
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problem);
+    }
+
+    @ExceptionHandler(value = AccountSuspendedException.class)
+    public ResponseEntity<ProblemDetail> handleAccountSuspended(AccountSuspendedException e) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
+
+        problem.setTitle("Account suspended");
+        problem.setDetail(e.getMessage());
+        problem.setProperty("code", AccountSuspendedException.ERROR_CODE);
+
+        return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problem);
+    }
+
+    @ExceptionHandler(value = InvalidCredentialsException.class)
+    public ResponseEntity<ProblemDetail> handleInvalidCredentials(InvalidCredentialsException e) {
+        ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
+
+        problem.setTitle("Invalid credentials");
+        problem.setDetail(e.getMessage());
+        problem.setProperty("code", InvalidCredentialsException.ERROR_CODE);
+
+        return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problem);
     }
 
     @ExceptionHandler(value = UsernameAlreadyExistsException.class)

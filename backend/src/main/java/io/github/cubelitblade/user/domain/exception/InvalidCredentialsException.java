@@ -1,7 +1,13 @@
 package io.github.cubelitblade.user.domain.exception;
 
-public class InvalidCredentialsException extends RuntimeException {
+import io.github.cubelitblade.common.exception.DomainException;
+
+public class InvalidCredentialsException extends DomainException {
+
+    public static String ERROR_CODE = "INVALID_CREDENTIALS";
+    public static String DEFAULT_MESSAGE = "Username or password is incorrect.";
+
     public InvalidCredentialsException() {
-        super("Username or password is incorrect.");
+        super(DEFAULT_MESSAGE);
     }
 }

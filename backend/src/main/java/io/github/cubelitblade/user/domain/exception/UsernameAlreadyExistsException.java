@@ -1,6 +1,9 @@
 package io.github.cubelitblade.user.domain.exception;
 
-public class UsernameAlreadyExistsException extends RuntimeException {
+import io.github.cubelitblade.common.exception.DomainException;
+
+public class UsernameAlreadyExistsException extends DomainException {
+
     public static final String ERROR_CODE = "USERNAME_ALREADY_EXISTS";
 
     public UsernameAlreadyExistsException(String username) {
