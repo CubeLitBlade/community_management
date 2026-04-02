@@ -2,8 +2,10 @@ package io.github.cubelitblade.user.domain.repository;
 
 import io.github.cubelitblade.user.domain.model.Account;
 
+import java.util.Optional;
+
 public interface AccountRepository {
-    Account getAccountById(Long id);
+    Optional<Account> findAccountById(Long id);
 
     Account register(Account account);
 

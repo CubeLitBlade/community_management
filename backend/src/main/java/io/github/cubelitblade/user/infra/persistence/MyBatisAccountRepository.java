@@ -10,15 +10,17 @@ import io.github.cubelitblade.user.infra.persistence.po.AccountPo;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Repository;
 
+import java.util.Optional;
+
 @Repository
 @RequiredArgsConstructor
 public class MyBatisAccountRepository implements AccountRepository {
     private final AccountMapper accountMapper;
 
     @Override
-    public Account getAccountById(Long id) {
+    public Optional<Account> findAccountById(Long id) {
         AccountPo accountPo = accountMapper.selectById(id);
-        return AccountConvertor.toDomain(accountPo);
+        return Optional.ofNullable(AccountConvertor.toDomain(accountPo));
     }
 
     @Override
