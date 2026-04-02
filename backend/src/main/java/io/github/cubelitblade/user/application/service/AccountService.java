@@ -13,9 +13,11 @@ import io.github.cubelitblade.user.domain.service.PasswordService;
 import io.github.cubelitblade.user.infra.security.jwt.JwtTokenProvider;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.net.InetAddress;
 import java.time.Instant;
+import java.util.Optional;
 
 @Service
 @RequiredArgsConstructor
@@ -62,5 +64,9 @@ public class AccountService {
                 jwtTokenProvider.generateToken(candidate.getId(), candidate.getRole(), now)
         );
     }
-}
 
+    @Transactional(readOnly = true)
+    public Optional<Account> findAccount(Long accountId) {
+        return accountRepository.findAccountById(accountId);
+    }
+}
