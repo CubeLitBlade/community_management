@@ -1,0 +1,28 @@
+# Node
+node_modules/
+build/
+dist/
+
+# Gradle
+gradle/wrapper/
+gradlew
+gradlew.bat
+.gradle/
+
+# Lock files
+pnpm-lock.yaml
+package-lock.json
+yarn.lock
+
+# IDEs
+.vscode/
+.idea/
+
+# Backend
+*.java
+*.kt
+*.kts
+
+# Environment
+.env
+.env.*
