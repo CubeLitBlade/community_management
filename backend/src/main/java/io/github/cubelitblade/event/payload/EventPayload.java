@@ -1,4 +1,3 @@
 package io.github.cubelitblade.event.payload;
 
-public interface EventPayload {
-}
+public interface EventPayload {}

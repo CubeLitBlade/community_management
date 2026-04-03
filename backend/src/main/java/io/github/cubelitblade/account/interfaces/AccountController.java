@@ -17,18 +17,18 @@ import org.springframework.web.server.ResponseStatusException;
 @RequiredArgsConstructor
 public class AccountController {
 
-    private final AccountService accountService;
+  private final AccountService accountService;
 
-    @GetMapping("/me")
-    public ResponseEntity<AccountMeResponse> me(Authentication authentication) {
-        if (!(authentication.getPrincipal() instanceof JwtAuthenticatedUser authenticatedUser)) {
-            throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
-        }
-
-        return accountService.findAccount(authenticatedUser.accountId())
-                .map(AccountMeResponse::from)
-                .map(ResponseEntity::ok)
-                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+  @GetMapping("/me")
+  public ResponseEntity<AccountMeResponse> me(Authentication authentication) {
+    if (!(authentication.getPrincipal() instanceof JwtAuthenticatedUser authenticatedUser)) {
+      throw new ResponseStatusException(HttpStatus.UNAUTHORIZED);
     }
-}
 
+    return accountService
+        .findAccount(authenticatedUser.accountId())
+        .map(AccountMeResponse::from)
+        .map(ResponseEntity::ok)
+        .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND));
+  }
+}

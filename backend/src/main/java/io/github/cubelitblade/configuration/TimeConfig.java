@@ -1,17 +1,16 @@
 package io.github.cubelitblade.configuration;
 
-import lombok.Data;
-import org.springframework.context.annotation.Configuration;
-
 import java.time.Clock;
 import java.time.Instant;
+import lombok.Data;
+import org.springframework.context.annotation.Configuration;
 
 @Data
 @Configuration
 public class TimeConfig {
-    private Clock clock = Clock.systemDefaultZone();
+  private Clock clock = Clock.systemDefaultZone();
 
-    public Instant now() {
-        return Instant.now(clock);
-    }
+  public Instant now() {
+    return Instant.now(clock);
+  }
 }

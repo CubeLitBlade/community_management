@@ -5,5 +5,4 @@ import io.github.cubelitblade.account.infra.persistence.po.AccountPo;
 import org.apache.ibatis.annotations.Mapper;
 
 @Mapper
-public interface AccountMapper  extends BaseMapper<AccountPo> {
-}
+public interface AccountMapper extends BaseMapper<AccountPo> {}

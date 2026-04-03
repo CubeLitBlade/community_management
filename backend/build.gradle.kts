@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    alias(libs.plugins.spotless)
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
 }
@@ -55,6 +56,12 @@ dependencies {
 
 val mockitoAgentPath: Provider<String> = mockitoAgent.elements.map {
     it.single().asFile.absolutePath
+}
+
+spotless {
+    java {
+        googleJavaFormat()
+    }
 }
 
 tasks.test {

@@ -1,29 +1,29 @@
 package io.github.cubelitblade.common.typehandler;
 
 import com.baomidou.mybatisplus.extension.handlers.Jackson3TypeHandler;
-import org.apache.ibatis.type.JdbcType;
-import org.postgresql.util.PGobject;
-
 import java.lang.reflect.Field;
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import org.apache.ibatis.type.JdbcType;
+import org.postgresql.util.PGobject;
 
 public class JsonbTypeHandler extends Jackson3TypeHandler {
-    public JsonbTypeHandler(Class<?> type) {
-        super(type);
-    }
+  public JsonbTypeHandler(Class<?> type) {
+    super(type);
+  }
 
-    public JsonbTypeHandler(Class<?> type, Field field) {
-        super(type, field);
-    }
+  public JsonbTypeHandler(Class<?> type, Field field) {
+    super(type, field);
+  }
 
-    @Override
-    public void setNonNullParameter(PreparedStatement ps, int i, Object parameter, JdbcType jdbcType) throws SQLException {
-        if (ps != null) {
-            PGobject jsonObject = new PGobject();
-            jsonObject.setType("jsonb");
-            jsonObject.setValue(toJson(parameter));
-            ps.setObject(i, jsonObject);
-        }
+  @Override
+  public void setNonNullParameter(PreparedStatement ps, int i, Object parameter, JdbcType jdbcType)
+      throws SQLException {
+    if (ps != null) {
+      PGobject jsonObject = new PGobject();
+      jsonObject.setType("jsonb");
+      jsonObject.setValue(toJson(parameter));
+      ps.setObject(i, jsonObject);
     }
+  }
 }

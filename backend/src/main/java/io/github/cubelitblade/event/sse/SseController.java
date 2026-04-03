@@ -10,10 +10,10 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 @RestController
 @RequiredArgsConstructor
 public class SseController {
-    private final SseService sseService;
+  private final SseService sseService;
 
-    @GetMapping("/sse")
-    public SseEmitter subscribe() {
-        return sseService.subscribe();
-    }
+  @GetMapping("/sse")
+  public SseEmitter subscribe() {
+    return sseService.subscribe();
+  }
 }

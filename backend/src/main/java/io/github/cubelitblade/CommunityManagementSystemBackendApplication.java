@@ -9,7 +9,7 @@ import org.springframework.scheduling.annotation.EnableScheduling;
 @EnableScheduling
 @EnableAsync
 public class CommunityManagementSystemBackendApplication {
-    static void main(String[] args) {
-        SpringApplication.run(CommunityManagementSystemBackendApplication.class, args);
-    }
+  static void main(String[] args) {
+    SpringApplication.run(CommunityManagementSystemBackendApplication.class, args);
+  }
 }

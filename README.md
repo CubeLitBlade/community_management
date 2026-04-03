@@ -99,7 +99,7 @@ podman compose up
 
 First, run the Gradle build from the project root;
 
- ```bash
+```bash
 ./gradlew :backend:bootJar
 ```
 
@@ -152,7 +152,7 @@ enable the Podman socket.
 > # Install a Docker-compatible CLI and a Compose engine
 > # Spring Boot Docker Compose invokes the `docker` command directly
 > sudo dnf install podman-docker docker-compose
-> 
+>
 > # Enable the Podman API socket so Docker-compatible clients can connect
 > systemctl --user enable --now podman.socket
 >
