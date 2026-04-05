@@ -1,0 +1,48 @@
+* {
+  box-sizing: border-box;
+}
+
+:root {
+  font-family:
+    'Segoe UI Variable',
+    'Segoe UI',
+    system-ui,
+    -apple-system,
+    BlinkMacSystemFont,
+    sans-serif;
+  line-height: 1.5;
+  font-weight: 400;
+  color: #0f172a;
+  background: #e2e8f0;
+  font-synthesis: none;
+  text-rendering: optimizeLegibility;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+html,
+body,
+#root {
+  min-height: 100%;
+  margin: 0;
+}
+
+body {
+  min-height: 100svh;
+  background:
+    radial-gradient(circle at 18% 12%, rgba(37, 99, 235, 0.18), transparent 28%),
+    radial-gradient(circle at 82% 0%, rgba(14, 165, 233, 0.15), transparent 22%),
+    linear-gradient(180deg, #f8fbff 0%, #edf2ff 100%);
+  color: #0f172a;
+}
+
+a {
+  color: inherit;
+}
+
+button,
+input,
+textarea,
+select {
+  font: inherit;
+}
