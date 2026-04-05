@@ -16,9 +16,12 @@ import {
 import BgLogin from '../assets/bg-login.jpg';
 import useLogin from '../hooks/useLogin';
 
+const LOGIN_CARD_MAX_WIDTH = '25rem';
+const BRAND_LOGO_SIZE = '3rem';
+
 const useStyles = makeStyles({
   root: {
-    height: '100vh',
+    minHeight: '100dvh',
     backgroundImage: `linear-gradient(
       rgba(0, 0, 0, 0.5), 
       rgba(0, 0, 0, 0.5)
@@ -28,11 +31,11 @@ const useStyles = makeStyles({
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: '20px',
+    padding: tokens.spacingHorizontalXXL,
   },
   loginCard: {
     width: '100%',
-    maxWidth: '400px',
+    maxWidth: LOGIN_CARD_MAX_WIDTH,
     backgroundColor: tokens.colorNeutralBackground1,
     borderRadius: tokens.borderRadiusXLarge,
     boxShadow: tokens.shadow16,
@@ -41,16 +44,16 @@ const useStyles = makeStyles({
   logoContainer: {
     display: 'flex',
     justifyContent: 'center',
-    padding: '6px 0',
+    padding: `${tokens.spacingVerticalSNudge} 0`,
   },
   logo: {
-    width: '48px',
-    height: '48px',
+    width: BRAND_LOGO_SIZE,
+    height: BRAND_LOGO_SIZE,
     paddingTop: `${tokens.spacingHorizontalSNudge}`,
   },
   title: {
     textAlign: 'center',
-    marginBottom: '8px',
+    marginBottom: tokens.spacingVerticalS,
     color: tokens.colorNeutralForeground1,
   },
   subtitle: {
@@ -81,7 +84,7 @@ const useStyles = makeStyles({
     justifyContent: 'center',
     width: '100%',
     padding: `0 ${tokens.spacingHorizontalXL} ${tokens.spacingVerticalXL}`,
-    fontSize: '14px',
+    fontSize: tokens.fontSizeBase300,
     color: tokens.colorNeutralForeground2,
   },
   formTip: {

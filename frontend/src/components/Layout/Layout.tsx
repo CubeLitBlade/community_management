@@ -1,5 +1,4 @@
 import {
-  AppItem,
   Hamburger,
   makeStyles,
   NavCategory,
@@ -13,49 +12,43 @@ import {
   NavSubItem,
   NavSubItemGroup,
   Tooltip,
+  tokens,
 } from '@fluentui/react-components';
-
-import {
-  bundleIcon,
-  CalendarMultiple20Filled,
-  CalendarMultiple20Regular,
-  CommentBadge20Filled,
-  CommentBadge20Regular,
-  Home20Filled,
-  Home20Regular,
-  LayerDiagonalPerson20Filled,
-  LayerDiagonalPerson20Regular,
-  MailInboxAll20Filled,
-  MailInboxAll20Regular,
-  PersonCircle32Regular,
-  Settings20Filled,
-  Settings20Regular,
-  SlideTextSparkle20Filled,
-  SlideTextSparkle20Regular,
-  ThumbLike20Filled,
-  ThumbLike20Regular,
-} from '@fluentui/react-icons';
 
 import { useState, type ComponentProps } from 'react';
 import { useLocation, useNavigate, Outlet } from 'react-router';
-import useAuth from '../hooks/useAuth';
+import useAccount from '../../hooks/useAccount';
+import {
+  CalendarMultipleIcon,
+  CommentBadgeIcon,
+  HomeIcon,
+  LayerDiagonalPersonIcon,
+  MailInboxAllIcon,
+  SettingsIcon,
+  SlideTextSparkleIcon,
+  ThumbLikeIcon,
+} from './icons';
+import AccountNavItem from './AccountNavItem';
+
+const NAV_WIDTH = '16.25rem';
 
 const useStyles = makeStyles({
   root: {
     overflow: 'hidden',
     display: 'flex',
-    height: '100vh',
+    height: '100dvh',
   },
   nav: {
-    minWidth: '260px',
+    minWidth: NAV_WIDTH,
   },
   content: {
     flex: '1',
-    padding: '16px',
+    padding: tokens.spacingHorizontalXL,
     display: 'grid',
     justifyContent: 'flex-start',
     alignItems: 'flex-start',
     overflowY: 'auto',
+    backgroundColor: tokens.colorNeutralBackground2,
   },
   navBody: {
     display: 'flex',
@@ -65,15 +58,6 @@ const useStyles = makeStyles({
   },
 });
 
-const Home = bundleIcon(Home20Filled, Home20Regular);
-const SlideTextSparkle = bundleIcon(SlideTextSparkle20Filled, SlideTextSparkle20Regular);
-const CalendarMultiple = bundleIcon(CalendarMultiple20Filled, CalendarMultiple20Regular);
-const CommentBadge = bundleIcon(CommentBadge20Filled, CommentBadge20Regular);
-const ThumbLike = bundleIcon(ThumbLike20Filled, ThumbLike20Regular);
-const MailInBoxAll = bundleIcon(MailInboxAll20Filled, MailInboxAll20Regular);
-const LayerDiagonalPerson = bundleIcon(LayerDiagonalPerson20Filled, LayerDiagonalPerson20Regular);
-const Settings = bundleIcon(Settings20Filled, Settings20Regular);
-
 type NavSelectHandler = NonNullable<ComponentProps<typeof NavDrawer>['onNavItemSelect']>;
 
 export default function Layout() {
@@ -81,15 +65,7 @@ export default function Layout() {
   const styles = useStyles();
   const location = useLocation();
   const navigate = useNavigate();
-  const { authStatus } = useAuth();
-
-  const handleAuthClick = () => {
-    if (authStatus === 'checking') {
-      return;
-    }
-
-    navigate(authStatus === 'authenticated' ? '/' : '/auth/login'); // TODO: navigate to "/profile" if authenticated
-  };
+  const { profile, isLoading, logout } = useAccount();
 
   const handleNavSelect: NavSelectHandler = (_event, data) => {
     if (!data.value) {
@@ -115,27 +91,16 @@ export default function Layout() {
         </NavDrawerHeader>
         <NavDrawerBody className={styles.navBody}>
           <div>
-            <AppItem
-              icon={<PersonCircle32Regular />}
-              as="a"
-              href="/auth/login"
-              onClick={(e) => {
-                e.preventDefault();
-                handleAuthClick();
-              }}
-            >
-              {authStatus === 'authenticated' ? '个人中心' : '登录/注册'}{' '}
-              {/* TODO:  display nickname here*/}
-            </AppItem>
-            <NavItem icon={<Home />} value="/">
+            <AccountNavItem profile={profile} isLoading={isLoading} onLogout={logout} />
+            <NavItem icon={<HomeIcon />} value="/">
               首页
             </NavItem>
             <NavSectionHeader>社区</NavSectionHeader>
-            <NavItem icon={<SlideTextSparkle />} value="/feed" disabled>
+            <NavItem icon={<SlideTextSparkleIcon />} value="/feed" disabled>
               新鲜事
             </NavItem>
             <NavCategory value="/activities">
-              <NavCategoryItem icon={<CalendarMultiple />}>活动</NavCategoryItem>
+              <NavCategoryItem icon={<CalendarMultipleIcon />}>活动</NavCategoryItem>
               <NavSubItemGroup>
                 <NavSubItem value="/activities/plaza" disabled>
                   广场
@@ -146,23 +111,23 @@ export default function Layout() {
               </NavSubItemGroup>
             </NavCategory>
             <NavSectionHeader>与我相关</NavSectionHeader>
-            <NavItem icon={<CommentBadge />} value="/replies" disabled>
+            <NavItem icon={<CommentBadgeIcon />} value="/replies" disabled>
               回复我的
             </NavItem>
-            <NavItem icon={<ThumbLike />} value="/likes" disabled>
+            <NavItem icon={<ThumbLikeIcon />} value="/likes" disabled>
               收到喜欢
             </NavItem>
-            <NavItem icon={<MailInBoxAll />} value="/notifications" disabled>
+            <NavItem icon={<MailInboxAllIcon />} value="/notifications" disabled>
               通知
             </NavItem>
             <NavSectionHeader>管理</NavSectionHeader>
-            <NavItem icon={<LayerDiagonalPerson />} value="/management/accounts" disabled>
+            <NavItem icon={<LayerDiagonalPersonIcon />} value="/management/accounts" disabled>
               用户管理
             </NavItem>
           </div>
           <div>
             <NavDivider />
-            <NavItem icon={<Settings />} value="/settings" disabled>
+            <NavItem icon={<SettingsIcon />} value="/settings" disabled>
               设置
             </NavItem>
           </div>

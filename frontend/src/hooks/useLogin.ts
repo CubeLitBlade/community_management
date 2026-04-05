@@ -1,22 +1,19 @@
 import { useNavigate } from 'react-router';
-import { useState } from 'react';
+import { useState, type SubmitEvent } from 'react';
 import apiClient from '../api/apiClient';
-import type { AccountAuthorizeRequest } from '../types/AccountAuthorizeRequest';
-import type { AccountLoginResponse } from '../types/AccountLoginResponse';
+import type { LoginRequest, LoginResponse } from '../types/Account';
 import { BizError } from '../types/Error';
-import useAuth from './useAuth';
-
-type LoginSubmitEvent = React.FormEvent<HTMLFormElement>;
+import useAccount from './useAccount';
 
 export default function useLogin() {
   const navigate = useNavigate();
-  const { markAuthenticated } = useAuth();
+  const { fetchAccount } = useAccount();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleLoginSubmit = async (e: LoginSubmitEvent) => {
+  const handleLoginSubmit = async (e: SubmitEvent) => {
     e.preventDefault();
 
     if (username.trim() === '') {
@@ -34,7 +31,7 @@ export default function useLogin() {
 
     const result = await requestLogin(username, password);
     if (result) {
-      markAuthenticated();
+      await fetchAccount();
       navigate('/');
       return;
     }
@@ -43,14 +40,14 @@ export default function useLogin() {
   };
 
   async function requestLogin(username: string, password: string): Promise<boolean> {
-    const request: AccountAuthorizeRequest = {
+    const request: LoginRequest = {
       username,
       password,
     };
 
     try {
-      const response: AccountLoginResponse = await apiClient.post('/auth/login', request);
-      localStorage.setItem('accessToken', response.accessToken);
+      const response = await apiClient.post<LoginResponse>('/auth/login', request);
+      localStorage.setItem('accessToken', response.data.accessToken);
       return true;
     } catch (e) {
       if (e instanceof BizError) {
