@@ -3,6 +3,8 @@ package io.github.cubelitblade.account.web;
 import io.github.cubelitblade.account.application.AccountService;
 import io.github.cubelitblade.account.dto.AccountLoginRequest;
 import io.github.cubelitblade.account.dto.AccountRegisterRequest;
+import io.github.cubelitblade.account.dto.RegisterFieldsCheckRequest;
+import io.github.cubelitblade.account.dto.RegisterFieldsCheckResponse;
 import io.github.cubelitblade.account.dto.TokenResponse;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
@@ -23,7 +25,7 @@ public class AuthController {
   private final AccountService accountService;
 
   @PostMapping("/register")
-  public ResponseEntity<Void> register(@Valid @RequestBody AccountRegisterRequest request) {
+  public ResponseEntity<Void> register(@RequestBody AccountRegisterRequest request) {
     Long id = accountService.register(request).getId();
     URI url =
         ServletUriComponentsBuilder.fromCurrentContextPath()
@@ -55,5 +57,11 @@ public class AuthController {
     }
 
     return ResponseEntity.ok(accountService.login(request, inetAddress));
+  }
+
+  @PostMapping("/register/check")
+  public ResponseEntity<RegisterFieldsCheckResponse> registerValidation(
+      @RequestBody RegisterFieldsCheckRequest request) {
+    return ResponseEntity.ok(accountService.checkRegisterFields(request));
   }
 }

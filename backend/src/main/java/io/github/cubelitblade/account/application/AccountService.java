@@ -3,9 +3,9 @@ package io.github.cubelitblade.account.application;
 import io.github.cubelitblade.account.application.validation.*;
 import io.github.cubelitblade.account.common.AccountError;
 import io.github.cubelitblade.account.dto.AccountLoginRequest;
-import io.github.cubelitblade.account.dto.AccountRegisterFieldsCheckRequest;
-import io.github.cubelitblade.account.dto.AccountRegisterFieldsCheckResponse;
 import io.github.cubelitblade.account.dto.AccountRegisterRequest;
+import io.github.cubelitblade.account.dto.RegisterFieldsCheckRequest;
+import io.github.cubelitblade.account.dto.RegisterFieldsCheckResponse;
 import io.github.cubelitblade.account.dto.TokenResponse;
 import io.github.cubelitblade.account.exception.AccountStateException;
 import io.github.cubelitblade.account.exception.InputValidationException;
@@ -111,8 +111,7 @@ public class AccountService {
   }
 
   @Transactional(readOnly = true)
-  public AccountRegisterFieldsCheckResponse checkRegisterFields(
-      AccountRegisterFieldsCheckRequest request) {
+  public RegisterFieldsCheckResponse checkRegisterFields(RegisterFieldsCheckRequest request) {
 
     List<String> reasons =
         Stream.of(
@@ -128,7 +127,7 @@ public class AccountService {
             .map(AccountError::getCode)
             .toList();
 
-    return new AccountRegisterFieldsCheckResponse(reasons.isEmpty(), reasons);
+    return new RegisterFieldsCheckResponse(reasons.isEmpty(), reasons);
   }
 
   /**
