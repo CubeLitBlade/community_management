@@ -190,6 +190,7 @@ function useFieldCheck(fieldKey: 'username' | 'email' | 'phone') {
     value,
     onChange: handleChange,
     onBlur: handleBlur,
+    isBlurred,
     checkState,
     checkMessage,
     isChecking,
@@ -253,11 +254,19 @@ export default function useRegister() {
     password.trim() !== '' &&
     confirmPassword.trim() !== '';
 
+  const hasAnyContact = email.normalizedValue !== '' || phone.normalizedValue !== '';
+  const hasAvailableContact =
+    (email.normalizedValue !== '' && email.isAvailable) ||
+    (phone.normalizedValue !== '' && phone.isAvailable);
+  const hasConfirmedUnavailableContact =
+    (email.normalizedValue !== '' && email.isBlurred && email.checkState === 'unavailable') ||
+    (phone.normalizedValue !== '' && phone.isBlurred && phone.checkState === 'unavailable');
+
   const canSubmit =
     !isSubmitting &&
-    (email.normalizedValue !== '' || phone.normalizedValue !== '') &&
-    (email.normalizedValue === '' || email.isAvailable) &&
-    (phone.normalizedValue === '' || phone.isAvailable);
+    hasAnyContact &&
+    (hasAvailableContact || !email.isBlurred || !phone.isBlurred) &&
+    !hasConfirmedUnavailableContact;
 
   const handleNextStep = (e: SubmitEvent) => {
     e.preventDefault();
