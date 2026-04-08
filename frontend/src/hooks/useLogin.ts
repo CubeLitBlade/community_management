@@ -52,7 +52,7 @@ export default function useLogin() {
     } catch (e) {
       if (e instanceof BizError) {
         switch (e.detail.code) {
-          case 'INVALID_CREDENTIALS':
+          case 'LOGIN_FAILED_INVALID_CREDENTIALS':
             setErrorMessage('用户名或密码错误');
             break;
           default:

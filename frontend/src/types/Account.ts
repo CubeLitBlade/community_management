@@ -1,3 +1,5 @@
+import type { ProblemCode } from './Error';
+
 export type Role = 'user' | 'admin' | 'owner';
 export type Status = 'normal' | 'suspended' | 'archived';
 
@@ -16,4 +18,22 @@ export type LoginRequest = {
 
 export type LoginResponse = {
   accessToken: string;
+};
+
+export type FieldsCheckRequest = {
+  username: string | null;
+  email: string | null;
+  phone: string | null;
+};
+
+export type FieldsCheckResponse = {
+  available: boolean;
+  reasons: ProblemCode[];
+};
+
+export type RegisterRequest = {
+  username: string;
+  password: string;
+  email: string | null;
+  phone: string | null;
 };
