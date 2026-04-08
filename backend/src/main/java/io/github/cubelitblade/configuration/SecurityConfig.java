@@ -1,6 +1,6 @@
 package io.github.cubelitblade.configuration;
 
-import io.github.cubelitblade.account.infra.security.jwt.JwtAuthenticationFilter;
+import io.github.cubelitblade.account.security.JwtAuthenticationFilter;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;

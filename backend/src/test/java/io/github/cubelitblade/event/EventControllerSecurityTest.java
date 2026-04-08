@@ -7,9 +7,9 @@ import static org.mockito.Mockito.when;
 import static org.springframework.test.web.servlet.request.MockMvcRequestBuilders.post;
 import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.status;
 
-import io.github.cubelitblade.account.domain.model.Role;
-import io.github.cubelitblade.account.infra.security.jwt.JwtAuthenticatedUser;
-import io.github.cubelitblade.account.infra.security.jwt.JwtTokenProvider;
+import io.github.cubelitblade.account.model.Role;
+import io.github.cubelitblade.account.security.JwtAuthenticatedUser;
+import io.github.cubelitblade.account.security.JwtTokenProvider;
 import io.github.cubelitblade.event.payload.DemoEventPayload;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;

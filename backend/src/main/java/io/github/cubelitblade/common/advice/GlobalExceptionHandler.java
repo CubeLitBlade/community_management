@@ -1,9 +1,6 @@
 package io.github.cubelitblade.common.advice;
 
-import io.github.cubelitblade.account.domain.exception.AccountArchivedException;
-import io.github.cubelitblade.account.domain.exception.AccountSuspendedException;
-import io.github.cubelitblade.account.domain.exception.InvalidCredentialsException;
-import io.github.cubelitblade.account.domain.exception.UsernameAlreadyExistsException;
+import io.github.cubelitblade.account.exception.*;
 import io.github.cubelitblade.common.exception.InvalidParameterException;
 import java.util.Objects;
 import org.springframework.http.HttpStatus;
@@ -30,49 +27,37 @@ public class GlobalExceptionHandler {
     return ResponseEntity.badRequest().body(problem);
   }
 
-  @ExceptionHandler(value = AccountArchivedException.class)
-  public ResponseEntity<ProblemDetail> handleAccountArchived(AccountArchivedException e) {
-    ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
-
-    problem.setTitle("Account archived");
-    problem.setDetail(e.getMessage());
-    problem.setProperty("code", AccountArchivedException.ERROR_CODE);
-
-    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problem);
-  }
-
-  @ExceptionHandler(value = AccountSuspendedException.class)
-  public ResponseEntity<ProblemDetail> handleAccountSuspended(AccountSuspendedException e) {
-    ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.FORBIDDEN);
-
-    problem.setTitle("Account suspended");
-    problem.setDetail(e.getMessage());
-    problem.setProperty("code", AccountSuspendedException.ERROR_CODE);
-
-    return ResponseEntity.status(HttpStatus.FORBIDDEN).body(problem);
-  }
-
-  @ExceptionHandler(value = InvalidCredentialsException.class)
-  public ResponseEntity<ProblemDetail> handleInvalidCredentials(InvalidCredentialsException e) {
+  @ExceptionHandler(value = LoginFailedException.class)
+  public ResponseEntity<ProblemDetail> handleLoginFailure(LoginFailedException e) {
     ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
 
-    problem.setTitle("Invalid credentials");
+    problem.setTitle("Failed to login");
     problem.setDetail(e.getMessage());
-    problem.setProperty("code", InvalidCredentialsException.ERROR_CODE);
+    problem.setProperty("code", e.getErrorCode());
 
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problem);
   }
 
-  @ExceptionHandler(value = UsernameAlreadyExistsException.class)
-  public ResponseEntity<ProblemDetail> handleUsernameAlreadyExists(
-      UsernameAlreadyExistsException e) {
+  @ExceptionHandler(value = ConflictFieldsException.class)
+  public ResponseEntity<ProblemDetail> handleUsernameAlreadyExists(ConflictFieldsException e) {
     ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.CONFLICT);
 
-    problem.setTitle("Username already exists");
+    problem.setTitle("Fields already exist");
     problem.setDetail(e.getMessage());
-    problem.setProperty("code", UsernameAlreadyExistsException.ERROR_CODE);
+    problem.setProperty("code", e.getErrorCode());
 
     return ResponseEntity.status(HttpStatus.CONFLICT).body(problem);
+  }
+
+  @ExceptionHandler(value = InputValidationException.class)
+  public ResponseEntity<ProblemDetail> handleInputValidation(InputValidationException e) {
+    ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
+
+    problem.setTitle("Invalid input");
+    problem.setDetail(e.getMessage());
+    problem.setProperty("code", e.getErrorCode());
+
+    return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(problem);
   }
 
   @ExceptionHandler(value = MethodArgumentNotValidException.class)
