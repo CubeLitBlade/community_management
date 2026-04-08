@@ -8,21 +8,24 @@ import io.github.cubelitblade.account.dto.RegisterFieldsCheckRequest;
 import io.github.cubelitblade.account.dto.RegisterFieldsCheckResponse;
 import io.github.cubelitblade.account.dto.TokenResponse;
 import io.github.cubelitblade.account.exception.AccountStateException;
+import io.github.cubelitblade.account.exception.ConflictFieldsException;
 import io.github.cubelitblade.account.exception.InputValidationException;
 import io.github.cubelitblade.account.exception.LoginFailedException;
-import io.github.cubelitblade.account.model.*;
+import io.github.cubelitblade.account.model.Account;
+import io.github.cubelitblade.account.model.Username;
 import io.github.cubelitblade.account.persistence.AccountRepository;
 import io.github.cubelitblade.account.security.JwtTokenProvider;
 import io.github.cubelitblade.configuration.TimeConfig;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
+
 import java.net.InetAddress;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -161,7 +164,13 @@ public class AccountService {
   private void requireValid(Optional<AccountError> result) {
     result.ifPresent(
         error -> {
-          throw new InputValidationException(error);
+          switch (error.getCategory()) {
+            case INPUT_VALIDATION -> throw new InputValidationException(error);
+            case CONFLICT -> throw new ConflictFieldsException(error);
+            default ->
+                throw new AssertionError(
+                    "Validation engine returned unexpected error type: " + error.getCategory());
+          }
         });
   }
 
