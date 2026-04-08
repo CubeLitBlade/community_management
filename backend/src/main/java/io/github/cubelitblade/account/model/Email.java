@@ -16,9 +16,13 @@ public record Email(String value) {
                 error -> {
                   throw new InputValidationException(error);
                 })
-            .orElseGet(() -> value.toLowerCase())
+            .orElseGet(value::toLowerCase)
             .toString();
     // Normalize to lowercase to ensure case-insensitive uniqueness in the database
+  }
+
+  public static Email of(String value) {
+    return new Email(value);
   }
 
   public static Optional<AccountError> check(String value) {

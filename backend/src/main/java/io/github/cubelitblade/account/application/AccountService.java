@@ -1,5 +1,6 @@
 package io.github.cubelitblade.account.application;
 
+import io.github.cubelitblade.account.application.validation.*;
 import io.github.cubelitblade.account.common.AccountError;
 import io.github.cubelitblade.account.dto.AccountLoginRequest;
 import io.github.cubelitblade.account.dto.AccountRegisterFieldsCheckRequest;
@@ -7,7 +8,6 @@ import io.github.cubelitblade.account.dto.AccountRegisterFieldsCheckResponse;
 import io.github.cubelitblade.account.dto.AccountRegisterRequest;
 import io.github.cubelitblade.account.dto.TokenResponse;
 import io.github.cubelitblade.account.exception.AccountStateException;
-import io.github.cubelitblade.account.exception.ConflictFieldsException;
 import io.github.cubelitblade.account.exception.InputValidationException;
 import io.github.cubelitblade.account.exception.LoginFailedException;
 import io.github.cubelitblade.account.model.*;
@@ -16,10 +16,10 @@ import io.github.cubelitblade.account.security.JwtTokenProvider;
 import io.github.cubelitblade.configuration.TimeConfig;
 import java.net.InetAddress;
 import java.time.Instant;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Optional;
-import java.util.concurrent.atomic.AtomicBoolean;
+import java.util.function.Predicate;
+import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -32,55 +32,40 @@ public class AccountService {
   private final TimeConfig timeConfig;
   private final JwtTokenProvider jwtTokenProvider;
 
+  private static final Predicate<String> SKIP_UNIQUENESS_CHECK = _ -> false;
+
   @Transactional
   public Account register(AccountRegisterRequest request) {
-    Username.check(request.username())
-        .ifPresent(
-            error -> {
-              throw new InputValidationException(error);
-            });
+    Instant now = timeConfig.now();
 
-    Password.check(request.password())
-        .ifPresent(
-            error -> {
-              throw new InputValidationException(error);
-            });
-
-    if (!hasValue(request.email()) && !hasValue(request.phone())) {
-      throw new InputValidationException(AccountError.INPUT_WITHOUT_CONTACT);
+    // Fast-fail for required fields.
+    // The engine skips nulls, so mandatory blanks must be caught early.
+    if (request.username() == null || request.username().isBlank()) {
+      throw new InputValidationException(AccountError.INPUT_USERNAME_BLANK);
+    }
+    if (request.password() == null || request.password().isBlank()) {
+      throw new InputValidationException(AccountError.INPUT_PASSWORD_BLANK);
+    }
+    if (nullIfBlank(request.email()) == null && nullIfBlank(request.phone()) == null) {
+      throw new InputValidationException(AccountError.INPUT_NO_CONTACT);
     }
 
-    if (hasValue(request.email())) {
-      Email.check(request.email())
-          .ifPresent(
-              error -> {
-                throw new InputValidationException(error);
-              });
-    }
-
-    if (hasValue(request.phone())) {
-      Phone.check(request.phone())
-          .ifPresent(
-              error -> {
-                throw new InputValidationException(error);
-              });
-    }
-
-    if (accountRepository.existsUserByUsername(request.username())) {
-      throw new ConflictFieldsException(request.username(), AccountError.CONFLICT_USERNAME_EXISTS);
-    }
-
-    if (accountRepository.existsUserByEmail(request.email())) {
-      throw new ConflictFieldsException(request.email(), AccountError.CONFLICT_EMAIL_EXISTS);
-    }
-
-    if (accountRepository.existsUserByPhone(request.phone())) {
-      throw new ConflictFieldsException(request.phone(), AccountError.CONFLICT_PHONE_EXISTS);
-    }
+    // Unified format and uniqueness validation via the rule engine.
+    requireValid(
+        evaluateFieldRule(
+            request.username(), new UsernameChecker(), accountRepository::existsUserByUsername));
+    requireValid(
+        evaluateFieldRule(request.password(), new PasswordChecker(), SKIP_UNIQUENESS_CHECK));
+    requireValid(
+        evaluateFieldRule(
+            request.email(), new EmailChecker(), accountRepository::existsUserByEmail));
+    requireValid(
+        evaluateFieldRule(
+            request.phone(), new PhoneChecker(), accountRepository::existsUserByPhone));
 
     Account account =
-        Account.register(
-            Username.of(request.username()), request.password(), passwordHasher, timeConfig.now());
+        Account.register(Username.of(request.username()), request.password(), passwordHasher, now);
+    account.updateContactInfo(request.email(), request.phone(), now);
 
     accountRepository.register(account);
     return account;
@@ -91,6 +76,7 @@ public class AccountService {
     Instant now = timeConfig.now();
     Account candidate = accountRepository.findByUsername(request.username());
 
+    // Fail securely with a generic error to prevent user enumeration.
     if (candidate == null) {
       throw new LoginFailedException(AccountError.LOGIN_FAILED_INVALID_CREDENTIALS);
     }
@@ -99,6 +85,7 @@ public class AccountService {
       throw new LoginFailedException(AccountError.LOGIN_FAILED_INVALID_CREDENTIALS);
     }
 
+    // Translate domain state exceptions into API-friendly login failures.
     try {
       candidate.requireNormalStatus();
     } catch (AccountStateException e) {
@@ -126,45 +113,60 @@ public class AccountService {
   @Transactional(readOnly = true)
   public AccountRegisterFieldsCheckResponse checkRegisterFields(
       AccountRegisterFieldsCheckRequest request) {
-    AtomicBoolean isAvailable = new AtomicBoolean(true);
-    List<String> reasons = new ArrayList<>();
 
-    if (request.username() != null && !request.username().isBlank()) {
-      Username.check(request.username())
-          .ifPresent(
-              error -> {
-                isAvailable.set(false);
-                reasons.add(error.getCode());
-              });
+    List<String> reasons =
+        Stream.of(
+                evaluateFieldRule(
+                    request.username(),
+                    new UsernameChecker(),
+                    accountRepository::existsUserByUsername),
+                evaluateFieldRule(
+                    request.email(), new EmailChecker(), accountRepository::existsUserByEmail),
+                evaluateFieldRule(
+                    request.phone(), new PhoneChecker(), accountRepository::existsUserByPhone))
+            .flatMap(Optional::stream)
+            .map(AccountError::getCode)
+            .toList();
 
-      if (accountRepository.existsUserByUsername(request.username())) {
-        isAvailable.set(false);
-        reasons.add(AccountError.CONFLICT_USERNAME_EXISTS.getCode());
+    return new AccountRegisterFieldsCheckResponse(reasons.isEmpty(), reasons);
+  }
+
+  /**
+   * Evaluates a field against format and uniqueness rules. Uses {@code instanceof} to dynamically
+   * probe checker capabilities, keeping the validation flow unified.
+   */
+  private Optional<AccountError> evaluateFieldRule(
+      String value, FormatChecker formatChecker, Predicate<String> existenceChecker) {
+    if (value == null) {
+      return Optional.empty();
+    }
+
+    if (formatChecker instanceof NotBlankChecker notBlankChecker) {
+      if (value.isBlank()) {
+        return Optional.of(notBlankChecker.blankError());
       }
     }
 
-    if (hasValue(request.email())) {
-      Email.check(request.email())
-          .ifPresent(
-              error -> {
-                isAvailable.set(false);
-                reasons.add(error.getCode());
-              });
+    Optional<AccountError> formatError = formatChecker.checkFormat(value);
+    if (formatError.isPresent()) return formatError;
+
+    if (formatChecker instanceof UniqueChecker uniqueChecker) {
+      if (existenceChecker.test(value)) {
+        return Optional.of(uniqueChecker.conflictError());
+      }
     }
 
-    if (hasValue(request.phone())) {
-      Phone.check(request.phone())
-          .ifPresent(
-              error -> {
-                isAvailable.set(false);
-                reasons.add(error.getCode());
-              });
-    }
-
-    return new AccountRegisterFieldsCheckResponse(isAvailable.get(), reasons);
+    return Optional.empty();
   }
 
-  private static boolean hasValue(String value) {
-    return value != null && !value.isBlank();
+  private void requireValid(Optional<AccountError> result) {
+    result.ifPresent(
+        error -> {
+          throw new InputValidationException(error);
+        });
+  }
+
+  private static String nullIfBlank(String value) {
+    return (value == null || value.isBlank()) ? null : value;
   }
 }

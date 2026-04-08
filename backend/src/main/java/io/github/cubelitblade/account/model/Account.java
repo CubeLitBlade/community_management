@@ -114,9 +114,13 @@ public class Account {
     this.touch(now);
   }
 
-  public void updateContactInfo(Email email, Phone phone, Instant now) {
-    this.email = Objects.requireNonNullElse(email, this.email);
-    this.phone = Objects.requireNonNullElse(phone, this.phone);
+  public void updateContactInfo(String email, String phone, Instant now) {
+    if (email != null && !email.isBlank()) {
+      this.email = Email.of(email);
+    }
+    if (phone != null && !phone.isBlank()) {
+      this.phone = Phone.of(phone);
+    }
     this.touch(now);
   }
 

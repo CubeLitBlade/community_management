@@ -16,7 +16,7 @@ public enum AccountError {
   INPUT_EMAIL_BAD_FORMAT("Invalid email format"),
   INPUT_PHONE_BAD_FORMAT("Invalid phone format"),
 
-  INPUT_WITHOUT_CONTACT("At least one contact information (email or phone) must be provided"),
+  INPUT_NO_CONTACT("At least one contact information (email or phone) must be provided"),
 
   CONFLICT_USERNAME_EXISTS("Username already exists. Try another one"),
   CONFLICT_EMAIL_EXISTS("Email already exists. Try another one"),
