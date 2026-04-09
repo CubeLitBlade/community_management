@@ -1,0 +1,63 @@
+package io.github.cubelitblade.post.model;
+
+import lombok.Builder;
+import lombok.Getter;
+import lombok.NoArgsConstructor;
+
+import java.time.Instant;
+
+@Getter
+@NoArgsConstructor
+public class Post {
+  private Long id;;
+  private Long authorId;
+  private String title;
+  private String content;
+  private Status status;
+  private Instant createdAt;
+  private Instant updatedAt;
+
+  public static Post createPost(Long authorId, String title, String content, Instant now) {
+    Post post = new Post();
+
+    post.authorId = authorId;
+    post.title = title;
+    post.content = content;
+    post.status = Status.NORMAL;
+    post.createdAt = now;
+
+    return post;
+  }
+
+  public void archive() {
+    if (status == Status.ARCHIVED) {
+      return;
+    }
+    status = Status.ARCHIVED;
+  }
+
+  public static Post reconstitute(Snapshot snapshot) {
+    if (snapshot == null) return null;
+
+    Post post = new Post();
+    post.id = snapshot.id;
+    post.authorId = snapshot.authorId;
+    post.title = snapshot.title;
+    post.content = snapshot.content;
+    post.status = snapshot.status;
+    post.createdAt = snapshot.createdAt;
+    post.updatedAt = snapshot.updatedAt;
+
+    return post;
+  }
+
+  @Builder
+  public record Snapshot(
+    Long id,
+    Long authorId,
+    String title,
+    String content,
+    Status status,
+    Instant createdAt,
+    Instant updatedAt) {}
+}
