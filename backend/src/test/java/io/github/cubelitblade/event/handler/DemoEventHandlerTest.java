@@ -5,8 +5,8 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.*;
 
-import io.github.cubelitblade.common.exception.TransientEventException;
 import io.github.cubelitblade.event.Event;
+import io.github.cubelitblade.event.exception.TransientEventException;
 import io.github.cubelitblade.event.payload.DemoEventPayload;
 import io.github.cubelitblade.event.payload.EventPayloadMapper;
 import io.github.cubelitblade.event.sse.SseService;

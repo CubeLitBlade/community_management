@@ -1,7 +1,10 @@
 package io.github.cubelitblade.account.application;
 
+import static io.github.cubelitblade.account.common.AccountErrorCode.ACCOUNT_STATE_ARCHIVED;
+import static io.github.cubelitblade.account.common.AccountErrorCode.ACCOUNT_STATE_SUSPENDED;
+
 import io.github.cubelitblade.account.application.validation.*;
-import io.github.cubelitblade.account.common.AccountError;
+import io.github.cubelitblade.account.common.AccountErrorCode;
 import io.github.cubelitblade.account.dto.AccountLoginRequest;
 import io.github.cubelitblade.account.dto.AccountRegisterRequest;
 import io.github.cubelitblade.account.dto.RegisterFieldsCheckRequest;
@@ -16,16 +19,15 @@ import io.github.cubelitblade.account.model.Username;
 import io.github.cubelitblade.account.persistence.AccountRepository;
 import io.github.cubelitblade.account.security.JwtTokenProvider;
 import io.github.cubelitblade.configuration.TimeConfig;
-import lombok.RequiredArgsConstructor;
-import org.springframework.stereotype.Service;
-import org.springframework.transaction.annotation.Transactional;
-
 import java.net.InetAddress;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
+import lombok.RequiredArgsConstructor;
+import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 @Service
 @RequiredArgsConstructor
@@ -44,13 +46,13 @@ public class AccountService {
     // Fast-fail for required fields.
     // The engine skips nulls, so mandatory blanks must be caught early.
     if (request.username() == null || request.username().isBlank()) {
-      throw new InputValidationException(AccountError.INPUT_USERNAME_BLANK);
+      throw new InputValidationException(AccountErrorCode.INPUT_USERNAME_BLANK);
     }
     if (request.password() == null || request.password().isBlank()) {
-      throw new InputValidationException(AccountError.INPUT_PASSWORD_BLANK);
+      throw new InputValidationException(AccountErrorCode.INPUT_PASSWORD_BLANK);
     }
     if (nullIfBlank(request.email()) == null && nullIfBlank(request.phone()) == null) {
-      throw new InputValidationException(AccountError.INPUT_NO_CONTACT);
+      throw new InputValidationException(AccountErrorCode.INPUT_NO_CONTACT);
     }
 
     // Unified format and uniqueness validation via the rule engine.
@@ -81,22 +83,22 @@ public class AccountService {
 
     // Fail securely with a generic error to prevent user enumeration.
     if (candidate == null) {
-      throw new LoginFailedException(AccountError.LOGIN_FAILED_INVALID_CREDENTIALS);
+      throw new LoginFailedException(AccountErrorCode.LOGIN_FAILED_INVALID_CREDENTIALS);
     }
 
     if (!candidate.passwordMatches(request.password(), passwordHasher)) {
-      throw new LoginFailedException(AccountError.LOGIN_FAILED_INVALID_CREDENTIALS);
+      throw new LoginFailedException(AccountErrorCode.LOGIN_FAILED_INVALID_CREDENTIALS);
     }
 
     // Translate domain state exceptions into API-friendly login failures.
     try {
       candidate.requireNormalStatus();
     } catch (AccountStateException e) {
-      switch (e.getError()) {
+      switch (e.getErrorCode()) {
         case ACCOUNT_STATE_ARCHIVED ->
-            throw new LoginFailedException(AccountError.LOGIN_FAILED_ARCHIVED);
+            throw new LoginFailedException(AccountErrorCode.LOGIN_FAILED_ARCHIVED);
         case ACCOUNT_STATE_SUSPENDED ->
-            throw new LoginFailedException(AccountError.LOGIN_FAILED_SUSPENDED);
+            throw new LoginFailedException(AccountErrorCode.LOGIN_FAILED_SUSPENDED);
         default -> throw e;
       }
     }
@@ -127,7 +129,7 @@ public class AccountService {
                 evaluateFieldRule(
                     request.phone(), new PhoneChecker(), accountRepository::existsUserByPhone))
             .flatMap(Optional::stream)
-            .map(AccountError::getCode)
+            .map(AccountErrorCode::name)
             .toList();
 
     return new RegisterFieldsCheckResponse(reasons.isEmpty(), reasons);
@@ -137,7 +139,7 @@ public class AccountService {
    * Evaluates a field against format and uniqueness rules. Uses {@code instanceof} to dynamically
    * probe checker capabilities, keeping the validation flow unified.
    */
-  private Optional<AccountError> evaluateFieldRule(
+  private Optional<AccountErrorCode> evaluateFieldRule(
       String value, FormatChecker formatChecker, Predicate<String> existenceChecker) {
     if (value == null) {
       return Optional.empty();
@@ -145,23 +147,23 @@ public class AccountService {
 
     if (formatChecker instanceof NotBlankChecker notBlankChecker) {
       if (value.isBlank()) {
-        return Optional.of(notBlankChecker.blankError());
+        return Optional.of(notBlankChecker.blankErrorCode());
       }
     }
 
-    Optional<AccountError> formatError = formatChecker.checkFormat(value);
+    Optional<AccountErrorCode> formatError = formatChecker.checkFormat(value);
     if (formatError.isPresent()) return formatError;
 
     if (formatChecker instanceof UniqueChecker uniqueChecker) {
       if (existenceChecker.test(value)) {
-        return Optional.of(uniqueChecker.conflictError());
+        return Optional.of(uniqueChecker.conflictErrorCode());
       }
     }
 
     return Optional.empty();
   }
 
-  private void requireValid(Optional<AccountError> result) {
+  private void requireValid(Optional<AccountErrorCode> result) {
     result.ifPresent(
         error -> {
           switch (error.getCategory()) {

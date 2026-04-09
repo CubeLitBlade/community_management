@@ -20,6 +20,4 @@ public class PostService {
 
     return post.getId();
   }
-
-
 }

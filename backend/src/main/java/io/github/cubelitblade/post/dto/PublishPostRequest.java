@@ -1,7 +1,3 @@
 package io.github.cubelitblade.post.dto;
 
-public record PublishPostRequest(
-  String title,
-  String content
-) {
-}
+public record PublishPostRequest(String title, String content) {}

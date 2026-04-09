@@ -2,9 +2,9 @@ package io.github.cubelitblade.event.handler;
 
 import static org.mockito.BDDMockito.*;
 
-import io.github.cubelitblade.common.exception.FatalEventException;
-import io.github.cubelitblade.common.exception.TransientEventException;
 import io.github.cubelitblade.event.Event;
+import io.github.cubelitblade.event.exception.FatalEventException;
+import io.github.cubelitblade.event.exception.TransientEventException;
 import io.github.cubelitblade.event.payload.EventPayload;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;

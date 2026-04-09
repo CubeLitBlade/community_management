@@ -1,4 +1,4 @@
-package io.github.cubelitblade.common.exception;
+package io.github.cubelitblade.event.exception;
 
 public class FatalEventException extends RuntimeException {
   public FatalEventException(String message) {

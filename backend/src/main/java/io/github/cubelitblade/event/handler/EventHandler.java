@@ -1,8 +1,8 @@
 package io.github.cubelitblade.event.handler;
 
-import io.github.cubelitblade.common.exception.FatalEventException;
-import io.github.cubelitblade.common.exception.TransientEventException;
 import io.github.cubelitblade.event.Event;
+import io.github.cubelitblade.event.exception.FatalEventException;
+import io.github.cubelitblade.event.exception.TransientEventException;
 import io.github.cubelitblade.event.payload.EventPayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

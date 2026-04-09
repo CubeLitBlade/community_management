@@ -1,10 +1,10 @@
 package io.github.cubelitblade.account.exception;
 
-import io.github.cubelitblade.account.common.AccountError;
+import io.github.cubelitblade.account.common.AccountErrorCode;
 
 public class LoginFailedException extends AccountException {
 
-  public LoginFailedException(AccountError error) {
+  public LoginFailedException(AccountErrorCode error) {
     super(error);
   }
 }

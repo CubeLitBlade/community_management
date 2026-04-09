@@ -1,10 +1,10 @@
 package io.github.cubelitblade.account.exception;
 
-import io.github.cubelitblade.account.common.AccountError;
+import io.github.cubelitblade.account.common.AccountErrorCode;
 
 public class InputValidationException extends AccountException {
 
-  public InputValidationException(AccountError error) {
+  public InputValidationException(AccountErrorCode error) {
     super(error);
   }
 }

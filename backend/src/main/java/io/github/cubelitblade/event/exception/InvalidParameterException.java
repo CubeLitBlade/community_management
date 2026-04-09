@@ -1,4 +1,4 @@
-package io.github.cubelitblade.common.exception;
+package io.github.cubelitblade.event.exception;
 
 import lombok.Getter;
 

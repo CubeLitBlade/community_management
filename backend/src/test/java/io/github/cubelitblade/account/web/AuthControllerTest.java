@@ -5,7 +5,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 
 import io.github.cubelitblade.account.application.AccountService;
-import io.github.cubelitblade.account.common.AccountError;
+import io.github.cubelitblade.account.common.AccountErrorCode;
 import io.github.cubelitblade.account.dto.AccountRegisterRequest;
 import io.github.cubelitblade.account.exception.ConflictFieldsException;
 import io.github.cubelitblade.account.model.Account;
@@ -70,7 +70,7 @@ class AuthControllerTest {
 
       doThrow(
               new ConflictFieldsException(
-                  request.username(), AccountError.CONFLICT_USERNAME_EXISTS))
+                  request.username(), AccountErrorCode.CONFLICT_USERNAME_EXISTS))
           .when(accountService)
           .register(request);
 

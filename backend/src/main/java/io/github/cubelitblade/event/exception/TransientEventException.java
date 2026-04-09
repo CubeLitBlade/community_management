@@ -1,4 +1,4 @@
-package io.github.cubelitblade.common.exception;
+package io.github.cubelitblade.event.exception;
 
 public class TransientEventException extends RuntimeException {
   public TransientEventException(String message) {

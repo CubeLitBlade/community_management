@@ -1,9 +1,10 @@
 package io.github.cubelitblade.account.common;
 
+import io.github.cubelitblade.common.exception.ErrorCode;
 import lombok.Getter;
 
 @Getter
-public enum AccountError {
+public enum AccountErrorCode implements ErrorCode {
   INPUT_USERNAME_BLANK(ErrorCategory.INPUT_VALIDATION, "Username cannot be blank"),
   INPUT_EMAIL_BLANK(ErrorCategory.INPUT_VALIDATION, "Email cannot be blank"),
   INPUT_PHONE_BLANK(ErrorCategory.INPUT_VALIDATION, "Phone cannot be blank"),
@@ -41,12 +42,8 @@ public enum AccountError {
   private final ErrorCategory category;
   private final String defaultMessage;
 
-  AccountError(ErrorCategory category, String defaultMessage) {
+  AccountErrorCode(ErrorCategory category, String defaultMessage) {
     this.category = category;
     this.defaultMessage = defaultMessage;
-  }
-
-  public String getCode() {
-    return this.name();
   }
 }

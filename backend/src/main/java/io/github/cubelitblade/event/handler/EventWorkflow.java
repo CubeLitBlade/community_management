@@ -1,10 +1,10 @@
 package io.github.cubelitblade.event.handler;
 
-import io.github.cubelitblade.common.exception.FatalEventException;
 import io.github.cubelitblade.configuration.RetryConfig;
 import io.github.cubelitblade.configuration.TimeConfig;
 import io.github.cubelitblade.event.Event;
 import io.github.cubelitblade.event.EventService;
+import io.github.cubelitblade.event.exception.FatalEventException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;

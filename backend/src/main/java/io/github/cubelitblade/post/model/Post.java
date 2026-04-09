@@ -1,15 +1,15 @@
 package io.github.cubelitblade.post.model;
 
+import java.time.Instant;
 import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 
-import java.time.Instant;
-
 @Getter
 @NoArgsConstructor
 public class Post {
-  private Long id;;
+  private Long id;
+
   private Long authorId;
   private String title;
   private String content;
@@ -53,11 +53,11 @@ public class Post {
 
   @Builder
   public record Snapshot(
-    Long id,
-    Long authorId,
-    String title,
-    String content,
-    Status status,
-    Instant createdAt,
-    Instant updatedAt) {}
+      Long id,
+      Long authorId,
+      String title,
+      String content,
+      Status status,
+      Instant createdAt,
+      Instant updatedAt) {}
 }

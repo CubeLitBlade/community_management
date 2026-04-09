@@ -1,4 +1,3 @@
 package io.github.cubelitblade.post.common;
 
-public enum PostError {
-}
+public enum PostError {}

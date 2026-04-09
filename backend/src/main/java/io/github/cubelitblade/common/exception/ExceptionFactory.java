@@ -1,5 +1,6 @@
 package io.github.cubelitblade.common.exception;
 
+import io.github.cubelitblade.event.exception.InvalidParameterException;
 import java.util.Locale;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.MessageSource;

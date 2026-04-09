@@ -1,6 +1,6 @@
 package io.github.cubelitblade.account.model;
 
-import io.github.cubelitblade.account.common.AccountError;
+import io.github.cubelitblade.account.common.AccountErrorCode;
 import io.github.cubelitblade.account.exception.InputValidationException;
 import java.util.Objects;
 import java.util.Optional;
@@ -47,11 +47,11 @@ public final class Username {
     return this.value;
   }
 
-  public static Optional<AccountError> check(String value) {
+  public static Optional<AccountErrorCode> check(String value) {
     if (value == null || value.isBlank()) {
-      return Optional.of(AccountError.INPUT_USERNAME_BLANK);
+      return Optional.of(AccountErrorCode.INPUT_USERNAME_BLANK);
     } else if (value.length() > 20) {
-      return Optional.of(AccountError.INPUT_USERNAME_BAD_LENGTH);
+      return Optional.of(AccountErrorCode.INPUT_USERNAME_BAD_LENGTH);
     } else {
       return Optional.empty();
     }

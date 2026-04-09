@@ -1,23 +1,16 @@
 package io.github.cubelitblade.account.exception;
 
-import io.github.cubelitblade.account.common.AccountError;
+import io.github.cubelitblade.common.exception.DomainException;
+import io.github.cubelitblade.common.exception.ErrorCode;
 import lombok.Getter;
 
 @Getter
-public class AccountException extends RuntimeException {
-  public final AccountError error;
-
-  public AccountException(String message, AccountError error) {
-    super(message);
-    this.error = error;
+public class AccountException extends DomainException {
+  public AccountException(String message, ErrorCode errorCode) {
+    super(message, errorCode);
   }
 
-  public AccountException(AccountError error) {
-    super(error.getDefaultMessage());
-    this.error = error;
-  }
-
-  public String getErrorCode() {
-    return this.error.getCode();
+  public AccountException(ErrorCode errorCode) {
+    super(errorCode);
   }
 }

@@ -1,7 +1,7 @@
 package io.github.cubelitblade.account.model;
 
 import io.github.cubelitblade.account.application.PasswordHasher;
-import io.github.cubelitblade.account.common.AccountError;
+import io.github.cubelitblade.account.common.AccountErrorCode;
 import io.github.cubelitblade.account.exception.AccountStateException;
 import io.github.cubelitblade.account.exception.LoginFailedException;
 import java.net.InetAddress;
@@ -69,10 +69,10 @@ public class Account {
    */
   public void requireNormalStatus() {
     if (this.status == Status.ARCHIVED) {
-      throw new AccountStateException(AccountError.ACCOUNT_STATE_ARCHIVED);
+      throw new AccountStateException(AccountErrorCode.ACCOUNT_STATE_ARCHIVED);
     }
     if (this.status == Status.SUSPENDED) {
-      throw new AccountStateException(AccountError.ACCOUNT_STATE_SUSPENDED);
+      throw new AccountStateException(AccountErrorCode.ACCOUNT_STATE_SUSPENDED);
     }
   }
 
@@ -93,7 +93,7 @@ public class Account {
   public void changePassword(
       String currentPassword, String newPassword, PasswordHasher passwordHasher, Instant now) {
     if (!passwordHasher.matches(currentPassword, this.passwordHash)) {
-      throw new LoginFailedException(AccountError.LOGIN_FAILED_INVALID_CREDENTIALS);
+      throw new LoginFailedException(AccountErrorCode.LOGIN_FAILED_INVALID_CREDENTIALS);
     }
     this.passwordHash = passwordHasher.fromRaw(newPassword);
     this.touch(now);
@@ -143,7 +143,7 @@ public class Account {
     if (this.status == Status.SUSPENDED) {
       return;
     } else if (this.status == Status.ARCHIVED) {
-      throw new AccountStateException(AccountError.ACCOUNT_STATE_ARCHIVED);
+      throw new AccountStateException(AccountErrorCode.ACCOUNT_STATE_ARCHIVED);
     }
     this.status = Status.SUSPENDED;
     this.touch(now);
@@ -158,7 +158,7 @@ public class Account {
     if (this.status == Status.NORMAL) {
       return;
     } else if (this.status == Status.ARCHIVED) {
-      throw new AccountStateException(AccountError.ACCOUNT_STATE_ARCHIVED);
+      throw new AccountStateException(AccountErrorCode.ACCOUNT_STATE_ARCHIVED);
     }
     this.status = Status.NORMAL;
     this.touch(now);

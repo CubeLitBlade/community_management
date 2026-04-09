@@ -1,7 +1,7 @@
 package io.github.cubelitblade.common.advice;
 
 import io.github.cubelitblade.account.exception.*;
-import io.github.cubelitblade.common.exception.InvalidParameterException;
+import io.github.cubelitblade.event.exception.InvalidParameterException;
 import java.util.Objects;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
