@@ -1,6 +1,5 @@
 package io.github.cubelitblade.event.model;
 
-import com.baomidou.mybatisplus.annotation.EnumValue;
 import java.util.Arrays;
 import java.util.Map;
 import java.util.stream.Collectors;
@@ -12,11 +11,12 @@ public enum Type {
   DEMO_EVENT("demo");
 
   private static final Map<String, Type> map =
-      Arrays.stream(Type.values()).collect(Collectors.toMap(Type::getType, v -> v));
-  @EnumValue private final String type;
+      Arrays.stream(Type.values()).collect(Collectors.toMap(Type::getValue, v -> v));
 
-  Type(String type) {
-    this.type = type;
+  private final String value;
+
+  Type(String value) {
+    this.value = value;
   }
 
   public static Type from(String type) {

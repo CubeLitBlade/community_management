@@ -1,6 +1,8 @@
 package io.github.cubelitblade.event.model;
 
-import com.baomidou.mybatisplus.annotation.EnumValue;
+import java.util.Arrays;
+import java.util.Map;
+import java.util.stream.Collectors;
 import lombok.Getter;
 
 @Getter
@@ -12,9 +14,20 @@ public enum Status {
   FAILED("failed"),
   DEAD("dead");
 
-  @EnumValue private final String status;
+  private static final Map<String, Status> map =
+      Arrays.stream(Status.values()).collect(Collectors.toMap(Status::getValue, v -> v));
 
-  Status(String status) {
-    this.status = status;
+  private final String value;
+
+  Status(String value) {
+    this.value = value;
+  }
+
+  public static Status from(String statusName) {
+    Status status = map.get(statusName);
+    if (status == null) {
+      throw new IllegalArgumentException("Unknown event status: " + statusName);
+    }
+    return status;
   }
 }

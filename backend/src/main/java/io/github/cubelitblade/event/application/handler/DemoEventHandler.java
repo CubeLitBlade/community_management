@@ -47,6 +47,7 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
   @Override
   public void process(Event event) {
     Long eventId = event.getId();
+
     DemoEventPayload payload =
         eventPayloadMapper.fromJsonNode(event.getPayload(), getPayloadType());
 
@@ -81,7 +82,7 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
 
     // Step 4: Finalize the event outcome
     if (event.getCurrentStep().equals(STEP_TX_VALIDATED)) {
-      decideResult(event, payload);
+      decideResult(payload);
     }
   }
 
@@ -138,7 +139,7 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
     }
   }
 
-  private void decideResult(Event event, DemoEventPayload payload) {
+  private void decideResult(DemoEventPayload payload) {
     if (!payload.expectSuccess()) {
       throw new RejectedEventException("Simulated rejection based on payload condition.");
     }

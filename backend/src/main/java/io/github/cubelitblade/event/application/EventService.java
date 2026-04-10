@@ -1,65 +1,56 @@
 package io.github.cubelitblade.event.application;
 
-import io.github.cubelitblade.common.exception.ExceptionFactory;
+import io.github.cubelitblade.configuration.TimeConfig;
 import io.github.cubelitblade.event.model.Event;
 import io.github.cubelitblade.event.model.Type;
 import io.github.cubelitblade.event.model.payload.DemoEventPayload;
-import io.github.cubelitblade.event.model.payload.EventPayloadMapper;
+import io.github.cubelitblade.event.model.payload.EventPayload;
 import io.github.cubelitblade.event.persistence.EventRepository;
-import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import tools.jackson.databind.JsonNode;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
 public class EventService {
   private final EventRepository eventRepository;
-  private final EventPayloadMapper eventPayloadMapper;
-  private final ExceptionFactory exceptionFactory;
+  private final TimeConfig timeConfig;
 
-  public List<Event> claimWaitingEvents(int count) {
-    return eventRepository.claimWaitingEvents(count);
+  public List<Event> getWaitingEvents(int count) {
+    return eventRepository.findWaitingEvents(count, timeConfig.now());
   }
 
-  public void resetZombieEvents(Instant threshold) {
-    eventRepository.resetZombieEvents(threshold);
+  public List<Event> getZombieEvents(int count, Instant threshold) {
+    return eventRepository.findZombieEvents(count, threshold, timeConfig.now());
   }
 
-  public Event enqueueEvent(Type eventType, DemoEventPayload eventPayload) {
-    Event event =
-        Event.create(
-            eventType, eventPayloadMapper.toJsonNode(eventPayload), Clock.systemDefaultZone());
-    eventRepository.saveOrThrow(event);
-    return event;
-  }
-
-  public Event enqueueEvent(String eventType, DemoEventPayload eventPayload) {
-    try {
-      Event event =
-          Event.create(
-              eventType, eventPayloadMapper.toJsonNode(eventPayload), Clock.systemDefaultZone());
-      eventRepository.saveOrThrow(event);
-      return event;
-    } catch (IllegalArgumentException e) {
-      log.error("Invalid event type: {}", eventType);
-      throw exceptionFactory.onUnknownEventType(eventType);
+  public Event createEvent(String type, JsonNode payloadJson) {
+    if (getPayloadClass(type) == null) {
+      throw new IllegalArgumentException("Unknown event type: " + type);
     }
-  }
 
-  public Event enqueueEvent(Event event) {
-    eventRepository.saveOrThrow(event);
+    Event event = Event.create(Type.from(type), payloadJson, timeConfig.now());
+
+    eventRepository.save(event);
     return event;
   }
 
-  public void updateEvent(Event event) {
-    eventRepository.updateOrThrow(event);
+  public boolean tryUpdate(Event event) {
+    return eventRepository.tryUpdate(event);
   }
 
   public Event find(long id) {
-    return eventRepository.findById(id);
+    return eventRepository.find(id);
+  }
+
+  private Class<? extends EventPayload> getPayloadClass(String type) {
+    return switch (type) {
+      case "demo" -> DemoEventPayload.class;
+      default -> null;
+    };
   }
 }

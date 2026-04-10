@@ -1,71 +1,60 @@
 package io.github.cubelitblade.event.model;
 
-import com.baomidou.mybatisplus.annotation.*;
-import io.github.cubelitblade.common.typehandler.JsonbTypeHandler;
-import java.time.Clock;
 import java.time.Instant;
 import java.util.Objects;
 import lombok.AccessLevel;
+import lombok.Builder;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
-import lombok.Setter;
 import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.JsonNode;
 
 @Slf4j
 @Getter
-@Setter(AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
-@TableName(autoResultMap = true)
 public class Event {
-  @TableId(type = IdType.AUTO)
-  @Setter(AccessLevel.NONE)
   private Long id;
-
   private Type type;
-
-  @TableField(typeHandler = JsonbTypeHandler.class)
   private JsonNode payload;
-
-  private Status status = Status.WAITING;
-
-  private Integer retryCount = 0;
-
+  private Status status;
+  private Integer retryCount;
   private String errorMsg;
-
   private Instant createdAt;
-
-  @TableField(updateStrategy = FieldStrategy.ALWAYS)
   private Instant nextRunAt;
-
   private Instant updatedAt;
-
   private String currentStep;
+  private Integer version;
 
-  public static Event create(Type type, JsonNode payload, Clock clock) {
-    Instant now = Instant.now(clock);
-
+  public static Event create(Type type, JsonNode payload, Instant now) {
     Event event = new Event();
+
     event.type = type;
     event.payload = payload;
     event.status = Status.WAITING;
+    event.retryCount = 0;
     event.createdAt = now;
     event.nextRunAt = now;
     event.updatedAt = now;
+    event.version = 0;
 
     return event;
   }
 
-  public static Event create(String type, JsonNode payload, Clock clock) {
-    Instant now = Instant.now(clock);
+  public static Event reconstitute(Snapshot snapshot) {
+    if (snapshot == null) return null;
 
     Event event = new Event();
-    event.type = Type.from(type);
-    event.payload = payload;
-    event.status = Status.WAITING;
-    event.createdAt = now;
-    event.nextRunAt = now;
-    event.updatedAt = now;
+    event.id = snapshot.id;
+    event.type = snapshot.type;
+    event.payload = snapshot.payload;
+    event.status = snapshot.status;
+    event.retryCount = snapshot.retryCount;
+    event.errorMsg = snapshot.errorMsg;
+    event.createdAt = snapshot.createdAt;
+    event.nextRunAt = snapshot.nextRunAt;
+    event.updatedAt = snapshot.updatedAt;
+    event.currentStep = snapshot.currentStep;
+    event.version = snapshot.version;
 
     return event;
   }
@@ -139,6 +128,16 @@ public class Event {
     this.touch(now);
   }
 
+  /**
+   * Synchronizes the in-memory version after a successful database update.
+   *
+   * <p><b>Infrastructure Use Only:</b> Must ONLY be called by {@code EventRepository} upon a
+   * successful optimistic lock update.
+   */
+  public void tick() {
+    this.version++;
+  }
+
   private void touch(Instant now) {
     this.updatedAt = now;
   }
@@ -162,4 +161,18 @@ public class Event {
     String prefix = "[Event #" + this.id + "] ";
     return prefix + Objects.requireNonNullElse(reason, "Encountered an unexpected error");
   }
+
+  @Builder
+  public record Snapshot(
+      Long id,
+      Type type,
+      JsonNode payload,
+      Status status,
+      Integer retryCount,
+      String errorMsg,
+      Instant createdAt,
+      Instant nextRunAt,
+      Instant updatedAt,
+      String currentStep,
+      Integer version) {}
 }

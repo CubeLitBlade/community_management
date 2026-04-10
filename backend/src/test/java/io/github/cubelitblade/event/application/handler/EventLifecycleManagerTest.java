@@ -1,6 +1,7 @@
 package io.github.cubelitblade.event.application.handler;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
 
@@ -41,14 +42,15 @@ class EventLifecycleManagerTest {
     EventRetryPolicy eventRetryPolicy = new EventRetryPolicy(retryConfig);
 
     lifecycleManager = new EventLifecycleManager(eventRepository, timeConfig, eventRetryPolicy);
+    given(eventRepository.tryUpdate(org.mockito.ArgumentMatchers.any(Event.class)))
+        .willReturn(true);
   }
 
   @Test
-  @DisplayName("Abort: should mark event as FAILED")
+  @DisplayName("Complete: should mark event as SUCCEEDED")
   void should_mark_as_succeeded_when_complete_is_called() {
     // Given
-    Event event =
-        Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.getClock());
+    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.now());
 
     // When
     lifecycleManager.complete(event);
@@ -57,15 +59,14 @@ class EventLifecycleManagerTest {
     assertThat(event)
         .hasFieldOrPropertyWithValue("nextRunAt", null)
         .hasFieldOrPropertyWithValue("status", Status.SUCCEEDED);
-    then(eventRepository).should().updateOrThrow(event);
+    then(eventRepository).should().tryUpdate(event);
   }
 
   @Test
   @DisplayName("Abort: should mark event as FAILED")
   void should_mark_as_failed_when_abort_is_called() {
     // Given
-    Event event =
-        Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.getClock());
+    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.now());
     String reason = "for testing purposes";
 
     // When
@@ -76,15 +77,14 @@ class EventLifecycleManagerTest {
         .hasFieldOrPropertyWithValue("nextRunAt", null)
         .hasFieldOrPropertyWithValue("errorMsg", reason)
         .hasFieldOrPropertyWithValue("status", Status.FAILED);
-    then(eventRepository).should().updateOrThrow(event);
+    then(eventRepository).should().tryUpdate(event);
   }
 
   @Test
   @DisplayName("GiveUp: should mark event as DEAD")
   void should_mark_as_dead_when_giveUp_is_called() {
     // Given
-    Event event =
-        Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.getClock());
+    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.now());
     String reason = "for testing purposes";
 
     // When
@@ -95,16 +95,15 @@ class EventLifecycleManagerTest {
         .hasFieldOrPropertyWithValue("nextRunAt", null)
         .hasFieldOrPropertyWithValue("errorMsg", reason)
         .hasFieldOrPropertyWithValue("status", Status.DEAD);
-    then(eventRepository).should().updateOrThrow(event);
+    then(eventRepository).should().tryUpdate(event);
   }
 
   @Test
   @DisplayName("Reschedule: should delay execution and increment retry count")
   void should_reschedule_with_delay_when_reschedule_is_called() {
     // Given
-    Event event =
-        Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.getClock());
-    Instant before = event.getNextRunAt();
+    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.now());
+    lifecycleManager.run(event);
     String reason = "for testing purposes";
 
     // When
@@ -112,23 +111,23 @@ class EventLifecycleManagerTest {
 
     // Then
     assertThat(event)
-        .hasFieldOrPropertyWithValue("nextRunAt", before.plus(retryConfig.baseDelay()))
+        .hasFieldOrPropertyWithValue("nextRunAt", timeConfig.now().plus(retryConfig.baseDelay()))
         .hasFieldOrPropertyWithValue("errorMsg", reason)
         .hasFieldOrPropertyWithValue("retryCount", 1)
         .hasFieldOrPropertyWithValue("status", Status.WAITING);
-    then(eventRepository).should().updateOrThrow(event);
+    then(eventRepository).should(times(2)).tryUpdate(event);
   }
 
   @Test
   @DisplayName("Max Retries: should mark as DEAD when limit exceeded")
   void should_mark_as_dead_when_retry_limit_exceeded() {
     // Given
-    Event event =
-        Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.getClock());
+    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.now());
     String reason = "for testing purposes";
 
     // When
     for (int i = 0; i <= retryConfig.maxRetries(); i++) {
+      lifecycleManager.run(event);
       lifecycleManager.reschedule(event, reason);
     }
 
@@ -138,15 +137,15 @@ class EventLifecycleManagerTest {
         .hasFieldOrPropertyWithValue("retryCount", retryConfig.maxRetries())
         .hasFieldOrPropertyWithValue("status", Status.DEAD);
 
-    // Total calls: maxRetries (reschedules) + 1 (final dead mark)
-    then(eventRepository).should(times(retryConfig.maxRetries() + 1)).updateOrThrow(event);
+    // Total calls: each attempt has one run and one reschedule/dead transition.
+    then(eventRepository).should(times((retryConfig.maxRetries() + 1) * 2)).tryUpdate(event);
   }
 
   @Test
   void should_update_step_when_advanceEventToStep_is_called() {
     // Given
-    Event event =
-        Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.getClock());
+    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.now());
+    lifecycleManager.run(event);
     String step = "checkpoint";
 
     // When
@@ -154,6 +153,6 @@ class EventLifecycleManagerTest {
 
     // Then
     assertThat(event.getCurrentStep()).isEqualTo(step);
-    then(eventRepository).should().updateOrThrow(event);
+    then(eventRepository).should(times(2)).tryUpdate(event);
   }
 }

@@ -1,9 +1,9 @@
 package io.github.cubelitblade.event.application.handler;
 
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.*;
 
-import io.github.cubelitblade.event.exception.DownstreamTimeoutException;
-import io.github.cubelitblade.event.exception.RejectedEventException;
+import io.github.cubelitblade.event.exception.EventExecutionException;
 import io.github.cubelitblade.event.model.Event;
 import io.github.cubelitblade.event.model.Status;
 import io.github.cubelitblade.event.model.Type;
@@ -17,15 +17,13 @@ import org.mockito.junit.jupiter.MockitoExtension;
 
 @ExtendWith(MockitoExtension.class)
 class EventHandlerTest {
-  @Mock private EventLifecycleManager workflow;
-
   @Mock private Event event;
 
   private TestEventHandler handler;
 
   @BeforeEach
   void setUp() {
-    TestEventHandler realHandler = new TestEventHandler(workflow);
+    TestEventHandler realHandler = new TestEventHandler();
     handler = spy(realHandler);
   }
 
@@ -39,12 +37,12 @@ class EventHandlerTest {
     handler.handleEvent(event);
 
     // Then
-    then(workflow).shouldHaveNoInteractions();
+    then(handler).should(never()).process(event);
   }
 
   @Test
-  @DisplayName("Complete: should complete workflow when process succeeds")
-  void should_complete_when_process_succeeds() {
+  @DisplayName("Process: should invoke process when event is RUNNING")
+  void should_invoke_process_when_status_is_running() {
     // Given
     given(event.getStatus()).willReturn(Status.RUNNING);
 
@@ -52,60 +50,31 @@ class EventHandlerTest {
     handler.handleEvent(event);
 
     // Then
-    then(workflow).should().complete(event);
+    then(handler).should().process(event);
   }
 
   @Test
-  @DisplayName("GiveUp: should call giveUp on FatalEventException")
-  void should_giveUp_on_fatal_exception() {
-    // Given
-    String reason = "for testing purposes";
-    given(event.getStatus()).willReturn(Status.RUNNING);
-    willThrow(new RejectedEventException(reason)).given(handler).process(event);
-
-    // When
-    handler.handleEvent(event);
-
-    // Then
-    then(workflow).should().giveUp(eq(event), eq(reason));
-  }
-
-  @Test
-  @DisplayName("Reschedule: should reschedule on TransientEventException")
-  void should_reschedule_on_transient_exception() {
+  @DisplayName("Wrap: should wrap process exceptions in EventExecutionException")
+  void should_wrap_process_exception() {
     // Given
     String reason = "for testing purposes";
     given(event.getStatus()).willReturn(Status.RUNNING);
-    willThrow(new DownstreamTimeoutException(reason)).given(handler).process(event);
+    given(event.getId()).willReturn(42L);
+    willThrow(new Exception(reason)).given(handler).process(event);
 
     // When
-    handler.handleEvent(event);
-
-    // Then
-    then(workflow).should().reschedule(eq(event), eq(reason));
-  }
-
-  @Test
-  @DisplayName("Abort: should abort on unknown exception")
-  void should_abort_on_unknown_exception() {
-    // Given
-    String reason = "for testing purposes";
-    given(event.getStatus()).willReturn(Status.RUNNING);
-    willThrow(new RuntimeException(reason)).given(handler).process(event);
-
-    // When
-    handler.handleEvent(event);
-
-    // Then
-    then(workflow).should().abort(eq(event), eq(reason));
+    assertThatThrownBy(() -> handler.handleEvent(event))
+        .isInstanceOf(EventExecutionException.class)
+        .hasCauseInstanceOf(Exception.class)
+        .hasMessageContaining(reason);
   }
 
   private record TestEventPayload() implements EventPayload {}
 
   private static class TestEventHandler extends EventHandler<TestEventPayload> {
 
-    public TestEventHandler(EventLifecycleManager workflow) {
-      super(workflow);
+    public TestEventHandler() {
+      super(null);
     }
 
     @Override

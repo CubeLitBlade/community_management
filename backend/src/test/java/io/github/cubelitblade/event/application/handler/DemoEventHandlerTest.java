@@ -5,6 +5,7 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.*;
 
+import io.github.cubelitblade.event.exception.RejectedEventException;
 import io.github.cubelitblade.event.exception.TransientEventException;
 import io.github.cubelitblade.event.infra.sse.SseService;
 import io.github.cubelitblade.event.model.Event;
@@ -44,7 +45,7 @@ class DemoEventHandlerTest {
 
   @BeforeEach
   void setUp() {
-    event = Event.create(Type.DEMO_EVENT, JsonNodeFactory.instance.nullNode(), clock);
+    event = Event.create(Type.DEMO_EVENT, JsonNodeFactory.instance.nullNode(), Instant.now(clock));
     event.run(Instant.now(clock));
 
     willAnswer(
@@ -52,7 +53,7 @@ class DemoEventHandlerTest {
               Event e = inv.getArgument(0);
               String step = inv.getArgument(1);
               e.advanceTo(step, Instant.now(clock));
-              return null;
+              return true;
             })
         .given(workflow)
         .advanceEventToStep(any(Event.class), any(String.class));
@@ -68,8 +69,8 @@ class DemoEventHandlerTest {
   }
 
   @Test
-  @DisplayName("Process: should execute all steps and complete")
-  void should_execute_all_steps_and_complete() {
+  @DisplayName("Process: should execute all business steps")
+  void should_execute_all_steps() {
     // Given
     DemoEventPayload payload = new DemoEventPayload("hello", 0L, 0, true);
     given(eventPayloadMapper.fromJsonNode(any(JsonNode.class), eq(DemoEventPayload.class)))
@@ -83,7 +84,6 @@ class DemoEventHandlerTest {
     then(workflow).should().advanceEventToStep(event, "init");
     then(workflow).should().advanceEventToStep(event, "time-consuming-work-done");
     then(workflow).should().advanceEventToStep(event, "tx-validated");
-    then(workflow).should().complete(event);
   }
 
   @Test
@@ -102,23 +102,20 @@ class DemoEventHandlerTest {
     then(sseService).shouldHaveNoInteractions();
     then(workflow).should(never()).advanceEventToStep(event, "init");
     then(workflow).should().advanceEventToStep(event, "tx-validated");
-    then(workflow).should().complete(event);
   }
 
   @Test
   @DisplayName("Decision: should abort on payload failure")
-  void should_abort_when_payload_indicates_failure() {
+  void should_throw_rejected_event_when_payload_indicates_failure() {
     // Given
     DemoEventPayload payload = new DemoEventPayload(null, 0L, 0, false);
     given(eventPayloadMapper.fromJsonNode(any(JsonNode.class), eq(DemoEventPayload.class)))
         .willReturn(payload);
 
     // When
-    handler.process(event);
-
-    // Then
-    then(workflow).should().abort(eq(event), any(String.class));
-    then(workflow).should(never()).complete(event);
+    assertThatThrownBy(() -> handler.process(event))
+        .isInstanceOf(RejectedEventException.class)
+        .hasMessageContaining("Simulated rejection based on payload condition.");
   }
 
   @Test
@@ -132,6 +129,6 @@ class DemoEventHandlerTest {
     // When & Then
     assertThatThrownBy(() -> handler.process(event))
         .isInstanceOf(TransientEventException.class)
-        .hasMessageContaining("Retry threshold not reached");
+        .hasMessageContaining("Simulated downstream timeout");
   }
 }

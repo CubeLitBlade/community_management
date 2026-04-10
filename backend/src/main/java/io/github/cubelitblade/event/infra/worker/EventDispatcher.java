@@ -27,47 +27,50 @@ public class EventDispatcher {
   }
 
   @Async("workerExecutor")
-  public void dispatch(Event runningEvent) {
+  public void dispatch(Event event) {
 
     Type type;
     EventHandler<?> handler;
 
     try {
-      type = runningEvent.getType();
+      type = event.getType();
     } catch (IllegalArgumentException e) {
-      lifecycleManager.abort(runningEvent, "Invalid event type: " + runningEvent.getType());
-      log.error("Unknown event type: {}", runningEvent.getType());
+      lifecycleManager.abort(event, "Invalid event type: " + event.getType());
+      log.error("Unknown event type: {}", event.getType());
       return;
     }
 
     handler = map.get(type);
 
     if (handler == null) {
-      lifecycleManager.abort(runningEvent, "No handler for event type: " + type);
+      lifecycleManager.abort(event, "No handler for event type: " + type);
       log.error("No handler for event type {}", type);
       return;
     }
 
+    if (!lifecycleManager.run(event)) {
+      log.warn("[Event #{}]: Failed to claim (optimistic lock), aborting dispatch.", event.getId());
+      return;
+    }
+
     try {
-      handler.handleEvent(runningEvent);
-      lifecycleManager.complete(runningEvent);
+      handler.handleEvent(event);
+      lifecycleManager.complete(event);
     } catch (EventExecutionException e) {
       Throwable cause = e.getCause();
 
       if (EventRetryPolicy.isTransient(cause)) {
-        lifecycleManager.reschedule(runningEvent, cause.getMessage());
+        lifecycleManager.reschedule(event, cause.getMessage());
       } else {
-        lifecycleManager.giveUp(runningEvent, "Fatal error: " + cause.getMessage());
-        log.error(
-            "Event #{} failed with fatal error: {}", runningEvent.getId(), cause.getMessage());
+        lifecycleManager.giveUp(event, "Fatal error: " + cause.getMessage());
+        log.error("[Event #{}] Failed with fatal error: {}", event.getId(), cause.getMessage());
       }
     } catch (IllegalStateException e) {
-      lifecycleManager.abort(runningEvent, "Illegal state: " + e.getMessage());
+      lifecycleManager.abort(event, "Illegal state: " + e.getMessage());
       log.error("Illegal state: {}", e.getMessage());
     } catch (Exception e) {
-      lifecycleManager.abort(runningEvent, "Unexpected error: " + e.getMessage());
-      log.error(
-          "Unexpected error while processing event #{}: {}", runningEvent.getId(), e.getMessage());
+      lifecycleManager.abort(event, "Unexpected error: " + e.getMessage());
+      log.error("Unexpected error while processing event #{}: {}", event.getId(), e.getMessage());
     }
   }
 }

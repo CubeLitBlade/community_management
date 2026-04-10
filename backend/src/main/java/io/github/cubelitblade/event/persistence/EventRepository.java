@@ -1,93 +1,95 @@
 package io.github.cubelitblade.event.persistence;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import io.github.cubelitblade.configuration.TimeConfig;
+import com.baomidou.mybatisplus.core.conditions.query.QueryWrapper;
 import io.github.cubelitblade.event.model.Event;
 import io.github.cubelitblade.event.model.Status;
 import java.time.Instant;
 import java.util.List;
+import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
-import org.apache.ibatis.executor.BatchResult;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Repository
 @RequiredArgsConstructor
 public class EventRepository {
+
   private final EventMapper eventMapper;
-  private final TimeConfig timeConfig;
 
-  @Transactional
-  public List<Event> claimWaitingEvents(int count) {
-    LambdaQueryWrapper<Event> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-    lambdaQueryWrapper
-        .eq(Event::getStatus, Status.WAITING)
-        .le(Event::getNextRunAt, Instant.now())
-        .orderByAsc(Event::getNextRunAt)
-        .last("for update skip locked limit " + count);
-    List<Event> eventList = eventMapper.selectList(lambdaQueryWrapper);
-
-    for (Event event : eventList) {
-      event.run(timeConfig.now());
+  @Transactional(readOnly = true)
+  public List<Event> findWaitingEvents(int count, Instant now) {
+    if (count <= 0) {
+      throw new IllegalArgumentException("Count must be greater than 0");
     }
 
-    updateOrThrow(eventList);
-    return eventList;
+    LambdaQueryWrapper<EventPo> query =
+        new QueryWrapper<EventPo>()
+            .lambda()
+            .eq(EventPo::getStatus, Status.WAITING.getValue())
+            .le(EventPo::getNextRunAt, now)
+            .orderByAsc(EventPo::getNextRunAt)
+            .last("limit " + count);
+
+    return eventMapper.selectList(query).stream()
+        .peek(
+            po ->
+                log.info(
+                    "[DEBUG][Event #{}] EventPo.payload is null? {}, class: {}",
+                    po.getId(),
+                    po.getPayload() == null,
+                    po.getPayload() != null ? po.getPayload().getClass().getSimpleName() : "N/A"))
+        .map(EventPo::toEvent)
+        .collect(Collectors.toList());
   }
 
-  @Transactional
-  public void resetZombieEvents(Instant threshold) {
-    LambdaQueryWrapper<Event> lambdaQueryWrapper = new LambdaQueryWrapper<>();
-    lambdaQueryWrapper
-        .eq(Event::getStatus, Status.RUNNING)
-        .le(Event::getUpdatedAt, threshold)
-        .orderByAsc(Event::getUpdatedAt)
-        .last("for update skip locked");
-    List<Event> eventList = eventMapper.selectList(lambdaQueryWrapper);
-
-    for (Event event : eventList) {
-      event.revive(timeConfig.now(), timeConfig.now());
+  @Transactional(readOnly = true)
+  public List<Event> findZombieEvents(int count, Instant threshold, Instant now) {
+    if (count <= 0) {
+      throw new IllegalArgumentException("Count must be greater than 0");
     }
 
-    updateOrThrow(eventList);
+    LambdaQueryWrapper<EventPo> query =
+        new QueryWrapper<EventPo>()
+            .lambda()
+            .eq(EventPo::getStatus, Status.RUNNING.getValue())
+            .le(EventPo::getUpdatedAt, threshold)
+            .orderByAsc(EventPo::getUpdatedAt)
+            .last("limit " + count);
+
+    return eventMapper.selectList(query).stream()
+        .map(EventPo::toEvent)
+        .collect(Collectors.toList());
   }
 
-  public void save(Event event) {
-    eventMapper.insert(event);
-  }
+  public boolean tryUpdate(Event event) {
+    EventPo eventPo = EventPo.of(event);
+    boolean succeedUpdate = eventMapper.updateById(eventPo) == 1;
 
-  public void saveOrThrow(Event event) {
-    if (eventMapper.insert(event) != 1) {
-      throw new RuntimeException("Failed to save event: " + event);
+    if (succeedUpdate) {
+      event.tick();
     }
-  }
 
-  public void update(Event event) {
-    eventMapper.updateById(event);
-  }
-
-  @Transactional
-  public void update(List<Event> events) {
-    eventMapper.updateById(events);
+    return succeedUpdate;
   }
 
   public void updateOrThrow(Event event) {
-    if (eventMapper.updateById(event) != 1) {
-      throw new RuntimeException("Failed to update event: " + event);
+    EventPo eventPo = EventPo.of(event);
+    if (eventMapper.updateById(eventPo) != 1) {
+      throw new IllegalStateException(
+          "[Event #"
+              + event.getId()
+              + "] State update failed, possible concurrent modification or DB error");
     }
   }
 
-  @Transactional
-  public void updateOrThrow(List<Event> events) {
-    List<BatchResult> results = eventMapper.updateById(events);
-    for (BatchResult result : results) {
-      if (result.getUpdateCounts()[0] != 1) {
-        throw new RuntimeException("Failed to update event: " + result);
-      }
-    }
+  public void save(Event event) {
+    eventMapper.insert(EventPo.of(event));
   }
 
-  public Event findById(long id) {
-    return eventMapper.selectById(id);
+  public Event find(long id) {
+    return eventMapper.selectById(id).toEvent();
   }
 }
