@@ -18,7 +18,7 @@ import io.github.cubelitblade.account.model.Account;
 import io.github.cubelitblade.account.model.Username;
 import io.github.cubelitblade.account.persistence.AccountRepository;
 import io.github.cubelitblade.account.security.JwtTokenProvider;
-import io.github.cubelitblade.configuration.TimeConfig;
+import io.github.cubelitblade.common.time.TimeProvider;
 import java.net.InetAddress;
 import java.time.Instant;
 import java.util.List;
@@ -34,14 +34,14 @@ import org.springframework.transaction.annotation.Transactional;
 public class AccountService {
   private final AccountRepository accountRepository;
   private final PasswordHasher passwordHasher;
-  private final TimeConfig timeConfig;
+  private final TimeProvider timeProvider;
   private final JwtTokenProvider jwtTokenProvider;
 
   private static final Predicate<String> SKIP_UNIQUENESS_CHECK = _ -> false;
 
   @Transactional
   public Account register(AccountRegisterRequest request) {
-    Instant now = timeConfig.now();
+    Instant now = timeProvider.now();
 
     // Fast-fail for required fields.
     // The engine skips nulls, so mandatory blanks must be caught early.
@@ -78,7 +78,7 @@ public class AccountService {
 
   @Transactional
   public TokenResponse login(AccountLoginRequest request, InetAddress clientIpAddress) {
-    Instant now = timeConfig.now();
+    Instant now = timeProvider.now();
     Account candidate = accountRepository.findByUsername(request.username());
 
     // Fail securely with a generic error to prevent user enumeration.

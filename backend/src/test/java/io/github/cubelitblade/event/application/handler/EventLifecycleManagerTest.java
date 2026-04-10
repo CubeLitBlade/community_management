@@ -5,8 +5,8 @@ import static org.mockito.BDDMockito.given;
 import static org.mockito.BDDMockito.then;
 import static org.mockito.Mockito.times;
 
+import io.github.cubelitblade.common.time.TimeProvider;
 import io.github.cubelitblade.configuration.RetryConfig;
-import io.github.cubelitblade.configuration.TimeConfig;
 import io.github.cubelitblade.event.application.EventRetryPolicy;
 import io.github.cubelitblade.event.model.Event;
 import io.github.cubelitblade.event.model.Status;
@@ -29,19 +29,19 @@ class EventLifecycleManagerTest {
   @Mock private EventRepository eventRepository;
 
   private RetryConfig retryConfig;
-  private TimeConfig timeConfig;
+  private TimeProvider timeProvider;
   private EventLifecycleManager lifecycleManager;
 
   @BeforeEach
   void setUp() {
     retryConfig = new RetryConfig(Duration.ofSeconds(1), Duration.ofSeconds(5), 3);
 
-    timeConfig = new TimeConfig();
-    timeConfig.setClock(Clock.fixed(Instant.parse("2026-03-26T15:30:00Z"), ZoneId.of("UTC+8")));
+    timeProvider =
+        new TimeProvider(Clock.fixed(Instant.parse("2026-03-26T15:30:00Z"), ZoneId.of("UTC+8")));
 
     EventRetryPolicy eventRetryPolicy = new EventRetryPolicy(retryConfig);
 
-    lifecycleManager = new EventLifecycleManager(eventRepository, timeConfig, eventRetryPolicy);
+    lifecycleManager = new EventLifecycleManager(eventRepository, timeProvider, eventRetryPolicy);
     given(eventRepository.tryUpdate(org.mockito.ArgumentMatchers.any(Event.class)))
         .willReturn(true);
   }
@@ -50,7 +50,7 @@ class EventLifecycleManagerTest {
   @DisplayName("Complete: should mark event as SUCCEEDED")
   void should_mark_as_succeeded_when_complete_is_called() {
     // Given
-    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.now());
+    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeProvider.now());
 
     // When
     lifecycleManager.complete(event);
@@ -66,7 +66,7 @@ class EventLifecycleManagerTest {
   @DisplayName("Abort: should mark event as FAILED")
   void should_mark_as_failed_when_abort_is_called() {
     // Given
-    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.now());
+    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeProvider.now());
     String reason = "for testing purposes";
 
     // When
@@ -84,7 +84,7 @@ class EventLifecycleManagerTest {
   @DisplayName("GiveUp: should mark event as DEAD")
   void should_mark_as_dead_when_giveUp_is_called() {
     // Given
-    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.now());
+    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeProvider.now());
     String reason = "for testing purposes";
 
     // When
@@ -102,7 +102,7 @@ class EventLifecycleManagerTest {
   @DisplayName("Reschedule: should delay execution and increment retry count")
   void should_reschedule_with_delay_when_reschedule_is_called() {
     // Given
-    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.now());
+    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeProvider.now());
     lifecycleManager.run(event);
     String reason = "for testing purposes";
 
@@ -111,7 +111,7 @@ class EventLifecycleManagerTest {
 
     // Then
     assertThat(event)
-        .hasFieldOrPropertyWithValue("nextRunAt", timeConfig.now().plus(retryConfig.baseDelay()))
+        .hasFieldOrPropertyWithValue("nextRunAt", timeProvider.now().plus(retryConfig.baseDelay()))
         .hasFieldOrPropertyWithValue("errorMsg", reason)
         .hasFieldOrPropertyWithValue("retryCount", 1)
         .hasFieldOrPropertyWithValue("status", Status.WAITING);
@@ -122,7 +122,7 @@ class EventLifecycleManagerTest {
   @DisplayName("Max Retries: should mark as DEAD when limit exceeded")
   void should_mark_as_dead_when_retry_limit_exceeded() {
     // Given
-    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.now());
+    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeProvider.now());
     String reason = "for testing purposes";
 
     // When
@@ -144,7 +144,7 @@ class EventLifecycleManagerTest {
   @Test
   void should_update_step_when_advanceEventToStep_is_called() {
     // Given
-    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.now());
+    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeProvider.now());
     lifecycleManager.run(event);
     String step = "checkpoint";
 

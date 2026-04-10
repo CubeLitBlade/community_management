@@ -1,6 +1,6 @@
 package io.github.cubelitblade.event.infra.worker;
 
-import io.github.cubelitblade.configuration.TimeConfig;
+import io.github.cubelitblade.common.time.TimeProvider;
 import io.github.cubelitblade.event.application.EventService;
 import io.github.cubelitblade.event.application.handler.EventLifecycleManager;
 import io.github.cubelitblade.event.model.Event;
@@ -19,11 +19,11 @@ public class Worker {
   private final EventService eventService;
   private final EventDispatcher eventDispatcher;
   private final EventLifecycleManager eventLifecycleManager;
-  private final TimeConfig timeConfig;
+  private final TimeProvider timeProvider;
 
   @Scheduled(fixedDelay = 5000)
   public void run() {
-    Instant now = timeConfig.now();
+    Instant now = timeProvider.now();
 
     resetZombieEvents(now, Duration.ofSeconds(600));
 

@@ -1,6 +1,6 @@
 package io.github.cubelitblade.event.application.handler;
 
-import io.github.cubelitblade.configuration.TimeConfig;
+import io.github.cubelitblade.common.time.TimeProvider;
 import io.github.cubelitblade.event.application.EventRetryPolicy;
 import io.github.cubelitblade.event.model.Event;
 import io.github.cubelitblade.event.persistence.EventRepository;
@@ -17,7 +17,7 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class EventLifecycleManager implements EventStepper {
   private final EventRepository eventRepository;
-  private final TimeConfig timeConfig;
+  private final TimeProvider timeProvider;
   private final EventRetryPolicy eventRetryPolicy;
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
@@ -27,7 +27,7 @@ public class EventLifecycleManager implements EventStepper {
     if (eventRetryPolicy.canRetry(retryCount)) {
       Duration backoff = eventRetryPolicy.getExponentialBackoffDuration(retryCount);
 
-      event.retry(timeConfig.now().plus(backoff), reason, timeConfig.now());
+      event.retry(timeProvider.now().plus(backoff), reason, timeProvider.now());
       log.warn(
           "[Event #{}]: Scheduled to retry at {} (after {} ms), because {}. ",
           event.getId(),
@@ -36,7 +36,7 @@ public class EventLifecycleManager implements EventStepper {
           reason);
     } else {
       event.die(
-          "The maximum number of retries has been reached, because " + reason, timeConfig.now());
+          "The maximum number of retries has been reached, because " + reason, timeProvider.now());
       log.error(
           "[Event #{}]: The maximum number of retries has been reached, marked as dead. ",
           event.getId());
@@ -46,33 +46,33 @@ public class EventLifecycleManager implements EventStepper {
   }
 
   public void revive(Event event, Instant nextRunAt) {
-    event.revive(timeConfig.now(), nextRunAt);
+    event.revive(timeProvider.now(), nextRunAt);
     this.persist(event);
   }
 
   public boolean run(Event event) {
-    event.run(timeConfig.now());
+    event.run(timeProvider.now());
     return this.persist(event);
   }
 
   public void complete(Event event) {
-    event.succeed(timeConfig.now());
+    event.succeed(timeProvider.now());
     this.persist(event);
   }
 
   public void abort(Event event, String reason) {
-    event.fail(reason, timeConfig.now());
+    event.fail(reason, timeProvider.now());
     this.persist(event);
   }
 
   public void giveUp(Event event, String reason) {
-    event.die(reason, timeConfig.now());
+    event.die(reason, timeProvider.now());
     this.persist(event);
   }
 
   @Override
   public boolean advanceEventToStep(Event event, String targetStep) {
-    event.advanceTo(targetStep, timeConfig.now());
+    event.advanceTo(targetStep, timeProvider.now());
     return this.persist(event);
   }
 

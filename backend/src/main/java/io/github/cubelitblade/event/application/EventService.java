@@ -1,6 +1,6 @@
 package io.github.cubelitblade.event.application;
 
-import io.github.cubelitblade.configuration.TimeConfig;
+import io.github.cubelitblade.common.time.TimeProvider;
 import io.github.cubelitblade.event.model.Event;
 import io.github.cubelitblade.event.model.Type;
 import io.github.cubelitblade.event.model.payload.DemoEventPayload;
@@ -18,14 +18,14 @@ import tools.jackson.databind.JsonNode;
 @RequiredArgsConstructor
 public class EventService {
   private final EventRepository eventRepository;
-  private final TimeConfig timeConfig;
+  private final TimeProvider timeProvider;
 
   public List<Event> getWaitingEvents(int count) {
-    return eventRepository.findWaitingEvents(count, timeConfig.now());
+    return eventRepository.findWaitingEvents(count, timeProvider.now());
   }
 
   public List<Event> getZombieEvents(int count, Instant threshold) {
-    return eventRepository.findZombieEvents(count, threshold, timeConfig.now());
+    return eventRepository.findZombieEvents(count, threshold, timeProvider.now());
   }
 
   public Event createEvent(String type, JsonNode payloadJson) {
@@ -33,7 +33,7 @@ public class EventService {
       throw new IllegalArgumentException("Unknown event type: " + type);
     }
 
-    Event event = Event.create(Type.from(type), payloadJson, timeConfig.now());
+    Event event = Event.create(Type.from(type), payloadJson, timeProvider.now());
 
     eventRepository.save(event);
     return event;
