@@ -2,11 +2,11 @@ package io.github.cubelitblade.event.application.handler;
 
 import static org.mockito.BDDMockito.*;
 
+import io.github.cubelitblade.event.exception.DownstreamTimeoutException;
+import io.github.cubelitblade.event.exception.RejectedEventException;
 import io.github.cubelitblade.event.model.Event;
 import io.github.cubelitblade.event.model.Status;
 import io.github.cubelitblade.event.model.Type;
-import io.github.cubelitblade.event.exception.DownstreamTimeoutException;
-import io.github.cubelitblade.event.exception.FatalEventException;
 import io.github.cubelitblade.event.model.payload.EventPayload;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -61,7 +61,7 @@ class EventHandlerTest {
     // Given
     String reason = "for testing purposes";
     given(event.getStatus()).willReturn(Status.RUNNING);
-    willThrow(new FatalEventException(reason)).given(handler).process(event);
+    willThrow(new RejectedEventException(reason)).given(handler).process(event);
 
     // When
     handler.handleEvent(event);
