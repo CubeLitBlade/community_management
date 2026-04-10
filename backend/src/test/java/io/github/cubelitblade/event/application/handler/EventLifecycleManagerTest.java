@@ -7,10 +7,10 @@ import static org.mockito.Mockito.times;
 import io.github.cubelitblade.configuration.RetryConfig;
 import io.github.cubelitblade.configuration.TimeConfig;
 import io.github.cubelitblade.event.application.EventRetryPolicy;
-import io.github.cubelitblade.event.application.EventService;
 import io.github.cubelitblade.event.model.Event;
 import io.github.cubelitblade.event.model.Status;
 import io.github.cubelitblade.event.model.Type;
+import io.github.cubelitblade.event.persistence.EventRepository;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -25,11 +25,11 @@ import tools.jackson.databind.node.JsonNodeFactory;
 
 @ExtendWith(MockitoExtension.class)
 class EventLifecycleManagerTest {
-  @Mock private EventService eventService;
+  @Mock private EventRepository eventRepository;
 
   private RetryConfig retryConfig;
   private TimeConfig timeConfig;
-  private EventLifecycleManager workflow;
+  private EventLifecycleManager lifecycleManager;
 
   @BeforeEach
   void setUp() {
@@ -40,7 +40,7 @@ class EventLifecycleManagerTest {
 
     EventRetryPolicy eventRetryPolicy = new EventRetryPolicy(retryConfig);
 
-    workflow = new EventLifecycleManager(eventService, timeConfig, eventRetryPolicy);
+    lifecycleManager = new EventLifecycleManager(eventRepository, timeConfig, eventRetryPolicy);
   }
 
   @Test
@@ -51,13 +51,13 @@ class EventLifecycleManagerTest {
         Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.getClock());
 
     // When
-    workflow.complete(event);
+    lifecycleManager.complete(event);
 
     // Then
     assertThat(event)
         .hasFieldOrPropertyWithValue("nextRunAt", null)
         .hasFieldOrPropertyWithValue("status", Status.SUCCEEDED);
-    then(eventService).should().updateEvent(event);
+    then(eventRepository).should().updateOrThrow(event);
   }
 
   @Test
@@ -69,14 +69,14 @@ class EventLifecycleManagerTest {
     String reason = "for testing purposes";
 
     // When
-    workflow.abort(event, reason);
+    lifecycleManager.abort(event, reason);
 
     // Then
     assertThat(event)
         .hasFieldOrPropertyWithValue("nextRunAt", null)
         .hasFieldOrPropertyWithValue("errorMsg", reason)
         .hasFieldOrPropertyWithValue("status", Status.FAILED);
-    then(eventService).should().updateEvent(event);
+    then(eventRepository).should().updateOrThrow(event);
   }
 
   @Test
@@ -88,14 +88,14 @@ class EventLifecycleManagerTest {
     String reason = "for testing purposes";
 
     // When
-    workflow.giveUp(event, reason);
+    lifecycleManager.giveUp(event, reason);
 
     // Then
     assertThat(event)
         .hasFieldOrPropertyWithValue("nextRunAt", null)
         .hasFieldOrPropertyWithValue("errorMsg", reason)
         .hasFieldOrPropertyWithValue("status", Status.DEAD);
-    then(eventService).should().updateEvent(event);
+    then(eventRepository).should().updateOrThrow(event);
   }
 
   @Test
@@ -108,7 +108,7 @@ class EventLifecycleManagerTest {
     String reason = "for testing purposes";
 
     // When
-    workflow.reschedule(event, reason);
+    lifecycleManager.reschedule(event, reason);
 
     // Then
     assertThat(event)
@@ -116,7 +116,7 @@ class EventLifecycleManagerTest {
         .hasFieldOrPropertyWithValue("errorMsg", reason)
         .hasFieldOrPropertyWithValue("retryCount", 1)
         .hasFieldOrPropertyWithValue("status", Status.WAITING);
-    then(eventService).should().updateEvent(event);
+    then(eventRepository).should().updateOrThrow(event);
   }
 
   @Test
@@ -129,7 +129,7 @@ class EventLifecycleManagerTest {
 
     // When
     for (int i = 0; i <= retryConfig.maxRetries(); i++) {
-      workflow.reschedule(event, reason);
+      lifecycleManager.reschedule(event, reason);
     }
 
     // Then
@@ -139,7 +139,7 @@ class EventLifecycleManagerTest {
         .hasFieldOrPropertyWithValue("status", Status.DEAD);
 
     // Total calls: maxRetries (reschedules) + 1 (final dead mark)
-    then(eventService).should(times(retryConfig.maxRetries() + 1)).updateEvent(event);
+    then(eventRepository).should(times(retryConfig.maxRetries() + 1)).updateOrThrow(event);
   }
 
   @Test
@@ -150,10 +150,10 @@ class EventLifecycleManagerTest {
     String step = "checkpoint";
 
     // When
-    workflow.advanceEventToStep(event, step);
+    lifecycleManager.advanceEventToStep(event, step);
 
     // Then
     assertThat(event.getCurrentStep()).isEqualTo(step);
-    then(eventService).should().updateEvent(event);
+    then(eventRepository).should().updateOrThrow(event);
   }
 }

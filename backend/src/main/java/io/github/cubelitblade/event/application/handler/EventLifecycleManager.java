@@ -2,8 +2,8 @@ package io.github.cubelitblade.event.application.handler;
 
 import io.github.cubelitblade.configuration.TimeConfig;
 import io.github.cubelitblade.event.application.EventRetryPolicy;
-import io.github.cubelitblade.event.application.EventService;
 import io.github.cubelitblade.event.model.Event;
+import io.github.cubelitblade.event.persistence.EventRepository;
 import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -15,7 +15,7 @@ import org.springframework.transaction.annotation.Transactional;
 @Component
 @RequiredArgsConstructor
 public class EventLifecycleManager implements EventStepper, EventFinalizer, EventScheduler {
-  private final EventService eventService;
+  private final EventRepository eventRepository;
   private final TimeConfig timeConfig;
   private final EventRetryPolicy eventRetryPolicy;
 
@@ -103,6 +103,6 @@ public class EventLifecycleManager implements EventStepper, EventFinalizer, Even
   }
 
   private void persist(Event event) {
-    eventService.updateEvent(event);
+    eventRepository.updateOrThrow(event);
   }
 }

@@ -3,9 +3,9 @@ package io.github.cubelitblade.event.worker;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.cubelitblade.configuration.RetryConfig;
+import io.github.cubelitblade.event.application.EventService;
 import io.github.cubelitblade.event.infra.worker.Worker;
 import io.github.cubelitblade.event.model.Event;
-import io.github.cubelitblade.event.application.EventService;
 import io.github.cubelitblade.event.model.Status;
 import io.github.cubelitblade.event.model.Type;
 import io.github.cubelitblade.event.model.payload.DemoEventPayload;

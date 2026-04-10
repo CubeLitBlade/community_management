@@ -5,12 +5,12 @@ import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.*;
 
+import io.github.cubelitblade.event.exception.TransientEventException;
+import io.github.cubelitblade.event.infra.sse.SseService;
 import io.github.cubelitblade.event.model.Event;
 import io.github.cubelitblade.event.model.Type;
-import io.github.cubelitblade.event.exception.TransientEventException;
 import io.github.cubelitblade.event.model.payload.DemoEventPayload;
 import io.github.cubelitblade.event.model.payload.EventPayloadMapper;
-import io.github.cubelitblade.event.infra.sse.SseService;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;

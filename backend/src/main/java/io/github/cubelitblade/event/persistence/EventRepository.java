@@ -1,7 +1,6 @@
 package io.github.cubelitblade.event.persistence;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
-import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import io.github.cubelitblade.configuration.TimeConfig;
 import io.github.cubelitblade.event.model.Event;
 import io.github.cubelitblade.event.model.Status;
@@ -10,7 +9,6 @@ import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.apache.ibatis.executor.BatchResult;
 import org.springframework.stereotype.Repository;
-import org.springframework.transaction.annotation.Propagation;
 import org.springframework.transaction.annotation.Transactional;
 
 @Repository
@@ -86,17 +84,6 @@ public class EventRepository {
       if (result.getUpdateCounts()[0] != 1) {
         throw new RuntimeException("Failed to update event: " + result);
       }
-    }
-  }
-
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public void updateEventStep(Event event) {
-    LambdaUpdateWrapper<Event> lambdaUpdateWrapper = new LambdaUpdateWrapper<>();
-    lambdaUpdateWrapper
-        .eq(Event::getId, event.getId())
-        .set(Event::getCurrentStep, event.getCurrentStep());
-    if (eventMapper.update(lambdaUpdateWrapper) != 1) {
-      throw new RuntimeException("Failed to update event: " + event);
     }
   }
 
