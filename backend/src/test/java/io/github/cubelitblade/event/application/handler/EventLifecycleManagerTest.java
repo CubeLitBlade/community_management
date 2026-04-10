@@ -1,4 +1,4 @@
-package io.github.cubelitblade.event.handler;
+package io.github.cubelitblade.event.application.handler;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.BDDMockito.then;
@@ -6,8 +6,11 @@ import static org.mockito.Mockito.times;
 
 import io.github.cubelitblade.configuration.RetryConfig;
 import io.github.cubelitblade.configuration.TimeConfig;
-import io.github.cubelitblade.event.Event;
-import io.github.cubelitblade.event.EventService;
+import io.github.cubelitblade.event.application.EventRetryPolicy;
+import io.github.cubelitblade.event.application.EventService;
+import io.github.cubelitblade.event.model.Event;
+import io.github.cubelitblade.event.model.Status;
+import io.github.cubelitblade.event.model.Type;
 import java.time.Clock;
 import java.time.Duration;
 import java.time.Instant;
@@ -21,24 +24,23 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import tools.jackson.databind.node.JsonNodeFactory;
 
 @ExtendWith(MockitoExtension.class)
-class EventWorkflowTest {
+class EventLifecycleManagerTest {
   @Mock private EventService eventService;
 
   private RetryConfig retryConfig;
   private TimeConfig timeConfig;
-  private EventWorkflow workflow;
+  private EventLifecycleManager workflow;
 
   @BeforeEach
   void setUp() {
-    retryConfig = new RetryConfig();
-    retryConfig.setBaseDelay(Duration.ofSeconds(1));
-    retryConfig.setMaxDelay(Duration.ofSeconds(5));
-    retryConfig.setMaxRetries(3);
+    retryConfig = new RetryConfig(Duration.ofSeconds(1), Duration.ofSeconds(5), 3);
 
     timeConfig = new TimeConfig();
     timeConfig.setClock(Clock.fixed(Instant.parse("2026-03-26T15:30:00Z"), ZoneId.of("UTC+8")));
 
-    workflow = new EventWorkflow(eventService, retryConfig, timeConfig);
+    EventRetryPolicy eventRetryPolicy = new EventRetryPolicy(retryConfig);
+
+    workflow = new EventLifecycleManager(eventService, timeConfig, eventRetryPolicy);
   }
 
   @Test
@@ -46,8 +48,7 @@ class EventWorkflowTest {
   void should_mark_as_succeeded_when_complete_is_called() {
     // Given
     Event event =
-        Event.create(
-            Event.EventType.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.getClock());
+        Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.getClock());
 
     // When
     workflow.complete(event);
@@ -55,7 +56,7 @@ class EventWorkflowTest {
     // Then
     assertThat(event)
         .hasFieldOrPropertyWithValue("nextRunAt", null)
-        .hasFieldOrPropertyWithValue("status", Event.EventStatus.SUCCEEDED);
+        .hasFieldOrPropertyWithValue("status", Status.SUCCEEDED);
     then(eventService).should().updateEvent(event);
   }
 
@@ -64,8 +65,7 @@ class EventWorkflowTest {
   void should_mark_as_failed_when_abort_is_called() {
     // Given
     Event event =
-        Event.create(
-            Event.EventType.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.getClock());
+        Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.getClock());
     String reason = "for testing purposes";
 
     // When
@@ -75,7 +75,7 @@ class EventWorkflowTest {
     assertThat(event)
         .hasFieldOrPropertyWithValue("nextRunAt", null)
         .hasFieldOrPropertyWithValue("errorMsg", reason)
-        .hasFieldOrPropertyWithValue("status", Event.EventStatus.FAILED);
+        .hasFieldOrPropertyWithValue("status", Status.FAILED);
     then(eventService).should().updateEvent(event);
   }
 
@@ -84,8 +84,7 @@ class EventWorkflowTest {
   void should_mark_as_dead_when_giveUp_is_called() {
     // Given
     Event event =
-        Event.create(
-            Event.EventType.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.getClock());
+        Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.getClock());
     String reason = "for testing purposes";
 
     // When
@@ -95,7 +94,7 @@ class EventWorkflowTest {
     assertThat(event)
         .hasFieldOrPropertyWithValue("nextRunAt", null)
         .hasFieldOrPropertyWithValue("errorMsg", reason)
-        .hasFieldOrPropertyWithValue("status", Event.EventStatus.DEAD);
+        .hasFieldOrPropertyWithValue("status", Status.DEAD);
     then(eventService).should().updateEvent(event);
   }
 
@@ -104,8 +103,7 @@ class EventWorkflowTest {
   void should_reschedule_with_delay_when_reschedule_is_called() {
     // Given
     Event event =
-        Event.create(
-            Event.EventType.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.getClock());
+        Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.getClock());
     Instant before = event.getNextRunAt();
     String reason = "for testing purposes";
 
@@ -114,10 +112,10 @@ class EventWorkflowTest {
 
     // Then
     assertThat(event)
-        .hasFieldOrPropertyWithValue("nextRunAt", before.plus(retryConfig.getBaseDelay()))
+        .hasFieldOrPropertyWithValue("nextRunAt", before.plus(retryConfig.baseDelay()))
         .hasFieldOrPropertyWithValue("errorMsg", reason)
         .hasFieldOrPropertyWithValue("retryCount", 1)
-        .hasFieldOrPropertyWithValue("status", Event.EventStatus.WAITING);
+        .hasFieldOrPropertyWithValue("status", Status.WAITING);
     then(eventService).should().updateEvent(event);
   }
 
@@ -126,38 +124,36 @@ class EventWorkflowTest {
   void should_mark_as_dead_when_retry_limit_exceeded() {
     // Given
     Event event =
-        Event.create(
-            Event.EventType.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.getClock());
+        Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.getClock());
     String reason = "for testing purposes";
 
     // When
-    for (int i = 0; i <= retryConfig.getMaxRetries(); i++) {
+    for (int i = 0; i <= retryConfig.maxRetries(); i++) {
       workflow.reschedule(event, reason);
     }
 
     // Then
     assertThat(event)
         .hasFieldOrPropertyWithValue("nextRunAt", null)
-        .hasFieldOrPropertyWithValue("retryCount", retryConfig.getMaxRetries())
-        .hasFieldOrPropertyWithValue("status", Event.EventStatus.DEAD);
+        .hasFieldOrPropertyWithValue("retryCount", retryConfig.maxRetries())
+        .hasFieldOrPropertyWithValue("status", Status.DEAD);
 
     // Total calls: maxRetries (reschedules) + 1 (final dead mark)
-    then(eventService).should(times(retryConfig.getMaxRetries() + 1)).updateEvent(event);
+    then(eventService).should(times(retryConfig.maxRetries() + 1)).updateEvent(event);
   }
 
   @Test
-  void should_update_step_when_checkpoint_is_called() {
+  void should_update_step_when_advanceEventToStep_is_called() {
     // Given
     Event event =
-        Event.create(
-            Event.EventType.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.getClock());
+        Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeConfig.getClock());
     String step = "checkpoint";
 
     // When
-    workflow.checkpoint(event, step);
+    workflow.advanceEventToStep(event, step);
 
     // Then
     assertThat(event.getCurrentStep()).isEqualTo(step);
-    then(eventService).should().updateEventStep(event);
+    then(eventService).should().updateEvent(event);
   }
 }

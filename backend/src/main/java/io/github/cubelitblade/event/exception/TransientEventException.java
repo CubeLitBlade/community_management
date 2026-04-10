@@ -1,6 +1,6 @@
 package io.github.cubelitblade.event.exception;
 
-public class TransientEventException extends RuntimeException {
+public abstract class TransientEventException extends RuntimeException {
   public TransientEventException(String message) {
     super(message);
   }

@@ -1,15 +1,16 @@
-package io.github.cubelitblade.event.handler;
+package io.github.cubelitblade.event.application.handler;
 
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.*;
 
-import io.github.cubelitblade.event.Event;
+import io.github.cubelitblade.event.model.Event;
+import io.github.cubelitblade.event.model.Type;
 import io.github.cubelitblade.event.exception.TransientEventException;
-import io.github.cubelitblade.event.payload.DemoEventPayload;
-import io.github.cubelitblade.event.payload.EventPayloadMapper;
-import io.github.cubelitblade.event.sse.SseService;
+import io.github.cubelitblade.event.model.payload.DemoEventPayload;
+import io.github.cubelitblade.event.model.payload.EventPayloadMapper;
+import io.github.cubelitblade.event.infra.sse.SseService;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -29,7 +30,7 @@ import tools.jackson.databind.node.JsonNodeFactory;
 class DemoEventHandlerTest {
   private final Clock clock = Clock.fixed(Instant.parse("2026-03-26T15:30:00Z"), ZoneId.of("UTC"));
 
-  @Mock private EventWorkflow workflow;
+  @Mock private EventLifecycleManager workflow;
 
   @Mock private SseService sseService;
 
@@ -43,18 +44,18 @@ class DemoEventHandlerTest {
 
   @BeforeEach
   void setUp() {
-    event = Event.create(Event.EventType.DEMO_EVENT, JsonNodeFactory.instance.nullNode(), clock);
+    event = Event.create(Type.DEMO_EVENT, JsonNodeFactory.instance.nullNode(), clock);
     event.run(Instant.now(clock));
 
     willAnswer(
             inv -> {
               Event e = inv.getArgument(0);
               String step = inv.getArgument(1);
-              e.toStep(step, Instant.now(clock));
+              e.advanceTo(step, Instant.now(clock));
               return null;
             })
         .given(workflow)
-        .checkpoint(any(Event.class), any(String.class));
+        .advanceEventToStep(any(Event.class), any(String.class));
 
     willAnswer(
             inv -> {
@@ -79,9 +80,9 @@ class DemoEventHandlerTest {
 
     // Then
     then(sseService).should().broadcast("hello");
-    then(workflow).should().checkpoint(event, "init");
-    then(workflow).should().checkpoint(event, "time-consuming-work-done");
-    then(workflow).should().checkpoint(event, "tx-validated");
+    then(workflow).should().advanceEventToStep(event, "init");
+    then(workflow).should().advanceEventToStep(event, "time-consuming-work-done");
+    then(workflow).should().advanceEventToStep(event, "tx-validated");
     then(workflow).should().complete(event);
   }
 
@@ -92,15 +93,15 @@ class DemoEventHandlerTest {
     DemoEventPayload payload = new DemoEventPayload("hello", 9999L, 0, true);
     given(eventPayloadMapper.fromJsonNode(any(JsonNode.class), eq(DemoEventPayload.class)))
         .willReturn(payload);
-    event.toStep("time-consuming-work-done", Instant.now(clock));
+    event.advanceTo("time-consuming-work-done", Instant.now(clock));
 
     // When
     handler.process(event);
 
     // Then
     then(sseService).shouldHaveNoInteractions();
-    then(workflow).should(never()).checkpoint(event, "init");
-    then(workflow).should().checkpoint(event, "tx-validated");
+    then(workflow).should(never()).advanceEventToStep(event, "init");
+    then(workflow).should().advanceEventToStep(event, "tx-validated");
     then(workflow).should().complete(event);
   }
 

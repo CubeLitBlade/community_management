@@ -10,7 +10,9 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 import io.github.cubelitblade.account.model.Role;
 import io.github.cubelitblade.account.security.JwtAuthenticatedUser;
 import io.github.cubelitblade.account.security.JwtTokenProvider;
-import io.github.cubelitblade.event.payload.DemoEventPayload;
+import io.github.cubelitblade.event.application.EventService;
+import io.github.cubelitblade.event.model.Event;
+import io.github.cubelitblade.event.model.payload.DemoEventPayload;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;

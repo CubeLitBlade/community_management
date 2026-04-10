@@ -1,8 +1,11 @@
-package io.github.cubelitblade.event;
+package io.github.cubelitblade.event.application;
 
 import io.github.cubelitblade.common.exception.ExceptionFactory;
-import io.github.cubelitblade.event.payload.DemoEventPayload;
-import io.github.cubelitblade.event.payload.EventPayloadMapper;
+import io.github.cubelitblade.event.model.Event;
+import io.github.cubelitblade.event.model.Type;
+import io.github.cubelitblade.event.model.payload.DemoEventPayload;
+import io.github.cubelitblade.event.model.payload.EventPayloadMapper;
+import io.github.cubelitblade.event.persistence.EventRepository;
 import java.time.Clock;
 import java.time.Instant;
 import java.util.List;
@@ -26,7 +29,7 @@ public class EventService {
     eventRepository.resetZombieEvents(threshold);
   }
 
-  public Event enqueueEvent(Event.EventType eventType, DemoEventPayload eventPayload) {
+  public Event enqueueEvent(Type eventType, DemoEventPayload eventPayload) {
     Event event =
         Event.create(
             eventType, eventPayloadMapper.toJsonNode(eventPayload), Clock.systemDefaultZone());
@@ -54,10 +57,6 @@ public class EventService {
 
   public void updateEvent(Event event) {
     eventRepository.updateOrThrow(event);
-  }
-
-  public void updateEventStep(Event event) {
-    eventRepository.updateEventStep(event);
   }
 
   public Event find(long id) {

@@ -1,6 +1,8 @@
-package io.github.cubelitblade.event;
+package io.github.cubelitblade.event.web;
 
-import io.github.cubelitblade.event.payload.DemoEventPayload;
+import io.github.cubelitblade.event.application.EventService;
+import io.github.cubelitblade.event.model.Event;
+import io.github.cubelitblade.event.model.payload.DemoEventPayload;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;

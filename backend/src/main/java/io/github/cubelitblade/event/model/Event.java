@@ -1,18 +1,18 @@
-package io.github.cubelitblade.event;
+package io.github.cubelitblade.event.model;
 
 import com.baomidou.mybatisplus.annotation.*;
 import io.github.cubelitblade.common.typehandler.JsonbTypeHandler;
 import java.time.Clock;
 import java.time.Instant;
-import java.util.Arrays;
-import java.util.Map;
-import java.util.stream.Collectors;
+import java.util.Objects;
 import lombok.AccessLevel;
 import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
+import lombok.extern.slf4j.Slf4j;
 import tools.jackson.databind.JsonNode;
 
+@Slf4j
 @Getter
 @Setter(AccessLevel.PRIVATE)
 @NoArgsConstructor(access = AccessLevel.PROTECTED)
@@ -22,12 +22,12 @@ public class Event {
   @Setter(AccessLevel.NONE)
   private Long id;
 
-  private EventType type;
+  private Type type;
 
   @TableField(typeHandler = JsonbTypeHandler.class)
   private JsonNode payload;
 
-  private EventStatus status = EventStatus.WAITING;
+  private Status status = Status.WAITING;
 
   private Integer retryCount = 0;
 
@@ -42,13 +42,13 @@ public class Event {
 
   private String currentStep;
 
-  public static Event create(EventType type, JsonNode payload, Clock clock) {
+  public static Event create(Type type, JsonNode payload, Clock clock) {
     Instant now = Instant.now(clock);
 
     Event event = new Event();
     event.type = type;
     event.payload = payload;
-    event.status = EventStatus.WAITING;
+    event.status = Status.WAITING;
     event.createdAt = now;
     event.nextRunAt = now;
     event.updatedAt = now;
@@ -60,9 +60,9 @@ public class Event {
     Instant now = Instant.now(clock);
 
     Event event = new Event();
-    event.type = EventType.from(type);
+    event.type = Type.from(type);
     event.payload = payload;
-    event.status = EventStatus.WAITING;
+    event.status = Status.WAITING;
     event.createdAt = now;
     event.nextRunAt = now;
     event.updatedAt = now;
@@ -70,8 +70,8 @@ public class Event {
     return event;
   }
 
-  public void await(Instant now, Instant nextRunAt) {
-    this.status = EventStatus.WAITING;
+  public void revive(Instant now, Instant nextRunAt) {
+    this.status = Status.WAITING;
     this.errorMsg = null;
     this.nextRunAt = nextRunAt;
     this.retryCount = 0;
@@ -79,34 +79,52 @@ public class Event {
   }
 
   public void succeed(Instant now) {
-    this.status = EventStatus.SUCCEEDED;
+    requireNonTerminalStatus();
+
+    this.status = Status.SUCCEEDED;
     this.errorMsg = null;
     this.nextRunAt = null;
     this.touch(now);
   }
 
   public void fail(String reason, Instant now) {
-    this.status = EventStatus.FAILED;
+    if (this.status == Status.FAILED) {
+      return;
+    }
+
+    requireNonTerminalStatus();
+
+    this.status = Status.FAILED;
     this.errorMsg = reason;
     this.nextRunAt = null;
     this.touch(now);
   }
 
   public void die(String reason, Instant now) {
-    this.status = EventStatus.DEAD;
+    if (this.status == Status.DEAD) {
+      return;
+    }
+
+    requireNonTerminalStatus();
+
+    this.status = Status.DEAD;
     this.errorMsg = reason;
     this.nextRunAt = null;
     this.touch(now);
   }
 
   public void run(Instant now) {
-    this.status = EventStatus.RUNNING;
+    requireStatus(Status.WAITING);
+
+    this.status = Status.RUNNING;
     this.nextRunAt = null;
     this.touch(now);
   }
 
-  public void prepareForRetry(Instant nextRunAt, String reason, Instant now) {
-    this.status = EventStatus.WAITING;
+  public void retry(Instant nextRunAt, String reason, Instant now) {
+    requireStatus(Status.RUNNING);
+
+    this.status = Status.WAITING;
     retryCount = retryCount + 1;
     this.nextRunAt = nextRunAt;
     this.errorMsg = reason;
@@ -114,7 +132,9 @@ public class Event {
     this.touch(now);
   }
 
-  public void toStep(String currentStep, Instant now) {
+  public void advanceTo(String currentStep, Instant now) {
+    requireStatus(Status.RUNNING);
+
     this.currentStep = currentStep;
     this.touch(now);
   }
@@ -123,41 +143,23 @@ public class Event {
     this.updatedAt = now;
   }
 
-  @Getter
-  public enum EventType {
-    EVENT("event"),
-    DEMO_EVENT("demo");
-
-    private static final Map<String, EventType> map =
-        Arrays.stream(EventType.values()).collect(Collectors.toMap(EventType::getType, v -> v));
-    @EnumValue private final String type;
-
-    EventType(String type) {
-      this.type = type;
-    }
-
-    public static EventType from(String type) {
-      EventType eventType = map.get(type);
-      if (eventType == null) {
-        throw new IllegalArgumentException("Unknown event type: " + type);
-      }
-      return eventType;
+  private void requireStatus(Status status) {
+    if (this.status != status) {
+      throw new IllegalStateException(
+          buildErrorMessage("Event status expected " + status + ", but was " + this.status));
     }
   }
 
-  @Getter
-  public enum EventStatus {
-    WAITING("waiting"),
-    PENDING("pending"),
-    RUNNING("running"),
-    SUCCEEDED("succeeded"),
-    FAILED("failed"),
-    DEAD("dead");
-
-    @EnumValue private final String status;
-
-    EventStatus(String status) {
-      this.status = status;
+  private void requireNonTerminalStatus() {
+    switch (this.status) {
+      case SUCCEEDED, FAILED, DEAD ->
+          throw new IllegalStateException(
+              buildErrorMessage("Already in terminal status: " + this.status));
     }
+  }
+
+  private String buildErrorMessage(String reason) {
+    String prefix = "[Event #" + this.id + "] ";
+    return prefix + Objects.requireNonNullElse(reason, "Encountered an unexpected error");
   }
 }

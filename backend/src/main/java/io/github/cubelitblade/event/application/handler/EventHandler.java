@@ -1,16 +1,17 @@
-package io.github.cubelitblade.event.handler;
+package io.github.cubelitblade.event.application.handler;
 
-import io.github.cubelitblade.event.Event;
-import io.github.cubelitblade.event.exception.FatalEventException;
-import io.github.cubelitblade.event.exception.TransientEventException;
-import io.github.cubelitblade.event.payload.EventPayload;
+import io.github.cubelitblade.event.exception.EventExecutionException;
+import io.github.cubelitblade.event.model.Event;
+import io.github.cubelitblade.event.model.Status;
+import io.github.cubelitblade.event.model.Type;
+import io.github.cubelitblade.event.model.payload.EventPayload;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @RequiredArgsConstructor
 public abstract class EventHandler<PayloadType extends EventPayload> {
-  protected final EventWorkflow workflow;
+  protected final EventStepper stepper;
 
   /**
    * Returns the concrete class of the payload type.
@@ -22,9 +23,9 @@ public abstract class EventHandler<PayloadType extends EventPayload> {
   /**
    * Returns the type of event this handler processes.
    *
-   * @return the {@link io.github.cubelitblade.event.Event.EventType} enum value
+   * @return the {@link Type} enum value
    */
-  public abstract Event.EventType getEventType();
+  public abstract Type getEventType();
 
   /**
    * The core business logic method to be implemented by subclasses.
@@ -39,7 +40,7 @@ public abstract class EventHandler<PayloadType extends EventPayload> {
    *
    * @param event the event to process
    */
-  public abstract void process(Event event);
+  public abstract void process(Event event) throws Exception;
 
   /**
    * Main entry point for handling an event.
@@ -50,23 +51,13 @@ public abstract class EventHandler<PayloadType extends EventPayload> {
    * @param event the event to handle
    */
   public void handleEvent(Event event) {
-    if (event.getStatus() != Event.EventStatus.RUNNING) {
+    if (event.getStatus() != Status.RUNNING) {
       return;
     }
     try {
       process(event);
-      if (event.getStatus() == Event.EventStatus.RUNNING) {
-        workflow.complete(event);
-      }
-    } catch (FatalEventException e) {
-      workflow.giveUp(event, e.getMessage());
-      log.error(e.getMessage(), e);
-    } catch (TransientEventException e) {
-      workflow.reschedule(event, e.getMessage());
-      log.error(e.getMessage(), e);
     } catch (Exception e) {
-      workflow.abort(event, e.getMessage());
-      log.error(e.getMessage(), e);
+      throw new EventExecutionException(event.getId(), e);
     }
   }
 }

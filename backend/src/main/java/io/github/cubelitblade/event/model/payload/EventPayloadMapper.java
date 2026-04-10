@@ -1,4 +1,4 @@
-package io.github.cubelitblade.event.payload;
+package io.github.cubelitblade.event.model.payload;
 
 import io.github.cubelitblade.event.exception.FatalEventException;
 import lombok.RequiredArgsConstructor;

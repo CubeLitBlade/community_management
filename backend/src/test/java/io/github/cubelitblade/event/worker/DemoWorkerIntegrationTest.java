@@ -3,9 +3,12 @@ package io.github.cubelitblade.event.worker;
 import static org.assertj.core.api.Assertions.assertThat;
 
 import io.github.cubelitblade.configuration.RetryConfig;
-import io.github.cubelitblade.event.Event;
-import io.github.cubelitblade.event.EventService;
-import io.github.cubelitblade.event.payload.DemoEventPayload;
+import io.github.cubelitblade.event.infra.worker.Worker;
+import io.github.cubelitblade.event.model.Event;
+import io.github.cubelitblade.event.application.EventService;
+import io.github.cubelitblade.event.model.Status;
+import io.github.cubelitblade.event.model.Type;
+import io.github.cubelitblade.event.model.payload.DemoEventPayload;
 import java.time.Instant;
 import java.util.concurrent.Executor;
 import org.junit.jupiter.api.BeforeEach;
@@ -49,7 +52,7 @@ class DemoWorkerIntegrationTest {
     Event updated = reload(event);
     assertThat(updated)
         .extracting(Event::getStatus, Event::getNextRunAt)
-        .containsExactly(Event.EventStatus.SUCCEEDED, null);
+        .containsExactly(Status.SUCCEEDED, null);
   }
 
   @Test
@@ -65,7 +68,7 @@ class DemoWorkerIntegrationTest {
     Event updated = reload(event);
     assertThat(updated)
         .extracting(Event::getStatus, Event::getNextRunAt)
-        .containsExactly(Event.EventStatus.FAILED, null);
+        .containsExactly(Status.FAILED, null);
   }
 
   @Test
@@ -79,7 +82,7 @@ class DemoWorkerIntegrationTest {
 
     // Then
     Event afterFirstRun = reload(event);
-    assertThat(afterFirstRun.getStatus()).isEqualTo(Event.EventStatus.WAITING);
+    assertThat(afterFirstRun.getStatus()).isEqualTo(Status.WAITING);
     assertThat(afterFirstRun.getRetryCount()).isEqualTo(1);
     assertThat(afterFirstRun.getNextRunAt()).isNotNull();
 
@@ -90,14 +93,14 @@ class DemoWorkerIntegrationTest {
     Event afterSecondRun = reload(event);
     assertThat(afterSecondRun)
         .extracting(Event::getStatus, Event::getRetryCount, Event::getNextRunAt)
-        .containsExactly(Event.EventStatus.SUCCEEDED, 1, null);
+        .containsExactly(Status.SUCCEEDED, 1, null);
   }
 
   @Test
   @DisplayName("Retry: should mark event as DEAD after max retries")
   void should_mark_event_as_dead_after_max_retries() {
     // Given
-    int requiredFailures = retryConfig.getMaxRetries() + 1;
+    int requiredFailures = retryConfig.maxRetries() + 1;
     Event event = enqueueDemoEvent(new DemoEventPayload("dead", 0L, requiredFailures, true));
 
     // When
@@ -109,7 +112,7 @@ class DemoWorkerIntegrationTest {
     Event updated = reload(event);
     assertThat(updated)
         .extracting(Event::getStatus, Event::getRetryCount, Event::getNextRunAt)
-        .containsExactly(Event.EventStatus.DEAD, retryConfig.getMaxRetries(), null);
+        .containsExactly(Status.DEAD, retryConfig.maxRetries(), null);
   }
 
   @Test
@@ -117,7 +120,7 @@ class DemoWorkerIntegrationTest {
   void should_skip_event_scheduled_in_future() {
     // Given
     Event event = enqueueDemoEvent(new DemoEventPayload("future", 0L, 0, true));
-    event.await(Instant.now(), Instant.now().plusSeconds(60));
+    event.revive(Instant.now(), Instant.now().plusSeconds(60));
     eventService.updateEvent(event);
 
     // When
@@ -127,11 +130,11 @@ class DemoWorkerIntegrationTest {
     Event updated = reload(event);
     assertThat(updated)
         .extracting(Event::getStatus, Event::getRetryCount)
-        .containsExactly(Event.EventStatus.WAITING, 0);
+        .containsExactly(Status.WAITING, 0);
   }
 
   private Event enqueueDemoEvent(DemoEventPayload payload) {
-    return eventService.enqueueEvent(Event.EventType.DEMO_EVENT, payload);
+    return eventService.enqueueEvent(Type.DEMO_EVENT, payload);
   }
 
   private Event reload(Event event) {

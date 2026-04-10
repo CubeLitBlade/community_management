@@ -1,8 +1,10 @@
-package io.github.cubelitblade.event;
+package io.github.cubelitblade.event.persistence;
 
 import com.baomidou.mybatisplus.core.conditions.query.LambdaQueryWrapper;
 import com.baomidou.mybatisplus.core.conditions.update.LambdaUpdateWrapper;
 import io.github.cubelitblade.configuration.TimeConfig;
+import io.github.cubelitblade.event.model.Event;
+import io.github.cubelitblade.event.model.Status;
 import java.time.Instant;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -21,7 +23,7 @@ public class EventRepository {
   public List<Event> claimWaitingEvents(int count) {
     LambdaQueryWrapper<Event> lambdaQueryWrapper = new LambdaQueryWrapper<>();
     lambdaQueryWrapper
-        .eq(Event::getStatus, Event.EventStatus.WAITING)
+        .eq(Event::getStatus, Status.WAITING)
         .le(Event::getNextRunAt, Instant.now())
         .orderByAsc(Event::getNextRunAt)
         .last("for update skip locked limit " + count);
@@ -39,14 +41,14 @@ public class EventRepository {
   public void resetZombieEvents(Instant threshold) {
     LambdaQueryWrapper<Event> lambdaQueryWrapper = new LambdaQueryWrapper<>();
     lambdaQueryWrapper
-        .eq(Event::getStatus, Event.EventStatus.RUNNING)
+        .eq(Event::getStatus, Status.RUNNING)
         .le(Event::getUpdatedAt, threshold)
         .orderByAsc(Event::getUpdatedAt)
         .last("for update skip locked");
     List<Event> eventList = eventMapper.selectList(lambdaQueryWrapper);
 
     for (Event event : eventList) {
-      event.await(timeConfig.now(), timeConfig.now());
+      event.revive(timeConfig.now(), timeConfig.now());
     }
 
     updateOrThrow(eventList);

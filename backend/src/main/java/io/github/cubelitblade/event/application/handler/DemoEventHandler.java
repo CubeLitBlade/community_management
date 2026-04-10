@@ -1,10 +1,12 @@
-package io.github.cubelitblade.event.handler;
+package io.github.cubelitblade.event.application.handler;
 
-import io.github.cubelitblade.event.Event;
-import io.github.cubelitblade.event.exception.TransientEventException;
-import io.github.cubelitblade.event.payload.DemoEventPayload;
-import io.github.cubelitblade.event.payload.EventPayloadMapper;
-import io.github.cubelitblade.event.sse.SseService;
+import io.github.cubelitblade.event.exception.DownstreamTimeoutException;
+import io.github.cubelitblade.event.exception.RejectedEventException;
+import io.github.cubelitblade.event.infra.sse.SseService;
+import io.github.cubelitblade.event.model.Event;
+import io.github.cubelitblade.event.model.Type;
+import io.github.cubelitblade.event.model.payload.DemoEventPayload;
+import io.github.cubelitblade.event.model.payload.EventPayloadMapper;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
 import org.springframework.transaction.support.TransactionTemplate;
@@ -22,7 +24,7 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
   private final EventPayloadMapper eventPayloadMapper;
 
   public DemoEventHandler(
-      EventWorkflow workflow,
+      EventLifecycleManager workflow,
       SseService sseService,
       TransactionTemplate transactionTemplate,
       EventPayloadMapper eventPayloadMapper) {
@@ -33,8 +35,8 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
   }
 
   @Override
-  public Event.EventType getEventType() {
-    return Event.EventType.DEMO_EVENT;
+  public Type getEventType() {
+    return Type.DEMO_EVENT;
   }
 
   @Override
@@ -56,7 +58,7 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
           eventPayloadMapper.toJsonString(payload));
 
       broadcastMessage(payload);
-      workflow.checkpoint(event, STEP_INIT); // save the progress
+      stepper.advanceEventToStep(event, STEP_INIT); // save the progress
     } else {
       log.debug(
           "[Event #{}] Resuming DemoEvent from step '{}'. Payload = {}",
@@ -68,20 +70,19 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
     // Step 2: Perform heavy, time-consuming work atomically
     if (event.getCurrentStep().equals(STEP_INIT)) {
       doTimeConsumingWork(event, payload);
-      workflow.checkpoint(event, STEP_TIME_CONSUMING_WORK_DONE); // save the progress
+      stepper.advanceEventToStep(event, STEP_TIME_CONSUMING_WORK_DONE); // save the progress
     }
 
     // Step 3: Execute transactional operations
     if (event.getCurrentStep().equals(STEP_TIME_CONSUMING_WORK_DONE)) {
       transactionTemplate.executeWithoutResult(_ -> validateRetryCondition(event, payload));
-      workflow.checkpoint(event, STEP_TX_VALIDATED); // save the progress
+      stepper.advanceEventToStep(event, STEP_TX_VALIDATED); // save the progress
     }
 
     // Step 4: Finalize the event outcome
     if (event.getCurrentStep().equals(STEP_TX_VALIDATED)) {
       decideResult(event, payload);
     }
-    log.info("[Event #{}] DemoEvent completed with status = {}", eventId, event.getStatus());
   }
 
   /**
@@ -115,18 +116,10 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
       log.warn(
           "[Event #{}] Heavy work was unexpectedly interrupted! Any side effects are assumed reverted or safe to retry. ",
           event.getId());
-      throw new TransientEventException("Simulation of heavy work was interrupted");
+      throw new IllegalStateException("Simulation of heavy work was unexpectedly interrupted");
     }
   }
 
-  /**
-   * Broadcast the message via SSE.
-   *
-   * <p>Lightweight operation without side effects. Checkpoints are not needed here to avoid
-   * unnecessary overhead.
-   *
-   * @param payload Payload of the event.
-   */
   private void broadcastMessage(DemoEventPayload payload) {
     if (payload.message() == null) {
       log.info("No message provided, skipping broadcast.");
@@ -135,35 +128,19 @@ public class DemoEventHandler extends EventHandler<DemoEventPayload> {
     sseService.broadcast(payload.message());
   }
 
-  /**
-   * Schedule a retry for the event if required.
-   *
-   * <p>This operation may modify the database, so it must run inside a transaction. Checkpoints are
-   * required after successful execution to ensure idempotency.
-   *
-   * @param event Event.
-   * @param payload Payload of the event.
-   */
   private void validateRetryCondition(Event event, DemoEventPayload payload) {
     int currentRetry = event.getRetryCount();
     int requiredRetries = payload.failures();
     if (requiredRetries > currentRetry) {
-      throw new TransientEventException(
-          String.format("Retry threshold not reached (%d/%d).", currentRetry, requiredRetries));
+      throw new DownstreamTimeoutException(
+          String.format(
+              "Simulated downstream timeout. Retry count: %d/%d.", currentRetry, requiredRetries));
     }
   }
 
-  /**
-   * Decide the final outcome of the event based on the payload.
-   *
-   * @param event Event.
-   * @param payload Payload of the event.
-   */
   private void decideResult(Event event, DemoEventPayload payload) {
-    if (payload.expectSuccess()) {
-      workflow.complete(event);
-    } else {
-      workflow.abort(event, "Payload indicates that this event should fail.");
+    if (!payload.expectSuccess()) {
+      throw new RejectedEventException("Simulated rejection based on payload condition.");
     }
   }
 }

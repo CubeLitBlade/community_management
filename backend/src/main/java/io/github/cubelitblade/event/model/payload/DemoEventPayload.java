@@ -1,4 +1,4 @@
-package io.github.cubelitblade.event.payload;
+package io.github.cubelitblade.event.model.payload;
 
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
 import java.util.Objects;

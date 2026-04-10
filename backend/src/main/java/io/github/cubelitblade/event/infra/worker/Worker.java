@@ -1,8 +1,8 @@
-package io.github.cubelitblade.event.worker;
+package io.github.cubelitblade.event.infra.worker;
 
 import io.github.cubelitblade.configuration.TimeConfig;
-import io.github.cubelitblade.event.Event;
-import io.github.cubelitblade.event.EventService;
+import io.github.cubelitblade.event.application.EventService;
+import io.github.cubelitblade.event.model.Event;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;

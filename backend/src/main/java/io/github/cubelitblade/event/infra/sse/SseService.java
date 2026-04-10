@@ -1,4 +1,4 @@
-package io.github.cubelitblade.event.sse;
+package io.github.cubelitblade.event.infra.sse;
 
 import java.io.IOException;
 import java.util.List;

@@ -1,10 +1,10 @@
-package io.github.cubelitblade.event.handler;
+package io.github.cubelitblade.event.application.handler;
 
-import io.github.cubelitblade.configuration.RetryConfig;
 import io.github.cubelitblade.configuration.TimeConfig;
-import io.github.cubelitblade.event.Event;
-import io.github.cubelitblade.event.EventService;
-import io.github.cubelitblade.event.exception.FatalEventException;
+import io.github.cubelitblade.event.application.EventRetryPolicy;
+import io.github.cubelitblade.event.application.EventService;
+import io.github.cubelitblade.event.model.Event;
+import java.time.Duration;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Component;
@@ -14,42 +14,25 @@ import org.springframework.transaction.annotation.Transactional;
 @Slf4j
 @Component
 @RequiredArgsConstructor
-public class EventWorkflow {
+public class EventLifecycleManager implements EventStepper, EventFinalizer, EventScheduler {
   private final EventService eventService;
-  private final RetryConfig retryConfig;
   private final TimeConfig timeConfig;
+  private final EventRetryPolicy eventRetryPolicy;
 
-  /**
-   * Schedules the next retry for the event using an exponential backoff algorithm.
-   *
-   * <p>Logic:
-   *
-   * <ul>
-   *   <li>If retries are not exhausted: calculates next run time ({@code baseDelay *
-   *       2^retryCount}), increments retry count, sets status to {@code WAITING}.
-   *   <li>If max retries reached: marks the event as {@code DEAD} via {@link #giveUp(Event,
-   *       String)}.
-   * </ul>
-   *
-   * @param event the event to schedule for retry
-   */
-  @Transactional
+  @Override
+  @Transactional(propagation = Propagation.REQUIRES_NEW)
   public void reschedule(Event event, String reason) {
     int retryCount = event.getRetryCount();
 
-    if (retryCount < retryConfig.getMaxRetries()) {
-      long backoffMills =
-          Math.min(
-              retryConfig.getBaseDelay().toMillis() * (1L << retryCount), // exponential backoff
-              retryConfig.getMaxDelay().toMillis() // max backoff
-              );
+    if (eventRetryPolicy.canRetry(retryCount)) {
+      Duration backoff = eventRetryPolicy.getExponentialBackoffDuration(retryCount);
 
-      event.prepareForRetry(timeConfig.now().plusMillis(backoffMills), reason, timeConfig.now());
+      event.retry(timeConfig.now().plus(backoff), reason, timeConfig.now());
       log.warn(
           "[Event #{}]: Scheduled to retry at {} (after {} ms), because {}. ",
           event.getId(),
           event.getNextRunAt(),
-          backoffMills,
+          backoff,
           reason);
     } else {
       event.die(
@@ -59,7 +42,7 @@ public class EventWorkflow {
           event.getId());
     }
 
-    this.commit(event);
+    this.persist(event);
   }
 
   /**
@@ -69,10 +52,10 @@ public class EventWorkflow {
    *
    * @param event the event to update
    */
-  @Transactional
+  @Override
   public void complete(Event event) {
     event.succeed(timeConfig.now());
-    this.commit(event);
+    this.persist(event);
   }
 
   /**
@@ -83,10 +66,10 @@ public class EventWorkflow {
    * @param event the event to update
    * @param reason the error message describing the failure
    */
-  @Transactional
+  @Override
   public void abort(Event event, String reason) {
     event.fail(reason, timeConfig.now());
-    this.commit(event);
+    this.persist(event);
   }
 
   /**
@@ -97,10 +80,10 @@ public class EventWorkflow {
    * @param event the event to update
    * @param reason the error message describing why the event is dead
    */
-  @Transactional
+  @Override
   public void giveUp(Event event, String reason) {
     event.die(reason, timeConfig.now());
-    this.commit(event);
+    this.persist(event);
   }
 
   /**
@@ -111,21 +94,15 @@ public class EventWorkflow {
    * intermediate steps to prevent excessive database writes.
    *
    * @param event the event to update
-   * @param step the critical step to set
+   * @param targetStep the critical step to set
    */
-  @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public void checkpoint(Event event, String step) {
-    event.toStep(step, timeConfig.now());
-    eventService.updateEventStep(event);
+  @Override
+  public void advanceEventToStep(Event event, String targetStep) {
+    event.advanceTo(targetStep, timeConfig.now());
+    this.persist(event);
   }
 
-  @Transactional
-  public void commit(Event event) {
-    try {
-      eventService.updateEvent(event);
-    } catch (RuntimeException e) {
-      log.error("[Event #{}]: Failed to commit event: {}", event.getId(), event.getErrorMsg(), e);
-      throw new FatalEventException("Failed to update event", e);
-    }
+  private void persist(Event event) {
+    eventService.updateEvent(event);
   }
 }
