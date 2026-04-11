@@ -1,32 +1,19 @@
 package io.github.cubelitblade.post.persistence;
 
-import com.baomidou.mybatisplus.annotation.IdType;
-import com.baomidou.mybatisplus.annotation.TableId;
-import com.baomidou.mybatisplus.annotation.TableName;
 import io.github.cubelitblade.post.model.Post;
 import io.github.cubelitblade.post.model.Status;
 import java.time.Instant;
-import lombok.AllArgsConstructor;
 import lombok.Builder;
-import lombok.Data;
-import lombok.NoArgsConstructor;
 
-@Data
 @Builder
-@NoArgsConstructor
-@AllArgsConstructor
-@TableName("posts")
-public class PostPo {
-  @TableId(type = IdType.AUTO)
-  private Long id;
-
-  private Long authorId;
-  private String title;
-  private String content;
-  private String status;
-  private Instant createdAt;
-  private Instant updatedAt;
-
+public record PostPo(
+    Long id,
+    Long authorId,
+    String title,
+    String content,
+    String status,
+    Instant createdAt,
+    Instant updatedAt) {
   public static PostPo of(Post post) {
     if (post == null) {
       return null;
