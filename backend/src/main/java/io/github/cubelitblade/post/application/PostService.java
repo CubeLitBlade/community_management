@@ -1,9 +1,12 @@
 package io.github.cubelitblade.post.application;
 
 import io.github.cubelitblade.common.time.TimeProvider;
+import io.github.cubelitblade.post.dto.PostResponse;
 import io.github.cubelitblade.post.dto.PublishPostRequest;
+import io.github.cubelitblade.post.dto.RecentPostsResponse;
 import io.github.cubelitblade.post.model.Post;
 import io.github.cubelitblade.post.persistence.PostRepository;
+import java.util.List;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -19,5 +22,15 @@ public class PostService {
     postRepository.publishPost(post);
 
     return post.getId();
+  }
+
+  public RecentPostsResponse getRecentPosts(int count, Long lastId) {
+    int fetchSize = count + 1; // Determine whether it has next
+
+    List<Post> fetchedPosts = postRepository.getRecentPosts(fetchSize, lastId);
+
+    return new RecentPostsResponse(
+        fetchedPosts.stream().limit(count).map(PostResponse::from).toList(),
+        fetchedPosts.size() > count);
   }
 }

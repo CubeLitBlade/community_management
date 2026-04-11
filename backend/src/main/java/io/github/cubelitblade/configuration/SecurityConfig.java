@@ -35,7 +35,7 @@ public class SecurityConfig {
         .authorizeHttpRequests(
             authorizeRequests ->
                 authorizeRequests
-                    .requestMatchers("/api/auth/**")
+                    .requestMatchers("/api/auth/**", "/api/posts/recent")
                     .permitAll()
                     .anyRequest()
                     .authenticated())

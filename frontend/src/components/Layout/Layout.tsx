@@ -1,21 +1,18 @@
 import {
-  Hamburger,
   makeStyles,
   NavCategory,
   NavCategoryItem,
   NavDivider,
   NavDrawer,
   NavDrawerBody,
-  NavDrawerHeader,
   NavItem,
   NavSectionHeader,
   NavSubItem,
   NavSubItemGroup,
-  Tooltip,
   tokens,
 } from '@fluentui/react-components';
 
-import { useState, type ComponentProps } from 'react';
+import { type ComponentProps } from 'react';
 import { useLocation, useNavigate, Outlet } from 'react-router';
 import useAccount from '../../hooks/useAccount';
 import {
@@ -37,18 +34,24 @@ const useStyles = makeStyles({
     overflow: 'hidden',
     display: 'flex',
     height: '100dvh',
+    backgroundColor: tokens.colorNeutralBackground2,
   },
   nav: {
     minWidth: NAV_WIDTH,
   },
   content: {
     flex: '1',
-    padding: tokens.spacingHorizontalXL,
-    display: 'grid',
-    justifyContent: 'flex-start',
-    alignItems: 'flex-start',
-    overflowY: 'auto',
+    minWidth: 0,
+    display: 'flex',
+    flexDirection: 'column',
+    overflow: 'hidden',
     backgroundColor: tokens.colorNeutralBackground2,
+  },
+  contentBody: {
+    flex: '1',
+    overflowY: 'auto',
+    padding: `${tokens.spacingVerticalL} ${tokens.spacingHorizontalXL}`,
+    display: 'block',
   },
   navBody: {
     display: 'flex',
@@ -61,7 +64,6 @@ const useStyles = makeStyles({
 type NavSelectHandler = NonNullable<ComponentProps<typeof NavDrawer>['onNavItemSelect']>;
 
 export default function Layout() {
-  const [isOpen, setIsOpen] = useState(true);
   const styles = useStyles();
   const location = useLocation();
   const navigate = useNavigate();
@@ -80,15 +82,10 @@ export default function Layout() {
       <NavDrawer
         selectedValue={location.pathname}
         onNavItemSelect={handleNavSelect}
-        open={isOpen}
+        open={true}
         type="inline"
         className={styles.nav}
       >
-        <NavDrawerHeader>
-          <Tooltip content="收起" relationship="label">
-            <Hamburger onClick={() => setIsOpen(!isOpen)} />
-          </Tooltip>
-        </NavDrawerHeader>
         <NavDrawerBody className={styles.navBody}>
           <div>
             <AccountNavItem profile={profile} isLoading={isLoading} onLogout={logout} />
@@ -96,7 +93,7 @@ export default function Layout() {
               首页
             </NavItem>
             <NavSectionHeader>社区</NavSectionHeader>
-            <NavItem icon={<SlideTextSparkleIcon />} value="/feed" disabled>
+            <NavItem icon={<SlideTextSparkleIcon />} value="/feed">
               新鲜事
             </NavItem>
             <NavCategory value="/activities">
@@ -134,7 +131,9 @@ export default function Layout() {
         </NavDrawerBody>
       </NavDrawer>
       <div className={styles.content}>
-        <Outlet />
+        <div className={styles.contentBody}>
+          <Outlet />
+        </div>
       </div>
     </div>
   );

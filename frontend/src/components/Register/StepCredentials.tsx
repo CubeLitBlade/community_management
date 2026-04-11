@@ -9,6 +9,7 @@ import {
   useId,
 } from '@fluentui/react-components';
 import { Spinner } from '@fluentui/react-components';
+import type { FormEvent } from 'react';
 
 const FIELD_MESSAGE_PLACEHOLDER = '\u00A0';
 
@@ -52,7 +53,7 @@ interface StepCredentialsProps {
   passwordMismatchMessage: string;
   handleConfirmPasswordBlur: () => void;
   canProceed: boolean;
-  onNext: (e: SubmitEvent) => void;
+  onNext: (e: FormEvent<HTMLFormElement>) => void;
 }
 
 export default function StepCredentials({
@@ -86,7 +87,7 @@ export default function StepCredentials({
     <>
       <Title3 className={styles.title}>注册</Title3>
       <Text className={styles.subtitle}>填写你的用户名和密码。</Text>
-      <form className={styles.form} onSubmit={(e) => onNext(e.nativeEvent as SubmitEvent)}>
+      <form className={styles.form} onSubmit={onNext}>
         <div className={styles.inputGroup}>
           <Field
             label="用户名"
@@ -99,6 +100,7 @@ export default function StepCredentials({
               className={styles.input}
               maxLength={20}
               value={username.value}
+              autoComplete="username"
               onChange={(e) => username.onChange(e.target.value)}
               onBlur={username.onBlur}
             />
@@ -116,6 +118,7 @@ export default function StepCredentials({
               className={styles.input}
               maxLength={20}
               value={password}
+              autoComplete="new-password"
               onChange={(e) => setPassword(e.target.value)}
               onBlur={handlePasswordBlur}
             />
@@ -130,6 +133,7 @@ export default function StepCredentials({
               id={confirmPasswordId}
               className={styles.input}
               value={confirmPassword}
+              autoComplete="new-password"
               onChange={(e) => setConfirmPassword(e.target.value)}
               onBlur={handleConfirmPasswordBlur}
             />

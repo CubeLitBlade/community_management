@@ -9,6 +9,7 @@ import {
   useId,
   Spinner,
 } from '@fluentui/react-components';
+import type { FormEvent } from 'react';
 
 const FIELD_MESSAGE_PLACEHOLDER = '\u00A0';
 
@@ -27,7 +28,7 @@ const useStyles = makeStyles({
     display: 'flex',
     flexDirection: 'column',
     gap: tokens.spacingVerticalL,
-    padding: `0 ${tokens.spacingHorizontalXXXL} ${tokens.spacingVerticalXXL}`,
+    padding: `0 ${tokens.spacingHorizontalXXXL} ${tokens.spacingVerticalXL}`,
   },
   inputGroup: { display: 'flex', flexDirection: 'column', gap: tokens.spacingVerticalL },
   input: { width: '100%' },
@@ -54,7 +55,7 @@ interface StepContactInfoProps {
   canSubmit: boolean;
   submitErrorMessage: string;
   isSubmitting: boolean;
-  onSubmit: (e: SubmitEvent) => void;
+  onSubmit: (e: FormEvent<HTMLFormElement>) => void;
 }
 
 export default function StepContactInfo({
@@ -87,7 +88,7 @@ export default function StepContactInfo({
     <>
       <Title3 className={styles.title}>完善信息</Title3>
       <Text className={styles.subtitle}>请提供手机号或邮箱，至少填写一项。</Text>
-      <form className={styles.form} onSubmit={(e) => onSubmit(e.nativeEvent as SubmitEvent)}>
+      <form className={styles.form} onSubmit={onSubmit}>
         {submitErrorMessage ? (
           <Text role="alert" style={{ color: tokens.colorPaletteRedForeground1 }}>
             {submitErrorMessage}
@@ -104,6 +105,7 @@ export default function StepContactInfo({
               id={emailId}
               className={styles.input}
               value={email.value}
+              autoComplete="email"
               onChange={(e) => email.onChange(e.target.value)}
               onBlur={email.onBlur}
             />
@@ -119,6 +121,7 @@ export default function StepContactInfo({
               className={styles.input}
               maxLength={12}
               value={phone.value}
+              autoComplete="tel"
               onChange={(e) => phone.onChange(e.target.value)}
               onBlur={phone.onBlur}
             />

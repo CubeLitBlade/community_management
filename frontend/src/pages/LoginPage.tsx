@@ -1,17 +1,18 @@
 import {
-  Card,
-  CardPreview,
-  CardFooter,
   Button,
+  Card,
+  CardFooter,
+  CardPreview,
+  Caption1,
+  Field,
+  Image,
+  Input,
+  Spinner,
+  Text,
+  Title3,
   makeStyles,
   tokens,
-  Image,
-  Text,
   useId,
-  Input,
-  Title3,
-  Spinner,
-  Field,
 } from '@fluentui/react-components';
 import { useNavigate } from 'react-router';
 import BgLogin from '../assets/bg-login.jpg';
@@ -30,7 +31,10 @@ const useStyles = makeStyles({
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: tokens.spacingHorizontalXXL,
+    padding: `${tokens.spacingVerticalXL} ${tokens.spacingHorizontalL}`,
+    '@media (max-width: 480px)': {
+      padding: tokens.spacingHorizontalM,
+    },
   },
   loginCard: {
     width: '100%',
@@ -71,17 +75,15 @@ const useStyles = makeStyles({
     flexDirection: 'column',
     gap: tokens.spacingVerticalL,
   },
-  credentialFields: {
-    display: 'flex',
-    flexDirection: 'column',
-    gap: tokens.spacingVerticalL,
-  },
   input: {
     width: '100%',
   },
+  errorText: {
+    color: tokens.colorPaletteRedForeground1,
+  },
   submitButton: {
     width: '100%',
-    marginTop: tokens.spacingVerticalXL,
+    marginTop: tokens.spacingVerticalM,
   },
   footer: {
     display: 'flex',
@@ -124,47 +126,56 @@ export default function LoginPage() {
           <Image
             className={styles.logo}
             src="https://raw.githubusercontent.com/microsoft/fluentui-system-icons/refs/heads/main/assets/People%20Community/SVG/ic_fluent_people_community_48_color.svg"
+            alt="社区图标"
           />
         </div>
         <CardPreview>
           <Title3 className={styles.title}>登录</Title3>
           <Text className={styles.subtitle}>提供您的登录凭据。</Text>
           <form className={styles.form} onSubmit={handleLoginSubmit}>
+            {errorMessage ? (
+              <Caption1 role="alert" className={styles.errorText}>
+                {errorMessage}
+              </Caption1>
+            ) : null}
             <div className={styles.inputGroup}>
               <Field
+                label="用户名"
                 validationState={errorMessage ? 'error' : 'none'}
-                validationMessage={errorMessage || FIELD_MESSAGE_PLACEHOLDER}
+                validationMessage={FIELD_MESSAGE_PLACEHOLDER}
               >
-                <div className={styles.credentialFields}>
-                  <Field label="用户名">
-                    <Input
-                      type="text"
-                      id={usernameId}
-                      className={styles.input}
-                      value={username}
-                      onChange={(e) => setUsername(e.target.value)}
-                    />
-                  </Field>
-                  <Field label="密码">
-                    <Input
-                      type="password"
-                      id={passwordId}
-                      className={styles.input}
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                    />
-                  </Field>
-                </div>
+                <Input
+                  type="text"
+                  id={usernameId}
+                  className={styles.input}
+                  value={username}
+                  autoComplete="username"
+                  onChange={(e) => setUsername(e.target.value)}
+                />
+              </Field>
+              <Field
+                label="密码"
+                validationState={errorMessage ? 'error' : 'none'}
+                validationMessage={FIELD_MESSAGE_PLACEHOLDER}
+              >
+                <Input
+                  type="password"
+                  id={passwordId}
+                  className={styles.input}
+                  value={password}
+                  autoComplete="current-password"
+                  onChange={(e) => setPassword(e.target.value)}
+                />
               </Field>
             </div>
             <Button
               type="submit"
               appearance="primary"
               className={styles.submitButton}
-              disabledFocusable={isSubmitting}
+              disabled={isSubmitting}
               icon={isSubmitting ? <Spinner size="tiny" /> : null}
             >
-              {isSubmitting ? '登录中' : '下一步'}
+              {isSubmitting ? '登录中' : '登录'}
             </Button>
           </form>
         </CardPreview>

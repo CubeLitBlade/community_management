@@ -1,5 +1,6 @@
 import { createBrowserRouter, RouterProvider } from 'react-router';
 import HomePage from '../pages/HomePage';
+import FeedPage from '../pages/FeedPage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import Layout from '../components/Layout/Layout';
@@ -12,6 +13,10 @@ const router = createBrowserRouter([
       {
         path: '/',
         element: <HomePage />,
+      },
+      {
+        path: '/feed',
+        element: <FeedPage />,
       },
     ],
   },
