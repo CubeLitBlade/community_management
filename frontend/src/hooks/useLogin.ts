@@ -1,5 +1,5 @@
 import { useNavigate } from 'react-router';
-import { useState, type SubmitEvent } from 'react';
+import { useState, type FormEvent } from 'react';
 import apiClient from '../api/apiClient';
 import type { LoginRequest, LoginResponse } from '../types/Account';
 import { BizError } from '../types/Error';
@@ -13,7 +13,7 @@ export default function useLogin() {
   const [errorMessage, setErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
 
-  const handleLoginSubmit = async (e: SubmitEvent) => {
+  const handleLoginSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (username.trim() === '') {

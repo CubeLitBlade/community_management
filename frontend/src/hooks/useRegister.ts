@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router';
 import apiClient from '../api/apiClient';
 import type { FieldsCheckRequest, FieldsCheckResponse, RegisterRequest } from '../types/Account';
@@ -268,7 +268,7 @@ export default function useRegister() {
     (hasAvailableContact || !email.isBlurred || !phone.isBlurred) &&
     !hasConfirmedUnavailableContact;
 
-  const handleNextStep = (e: SubmitEvent) => {
+  const handleNextStep = (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     setIsPasswordBlurred(true);
     setIsConfirmPasswordBlurred(true);
@@ -279,7 +279,7 @@ export default function useRegister() {
     setStep(1);
   };
 
-  const handleSubmit = async (e: SubmitEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     if (!canSubmit) return;
 

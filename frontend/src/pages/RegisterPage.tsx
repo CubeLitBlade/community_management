@@ -26,7 +26,10 @@ const useStyles = makeStyles({
     display: 'flex',
     justifyContent: 'center',
     alignItems: 'center',
-    padding: tokens.spacingHorizontalXXL,
+    padding: `${tokens.spacingVerticalXL} ${tokens.spacingHorizontalL}`,
+    '@media (max-width: 480px)': {
+      padding: tokens.spacingHorizontalM,
+    },
   },
   registerCard: {
     width: '100%',
@@ -118,6 +121,7 @@ export default function RegisterPage() {
           <Image
             className={styles.logo}
             src="https://raw.githubusercontent.com/microsoft/fluentui-system-icons/refs/heads/main/assets/People%20Community/SVG/ic_fluent_people_community_48_color.svg"
+            alt="社区图标"
           />
         </div>
         <CardPreview>
