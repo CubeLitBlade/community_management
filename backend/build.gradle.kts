@@ -34,7 +34,8 @@ dependencies {
     implementation(libs.spring.boot.starter.security)
     implementation(libs.spring.boot.starter.validation)
 
-    // MyBatis-Plus & PostgreSQL
+    // MyBatis & PostgreSQL
+    implementation(libs.mybatis.dynamic.sql)
     implementation(libs.mybatis.plus)
     implementation(libs.postgresql)
 
