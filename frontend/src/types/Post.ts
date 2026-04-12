@@ -1,5 +1,6 @@
 export type Post = {
   id: number;
+  authorId: number;
   authorNickname?: string | null;
   authorUsername?: string | null;
   title: string | null;

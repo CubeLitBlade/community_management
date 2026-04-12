@@ -272,8 +272,9 @@ export default function FeedPage() {
 
       <div className={styles.postList}>
         {posts.map((post) => {
-          const hasTitle = Boolean(post.title?.trim());
-          const authorNickname = post.authorNickname?.trim() || '作者昵称';
+          const hasTitle = post.title?.trim() != '';
+          const authorNickname = post.authorNickname?.trim() || '已注销用户';
+          const authorUsername = post.authorUsername?.trim() || '';
 
           return (
             <Card key={post.id}>
@@ -282,7 +283,7 @@ export default function FeedPage() {
                   image={
                     <Persona
                       name={authorNickname}
-                      secondaryText={hasTitle ? '帖子作者' : '内容帖作者'}
+                      secondaryText={authorUsername}
                       size="small"
                       textAlignment="center"
                     />
