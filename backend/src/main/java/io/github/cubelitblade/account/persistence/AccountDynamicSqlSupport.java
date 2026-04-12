@@ -1,9 +1,8 @@
 package io.github.cubelitblade.account.persistence;
 
+import java.sql.JDBCType;
 import org.mybatis.dynamic.sql.AliasableSqlTable;
 import org.mybatis.dynamic.sql.SqlColumn;
-
-import java.sql.JDBCType;
 
 public class AccountDynamicSqlSupport {
   public static final Accounts accounts = new Accounts();
