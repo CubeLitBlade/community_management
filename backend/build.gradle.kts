@@ -30,6 +30,7 @@ dependencies {
 
     // Spring Boot
     implementation(libs.spring.boot.starter)
+    implementation(libs.spring.boot.starter.data.redis)
     implementation(libs.spring.boot.starter.web)
     implementation(libs.spring.boot.starter.security)
     implementation(libs.spring.boot.starter.validation)
