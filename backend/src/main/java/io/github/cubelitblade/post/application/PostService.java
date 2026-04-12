@@ -2,7 +2,8 @@ package io.github.cubelitblade.post.application;
 
 import io.github.cubelitblade.account.security.JwtAuthenticatedUser;
 import io.github.cubelitblade.common.time.TimeProvider;
-import io.github.cubelitblade.post.dto.PostResponse;
+import io.github.cubelitblade.post.dto.EditPostRequest;
+import io.github.cubelitblade.post.dto.PostDetailView;
 import io.github.cubelitblade.post.dto.PublishPostRequest;
 import io.github.cubelitblade.post.dto.RecentPostsResponse;
 import io.github.cubelitblade.post.exception.PostForbiddenException;
@@ -52,13 +53,26 @@ public class PostService {
     postRepository.updatePost(post);
   }
 
+  public Post editPost(JwtAuthenticatedUser  authenticatedUser, long postId, EditPostRequest request) {
+    Post post = postRepository.getPost(postId).orElseThrow(() -> new PostNotFoundException("Post not found"));
+
+    if (!post.getAuthorId().equals(authenticatedUser.accountId())) {
+      throw new PostForbiddenException("You are not allowed to edit post");
+    }
+
+    post.edit(request.title(), request.content(), timeProvider.now());
+    postRepository.updatePost(post);
+
+    return post;
+  }
+
   public RecentPostsResponse getRecentPosts(int count, Long lastId) {
     int fetchSize = count + 1; // Determine whether it has next
 
     List<PostWithAuthorVo> fetchedPosts = postQueryRepository.getRecentPosts(fetchSize, lastId);
 
     return new RecentPostsResponse(
-        fetchedPosts.stream().limit(count).map(PostResponse::from).toList(),
+        fetchedPosts.stream().limit(count).map(PostDetailView::from).toList(),
         fetchedPosts.size() > count);
   }
 }

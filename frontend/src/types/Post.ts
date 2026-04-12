@@ -1,4 +1,13 @@
-export type Post = {
+export type PostRecord = {
+  id: number;
+  authorId: number;
+  title: string | null;
+  content: string;
+  createdAt: string;
+  updatedAt: string;
+};
+
+export type PostView = {
   id: number;
   authorId: number;
   authorNickname?: string | null;
@@ -15,6 +24,11 @@ export type PublishPostRequest = {
 };
 
 export type RecentPostsResponse = {
-  items: Post[];
+  items: PostView[];
   hasMore: boolean;
+};
+
+export type EditPostRequest = {
+  title: string | null;
+  content: string;
 };

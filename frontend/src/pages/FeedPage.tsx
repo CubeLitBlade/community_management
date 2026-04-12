@@ -28,7 +28,7 @@ import {
   makeStyles,
   tokens,
 } from '@fluentui/react-components';
-import { DeleteRegular, MoreHorizontalRegular } from '@fluentui/react-icons';
+import { DeleteRegular, MoreHorizontalRegular, SlideTextEditRegular } from '@fluentui/react-icons';
 import { useEffect, useRef, useState, type SubmitEvent } from 'react';
 import { useNavigate } from 'react-router';
 import useAccount from '../hooks/useAccount';
@@ -120,6 +120,19 @@ function formatPostTime(value: string) {
   return postDateFormatter.format(date);
 }
 
+function getPostTimeLabel(createdAt: string, updatedAt?: string | null) {
+  const normalizedUpdatedAt = updatedAt?.trim() || '';
+  if (normalizedUpdatedAt) {
+    const formattedUpdatedAt = formatPostTime(normalizedUpdatedAt);
+    if (formattedUpdatedAt) {
+      return `编辑于 ${formattedUpdatedAt}`;
+    }
+  }
+
+  const formattedCreatedAt = formatPostTime(createdAt);
+  return formattedCreatedAt ? `发布于 ${formattedCreatedAt}` : '';
+}
+
 export default function FeedPage() {
   const styles = useStyles();
   const navigate = useNavigate();
@@ -131,16 +144,23 @@ export default function FeedPage() {
     isLoadingMore,
     errorMessage,
     publishErrorMessage,
+    editErrorMessage,
     deleteErrorMessage,
     isPublishing,
+    updatingPostId,
     deletingPostId,
     loadMore,
     publishPost,
+    editPost,
     deletePost,
     refresh,
   } = useFeedPosts();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [editTitle, setEditTitle] = useState('');
+  const [editContent, setEditContent] = useState('');
+  const [showEditTitle, setShowEditTitle] = useState(true);
+  const [editPostId, setEditPostId] = useState<number | null>(null);
   const [confirmDeletePostId, setConfirmDeletePostId] = useState<number | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
@@ -193,6 +213,34 @@ export default function FeedPage() {
     const success = await deletePost(confirmDeletePostId);
     if (success) {
       setConfirmDeletePostId(null);
+    }
+  };
+
+  const openEditDialog = (postId: number, currentTitle: string | null, currentContent: string) => {
+    const hasTitle = currentTitle !== null;
+    setShowEditTitle(hasTitle);
+    setEditTitle(currentTitle ?? '');
+    setEditContent(currentContent);
+    setEditPostId(postId);
+  };
+
+  const handleConfirmEdit = async () => {
+    if (editPostId === null) {
+      return;
+    }
+
+    const normalizedContent = editContent.trim();
+    if (!normalizedContent) {
+      return;
+    }
+
+    const success = await editPost(editPostId, {
+      title: showEditTitle ? editTitle.trim() || null : null,
+      content: normalizedContent,
+    });
+
+    if (success) {
+      setEditPostId(null);
     }
   };
 
@@ -290,6 +338,8 @@ export default function FeedPage() {
         <Caption1 className={styles.muted}>{deleteErrorMessage}</Caption1>
       ) : null}
 
+      {editErrorMessage ? <Caption1 className={styles.muted}>{editErrorMessage}</Caption1> : null}
+
       {errorMessage ? (
         <Card>
           <div className={styles.cardBody}>
@@ -317,7 +367,9 @@ export default function FeedPage() {
           const authorNickname = post.authorNickname?.trim() || '已注销用户';
           const authorUsername = post.authorUsername?.trim() || '';
           const isAuthor = !Number.isNaN(profileId) && profileId === post.authorId;
+          const canEdit = isAuthor;
           const canDelete = Boolean(profile) && (isAdmin || isAuthor);
+          const canManagePost = canEdit || canDelete;
 
           return (
             <Card key={post.id}>
@@ -332,7 +384,9 @@ export default function FeedPage() {
                     />
                   }
                   action={
-                    <Caption1 className={styles.muted}>{formatPostTime(post.createdAt)}</Caption1>
+                    <Caption1 className={styles.muted}>
+                      {getPostTimeLabel(post.createdAt, post.updatedAt)}
+                    </Caption1>
                   }
                 />
                 <Divider />
@@ -343,18 +397,27 @@ export default function FeedPage() {
                 <Divider />
                 <CardFooter className={styles.postFooter}>
                   <Caption1 className={styles.muted}>社区动态</Caption1>
-                  {canDelete ? (
+                  {canManagePost ? (
                     <Menu>
                       <MenuTrigger disableButtonEnhancement>
                         <Button
                           appearance="subtle"
                           icon={<MoreHorizontalRegular />}
                           aria-label="更多操作"
-                          disabled={deletingPostId === post.id}
+                          disabled={deletingPostId === post.id || updatingPostId === post.id}
                         />
                       </MenuTrigger>
                       <MenuPopover>
                         <MenuList>
+                          {canEdit ? (
+                            <MenuItem
+                              icon={<SlideTextEditRegular />}
+                              onClick={() => openEditDialog(post.id, post.title, post.content)}
+                              disabled={updatingPostId === post.id}
+                            >
+                              {updatingPostId === post.id ? '编辑中' : '编辑'}
+                            </MenuItem>
+                          ) : null}
                           <MenuItem
                             icon={<DeleteRegular />}
                             onClick={() => setConfirmDeletePostId(post.id)}
@@ -379,6 +442,56 @@ export default function FeedPage() {
           <Caption1 className={styles.muted}>没有更多内容了。</Caption1>
         ) : null}
       </div>
+
+      <Dialog
+        open={editPostId !== null}
+        onOpenChange={(_event, data) => {
+          if (!data.open) {
+            setEditPostId(null);
+          }
+        }}
+      >
+        <DialogSurface>
+          <DialogBody>
+            <DialogTitle>编辑帖子</DialogTitle>
+            <DialogContent>
+              <div className={styles.formFields}>
+                {showEditTitle ? (
+                  <Field label="标题">
+                    <Input
+                      value={editTitle}
+                      onChange={(_event, data) => setEditTitle(data.value)}
+                      placeholder="可编辑标题"
+                    />
+                  </Field>
+                ) : null}
+                <Field label="内容">
+                  <Textarea
+                    value={editContent}
+                    onChange={(_event, data) => setEditContent(data.value)}
+                    placeholder="编辑内容"
+                    resize="vertical"
+                  />
+                </Field>
+              </div>
+            </DialogContent>
+            <DialogActions>
+              <Button appearance="secondary" onClick={() => setEditPostId(null)}>
+                取消
+              </Button>
+              <Button
+                appearance="primary"
+                onClick={() => void handleConfirmEdit()}
+                disabled={
+                  editPostId === null || updatingPostId === editPostId || editContent.trim() === ''
+                }
+              >
+                {updatingPostId === editPostId ? '编辑中' : '确认编辑'}
+              </Button>
+            </DialogActions>
+          </DialogBody>
+        </DialogSurface>
+      </Dialog>
 
       <Dialog
         open={confirmDeletePostId !== null}

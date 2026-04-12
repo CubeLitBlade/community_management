@@ -1,10 +1,16 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import apiClient from '../api/apiClient';
-import type { Post, PublishPostRequest, RecentPostsResponse } from '../types/Post';
+import type {
+  EditPostRequest,
+  PostRecord,
+  PostView,
+  PublishPostRequest,
+  RecentPostsResponse,
+} from '../types/Post';
 
 const PAGE_SIZE = 12;
 
-function normalizePost(post: Post): Post {
+function normalizePost(post: PostView): PostView {
   return {
     ...post,
     title: post.title?.trim() ? post.title.trim() : null,
@@ -12,13 +18,15 @@ function normalizePost(post: Post): Post {
 }
 
 export default function useFeedPosts() {
-  const [posts, setPosts] = useState<Post[]>([]);
+  const [posts, setPosts] = useState<PostView[]>([]);
   const [hasMore, setHasMore] = useState(true);
   const [isInitialLoading, setIsInitialLoading] = useState(true);
   const [isLoadingMore, setIsLoadingMore] = useState(false);
   const [errorMessage, setErrorMessage] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishErrorMessage, setPublishErrorMessage] = useState('');
+  const [updatingPostId, setUpdatingPostId] = useState<number | null>(null);
+  const [editErrorMessage, setEditErrorMessage] = useState('');
   const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
 
@@ -120,6 +128,49 @@ export default function useFeedPosts() {
     }
   }, []);
 
+  const editPost = useCallback(async (postId: number, request: EditPostRequest) => {
+    setUpdatingPostId(postId);
+    setEditErrorMessage('');
+
+    const normalizedTitle = request.title?.trim() ? request.title.trim() : null;
+    const normalizedContent = request.content.trim();
+
+    try {
+      const response = await apiClient.patch<PostRecord>(`/posts/${postId}`, {
+        title: normalizedTitle,
+        content: normalizedContent,
+      });
+
+      if (response.status !== 200) {
+        throw new Error('Unexpected response status');
+      }
+
+      const updatedPost = response.data;
+
+      setPosts((current) =>
+        current.map((post) => {
+          if (post.id !== postId) {
+            return post;
+          }
+
+          return normalizePost({
+            ...post,
+            title: updatedPost.title,
+            content: updatedPost.content,
+            updatedAt: updatedPost.updatedAt,
+          });
+        }),
+      );
+
+      return true;
+    } catch {
+      setEditErrorMessage('修改失败，请稍后重试。');
+      return false;
+    } finally {
+      setUpdatingPostId((current) => (current === postId ? null : current));
+    }
+  }, []);
+
   return useMemo(
     () => ({
       posts,
@@ -128,12 +179,15 @@ export default function useFeedPosts() {
       isLoadingMore,
       errorMessage,
       publishErrorMessage,
+      editErrorMessage,
       deleteErrorMessage,
       isPublishing,
+      updatingPostId,
       deletingPostId,
       loadMore,
       refresh,
       publishPost,
+      editPost,
       deletePost,
     }),
     [
@@ -143,12 +197,15 @@ export default function useFeedPosts() {
       isLoadingMore,
       errorMessage,
       publishErrorMessage,
+      editErrorMessage,
       deleteErrorMessage,
       isPublishing,
+      updatingPostId,
       deletingPostId,
       loadMore,
       refresh,
       publishPost,
+      editPost,
       deletePost,
     ],
   );

@@ -2,6 +2,8 @@ package io.github.cubelitblade.post.web;
 
 import io.github.cubelitblade.account.security.JwtAuthenticatedUser;
 import io.github.cubelitblade.post.application.PostService;
+import io.github.cubelitblade.post.dto.EditPostRequest;
+import io.github.cubelitblade.post.dto.EditPostResponse;
 import io.github.cubelitblade.post.dto.PublishPostRequest;
 import io.github.cubelitblade.post.dto.RecentPostsResponse;
 import java.net.URI;
@@ -49,5 +51,13 @@ public class PostController {
       @AuthenticationPrincipal JwtAuthenticatedUser authenticatedUser, @PathVariable Long id) {
     postService.archivePost(authenticatedUser, id);
     return ResponseEntity.noContent().build();
+  }
+
+  @PatchMapping("/{id}")
+  public ResponseEntity<EditPostResponse> editPost(
+      @AuthenticationPrincipal JwtAuthenticatedUser authenticatedUser,
+      @PathVariable Long id,
+      @RequestBody EditPostRequest request) {
+    return ResponseEntity.ok(EditPostResponse.from(postService.editPost(authenticatedUser, id, request)));
   }
 }

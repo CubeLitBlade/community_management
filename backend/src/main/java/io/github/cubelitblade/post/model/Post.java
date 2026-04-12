@@ -29,6 +29,16 @@ public class Post {
     return post;
   }
 
+  public void edit(String title, String content, Instant now) {
+    if (title != null && !title.isBlank()) {
+      this.title = title;
+    }
+    if (content != null && !content.isBlank()) {
+      this.content = content;
+    }
+    this.touch(now);
+  }
+
   public void archive(Instant now) {
     if (status == Status.ARCHIVED) {
       return;
