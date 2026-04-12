@@ -1,9 +1,8 @@
 package io.github.cubelitblade.common.advice;
 
 import io.github.cubelitblade.account.exception.*;
-import java.util.Objects;
-
 import io.github.cubelitblade.common.exception.DomainException;
+import java.util.Objects;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -43,7 +42,8 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(value = ConflictFieldsExceptionLegacy.class)
-  public ResponseEntity<ProblemDetail> handleConflictFieldsException(ConflictFieldsExceptionLegacy e) {
+  public ResponseEntity<ProblemDetail> handleConflictFieldsException(
+      ConflictFieldsExceptionLegacy e) {
     ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.CONFLICT);
 
     problem.setTitle("Fields already exist");
@@ -54,7 +54,8 @@ public class GlobalExceptionHandler {
   }
 
   @ExceptionHandler(value = InputValidationExceptionLegacy.class)
-  public ResponseEntity<ProblemDetail> handleInputValidationException(InputValidationExceptionLegacy e) {
+  public ResponseEntity<ProblemDetail> handleInputValidationException(
+      InputValidationExceptionLegacy e) {
     ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
 
     problem.setTitle("Invalid input");

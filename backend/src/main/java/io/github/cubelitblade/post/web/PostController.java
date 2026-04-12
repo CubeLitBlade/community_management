@@ -58,6 +58,7 @@ public class PostController {
       @AuthenticationPrincipal JwtAuthenticatedUser authenticatedUser,
       @PathVariable Long id,
       @RequestBody EditPostRequest request) {
-    return ResponseEntity.ok(EditPostResponse.from(postService.editPost(authenticatedUser, id, request)));
+    return ResponseEntity.ok(
+        EditPostResponse.from(postService.editPost(authenticatedUser, id, request)));
   }
 }

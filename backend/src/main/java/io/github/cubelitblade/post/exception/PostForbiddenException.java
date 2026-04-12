@@ -5,7 +5,6 @@ import lombok.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
-import org.springframework.web.ErrorResponse;
 
 public class PostForbiddenException extends DomainException {
   public PostForbiddenException(String message) {

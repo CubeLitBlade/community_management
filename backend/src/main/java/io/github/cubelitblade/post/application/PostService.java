@@ -53,8 +53,12 @@ public class PostService {
     postRepository.updatePost(post);
   }
 
-  public Post editPost(JwtAuthenticatedUser  authenticatedUser, long postId, EditPostRequest request) {
-    Post post = postRepository.getPost(postId).orElseThrow(() -> new PostNotFoundException("Post not found"));
+  public Post editPost(
+      JwtAuthenticatedUser authenticatedUser, long postId, EditPostRequest request) {
+    Post post =
+        postRepository
+            .getPost(postId)
+            .orElseThrow(() -> new PostNotFoundException("Post not found"));
 
     if (!post.getAuthorId().equals(authenticatedUser.accountId())) {
       throw new PostForbiddenException("You are not allowed to edit post");
