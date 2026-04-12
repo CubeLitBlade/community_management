@@ -19,6 +19,8 @@ export default function useFeedPosts() {
   const [errorMessage, setErrorMessage] = useState('');
   const [isPublishing, setIsPublishing] = useState(false);
   const [publishErrorMessage, setPublishErrorMessage] = useState('');
+  const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
+  const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
 
   const fetchRecentPosts = useCallback(
     async (lastId: number | null, mode: 'replace' | 'append') => {
@@ -98,6 +100,26 @@ export default function useFeedPosts() {
     [refresh],
   );
 
+  const deletePost = useCallback(async (postId: number) => {
+    setDeletingPostId(postId);
+    setDeleteErrorMessage('');
+
+    try {
+      const response = await apiClient.delete(`/posts/${postId}`);
+      if (response.status !== 204) {
+        throw new Error('Unexpected response status');
+      }
+
+      setPosts((current) => current.filter((post) => post.id !== postId));
+      return true;
+    } catch {
+      setDeleteErrorMessage('删除失败，请稍后重试。');
+      return false;
+    } finally {
+      setDeletingPostId((current) => (current === postId ? null : current));
+    }
+  }, []);
+
   return useMemo(
     () => ({
       posts,
@@ -106,10 +128,13 @@ export default function useFeedPosts() {
       isLoadingMore,
       errorMessage,
       publishErrorMessage,
+      deleteErrorMessage,
       isPublishing,
+      deletingPostId,
       loadMore,
       refresh,
       publishPost,
+      deletePost,
     }),
     [
       posts,
@@ -118,10 +143,13 @@ export default function useFeedPosts() {
       isLoadingMore,
       errorMessage,
       publishErrorMessage,
+      deleteErrorMessage,
       isPublishing,
+      deletingPostId,
       loadMore,
       refresh,
       publishPost,
+      deletePost,
     ],
   );
 }

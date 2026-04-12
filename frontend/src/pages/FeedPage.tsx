@@ -4,10 +4,22 @@ import {
   Button,
   Caption1,
   Card,
+  CardFooter,
   CardHeader,
   Divider,
+  Dialog,
+  DialogActions,
+  DialogBody,
+  DialogContent,
+  DialogSurface,
+  DialogTitle,
   Field,
   Input,
+  Menu,
+  MenuItem,
+  MenuList,
+  MenuPopover,
+  MenuTrigger,
   Persona,
   Spinner,
   Subtitle2,
@@ -16,6 +28,7 @@ import {
   makeStyles,
   tokens,
 } from '@fluentui/react-components';
+import { DeleteRegular, MoreHorizontalRegular } from '@fluentui/react-icons';
 import { useEffect, useRef, useState, type SubmitEvent } from 'react';
 import { useNavigate } from 'react-router';
 import useAccount from '../hooks/useAccount';
@@ -82,6 +95,12 @@ const useStyles = makeStyles({
     alignItems: 'center',
     minHeight: '2rem',
   },
+  postFooter: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalM,
+  },
 });
 
 const postDateFormatter = new Intl.DateTimeFormat('zh-CN', {
@@ -112,13 +131,17 @@ export default function FeedPage() {
     isLoadingMore,
     errorMessage,
     publishErrorMessage,
+    deleteErrorMessage,
     isPublishing,
+    deletingPostId,
     loadMore,
     publishPost,
+    deletePost,
     refresh,
   } = useFeedPosts();
   const [title, setTitle] = useState('');
   const [content, setContent] = useState('');
+  const [confirmDeletePostId, setConfirmDeletePostId] = useState<number | null>(null);
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -161,6 +184,20 @@ export default function FeedPage() {
       setContent('');
     }
   };
+
+  const handleConfirmDelete = async () => {
+    if (confirmDeletePostId === null) {
+      return;
+    }
+
+    const success = await deletePost(confirmDeletePostId);
+    if (success) {
+      setConfirmDeletePostId(null);
+    }
+  };
+
+  const isAdmin = profile?.role === 'admin' || profile?.role === 'owner';
+  const profileId = profile ? Number(profile.id) : Number.NaN;
 
   return (
     <div className={styles.page}>
@@ -249,6 +286,10 @@ export default function FeedPage() {
         {isInitialLoading ? <Spinner size="tiny" label="加载中" /> : null}
       </div>
 
+      {deleteErrorMessage ? (
+        <Caption1 className={styles.muted}>{deleteErrorMessage}</Caption1>
+      ) : null}
+
       {errorMessage ? (
         <Card>
           <div className={styles.cardBody}>
@@ -275,6 +316,8 @@ export default function FeedPage() {
           const hasTitle = post.title?.trim() != '';
           const authorNickname = post.authorNickname?.trim() || '已注销用户';
           const authorUsername = post.authorUsername?.trim() || '';
+          const isAuthor = !Number.isNaN(profileId) && profileId === post.authorId;
+          const canDelete = Boolean(profile) && (isAdmin || isAuthor);
 
           return (
             <Card key={post.id}>
@@ -297,7 +340,33 @@ export default function FeedPage() {
                   {hasTitle ? <Subtitle2>{post.title}</Subtitle2> : null}
                   <Body1 className={styles.postText}>{post.content}</Body1>
                 </div>
-                <Caption1 className={styles.muted}>社区动态</Caption1>
+                <Divider />
+                <CardFooter className={styles.postFooter}>
+                  <Caption1 className={styles.muted}>社区动态</Caption1>
+                  {canDelete ? (
+                    <Menu>
+                      <MenuTrigger disableButtonEnhancement>
+                        <Button
+                          appearance="subtle"
+                          icon={<MoreHorizontalRegular />}
+                          aria-label="更多操作"
+                          disabled={deletingPostId === post.id}
+                        />
+                      </MenuTrigger>
+                      <MenuPopover>
+                        <MenuList>
+                          <MenuItem
+                            icon={<DeleteRegular />}
+                            onClick={() => setConfirmDeletePostId(post.id)}
+                            disabled={deletingPostId === post.id}
+                          >
+                            {deletingPostId === post.id ? '删除中' : '删除'}
+                          </MenuItem>
+                        </MenuList>
+                      </MenuPopover>
+                    </Menu>
+                  ) : null}
+                </CardFooter>
               </div>
             </Card>
           );
@@ -310,6 +379,34 @@ export default function FeedPage() {
           <Caption1 className={styles.muted}>没有更多内容了。</Caption1>
         ) : null}
       </div>
+
+      <Dialog
+        open={confirmDeletePostId !== null}
+        onOpenChange={(_event, data) => {
+          if (!data.open) {
+            setConfirmDeletePostId(null);
+          }
+        }}
+      >
+        <DialogSurface>
+          <DialogBody>
+            <DialogTitle>确认删除</DialogTitle>
+            <DialogContent>删除后无法恢复，确定要删除这条新鲜事吗？</DialogContent>
+            <DialogActions>
+              <Button appearance="secondary" onClick={() => setConfirmDeletePostId(null)}>
+                取消
+              </Button>
+              <Button
+                appearance="primary"
+                onClick={() => void handleConfirmDelete()}
+                disabled={confirmDeletePostId === null || deletingPostId === confirmDeletePostId}
+              >
+                {deletingPostId === confirmDeletePostId ? '删除中' : '确认删除'}
+              </Button>
+            </DialogActions>
+          </DialogBody>
+        </DialogSurface>
+      </Dialog>
     </div>
   );
 }
