@@ -5,7 +5,7 @@ export type AccountContextValue = {
   profile: Profile | null;
   isLoading: boolean;
   fetchAccount: () => Promise<void>;
-  logout: () => void;
+  logout: () => Promise<void>;
 };
 
 export const AccountContext = createContext<AccountContextValue | undefined>(undefined);

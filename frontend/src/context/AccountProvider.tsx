@@ -7,10 +7,20 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
   const [profile, setProfile] = useState<Profile | null>(null);
   const [isLoading, setLoading] = useState(true);
 
-  const logout = useCallback(() => {
+  const clearAccountSession = useCallback(() => {
     localStorage.removeItem('accessToken');
     setProfile(null);
   }, []);
+
+  const logout = useCallback(async () => {
+    try {
+      await apiClient.post('/auth/logout');
+    } catch {
+      // Always clear local session even if remote logout fails.
+    } finally {
+      clearAccountSession();
+    }
+  }, [clearAccountSession]);
 
   const fetchAccount = useCallback(async () => {
     const accessToken = localStorage.getItem('accessToken');
@@ -24,12 +34,12 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
         const response = await apiClient.get<Profile>('/account/me');
         setProfile(response.data);
       } catch {
-        logout();
+        clearAccountSession();
       } finally {
         setLoading(false);
       }
     }
-  }, [logout]);
+  }, [clearAccountSession]);
 
   useEffect(() => {
     void fetchAccount();

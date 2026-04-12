@@ -3,7 +3,6 @@ import {
   Card,
   CardFooter,
   CardPreview,
-  Caption1,
   Field,
   Image,
   Input,
@@ -111,7 +110,9 @@ export default function LoginPage() {
     setUsername,
     password,
     setPassword,
-    errorMessage,
+    usernameMessage,
+    passwordMessage,
+    submitErrorMessage,
     isSubmitting,
     handleLoginSubmit,
   } = useLogin();
@@ -133,16 +134,11 @@ export default function LoginPage() {
           <Title3 className={styles.title}>登录</Title3>
           <Text className={styles.subtitle}>提供您的登录凭据。</Text>
           <form className={styles.form} onSubmit={handleLoginSubmit}>
-            {errorMessage ? (
-              <Caption1 role="alert" className={styles.errorText}>
-                {errorMessage}
-              </Caption1>
-            ) : null}
             <div className={styles.inputGroup}>
               <Field
                 label="用户名"
-                validationState={errorMessage ? 'error' : 'none'}
-                validationMessage={FIELD_MESSAGE_PLACEHOLDER}
+                validationState={usernameMessage ? 'error' : 'none'}
+                validationMessage={usernameMessage || FIELD_MESSAGE_PLACEHOLDER}
               >
                 <Input
                   type="text"
@@ -155,8 +151,8 @@ export default function LoginPage() {
               </Field>
               <Field
                 label="密码"
-                validationState={errorMessage ? 'error' : 'none'}
-                validationMessage={FIELD_MESSAGE_PLACEHOLDER}
+                validationState={passwordMessage ? 'error' : 'none'}
+                validationMessage={passwordMessage || FIELD_MESSAGE_PLACEHOLDER}
               >
                 <Input
                   type="password"
@@ -168,6 +164,11 @@ export default function LoginPage() {
                 />
               </Field>
             </div>
+            {submitErrorMessage ? (
+              <Text role="alert" className={styles.errorText}>
+                {submitErrorMessage}
+              </Text>
+            ) : null}
             <Button
               type="submit"
               appearance="primary"

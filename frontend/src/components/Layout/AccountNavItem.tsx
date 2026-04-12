@@ -26,7 +26,7 @@ const POPOVER_CROSS_AXIS_OFFSET = 16;
 type AccountNavItemProps = {
   profile: Profile | null;
   isLoading: boolean;
-  onLogout: () => void;
+  onLogout: () => Promise<void>;
 };
 
 const useClasses = makeStyles({
@@ -125,7 +125,7 @@ export default function AccountNavItem({ profile, isLoading, onLogout }: Account
               icon={<SignOutRegular />}
               onClick={() => {
                 setOpen(false);
-                onLogout();
+                void onLogout();
               }}
             >
               退出登录

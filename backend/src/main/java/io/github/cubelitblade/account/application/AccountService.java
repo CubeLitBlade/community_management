@@ -20,12 +20,14 @@ import io.github.cubelitblade.account.persistence.AccountRepository;
 import io.github.cubelitblade.account.security.JwtTokenProvider;
 import io.github.cubelitblade.common.time.TimeProvider;
 import java.net.InetAddress;
+import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -38,6 +40,7 @@ public class AccountService {
   private final JwtTokenProvider jwtTokenProvider;
 
   private static final Predicate<String> SKIP_UNIQUENESS_CHECK = _ -> false;
+  private final StringRedisTemplate stringRedisTemplate;
 
   @Transactional
   public Account register(AccountRegisterRequest request) {
@@ -108,6 +111,16 @@ public class AccountService {
 
     return new TokenResponse(
         jwtTokenProvider.generateToken(candidate.getId(), candidate.getRole(), now));
+  }
+
+  public void logout(String token) {
+    Instant expiration = jwtTokenProvider.getExpirationDate(token).toInstant();
+    Duration timeout = Duration.between(timeProvider.now(), expiration);
+
+    if (timeout.isPositive()) {
+      String key = "jwt:blacklist:" + token;
+      stringRedisTemplate.opsForValue().set(key, "logout", timeout);
+    }
   }
 
   @Transactional(readOnly = true)

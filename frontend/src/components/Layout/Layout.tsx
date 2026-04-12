@@ -14,7 +14,6 @@ import {
 
 import { type ComponentProps } from 'react';
 import { useLocation, useNavigate, Outlet } from 'react-router';
-import useAccount from '../../hooks/useAccount';
 import {
   CalendarMultipleIcon,
   CommentBadgeIcon,
@@ -26,6 +25,7 @@ import {
   ThumbLikeIcon,
 } from './icons';
 import AccountNavItem from './AccountNavItem';
+import useAuth from '../../hooks/useAuth';
 
 const NAV_WIDTH = '16.25rem';
 
@@ -67,7 +67,7 @@ export default function Layout() {
   const styles = useStyles();
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, isLoading, logout } = useAccount();
+  const { profile, isLoading, logout } = useAuth();
 
   const handleNavSelect: NavSelectHandler = (_event, data) => {
     if (!data.value) {

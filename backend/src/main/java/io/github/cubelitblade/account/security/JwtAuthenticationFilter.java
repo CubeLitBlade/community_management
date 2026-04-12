@@ -7,8 +7,10 @@ import jakarta.servlet.http.HttpServletRequest;
 import jakarta.servlet.http.HttpServletResponse;
 import java.io.IOException;
 import java.util.List;
+import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.jspecify.annotations.NonNull;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpHeaders;
 import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
 import org.springframework.security.core.authority.SimpleGrantedAuthority;
@@ -19,15 +21,13 @@ import org.springframework.web.filter.OncePerRequestFilter;
 
 @Slf4j
 @Component
+@RequiredArgsConstructor
 public class JwtAuthenticationFilter extends OncePerRequestFilter {
 
   private static final String BEARER_PREFIX = "Bearer ";
 
   private final JwtTokenProvider jwtTokenProvider;
-
-  public JwtAuthenticationFilter(JwtTokenProvider jwtTokenProvider) {
-    this.jwtTokenProvider = jwtTokenProvider;
-  }
+  private final StringRedisTemplate stringRedisTemplate;
 
   @Override
   protected void doFilterInternal(
@@ -45,6 +45,20 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
     if (SecurityContextHolder.getContext().getAuthentication() == null) {
       String token = authorization.substring(BEARER_PREFIX.length()).trim();
       if (!token.isEmpty()) {
+        String blackListKey = "jwt:blacklist:" + token;
+
+        if (Boolean.TRUE.equals(stringRedisTemplate.hasKey(blackListKey))) {
+          log.warn(
+              "JWT token is blacklisted: method={}, uri={}, remoteIp={}, userAgent={}",
+              request.getMethod(),
+              request.getRequestURI(),
+              request.getRemoteAddr(),
+              request.getHeader(HttpHeaders.USER_AGENT));
+          response.setStatus(HttpServletResponse.SC_UNAUTHORIZED);
+          response.setHeader(HttpHeaders.WWW_AUTHENTICATE, "Bearer error=\"invalid_token\"");
+          return;
+        }
+
         try {
           JwtAuthenticatedUser user = jwtTokenProvider.parseToken(token);
           SimpleGrantedAuthority authority =

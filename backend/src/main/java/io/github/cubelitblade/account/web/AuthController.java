@@ -13,8 +13,10 @@ import java.net.URI;
 import java.net.UnknownHostException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @Slf4j
@@ -22,6 +24,9 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @RequestMapping("/api/auth")
 @RequiredArgsConstructor
 public class AuthController {
+
+  private static final String BEARER_PREFIX = "Bearer ";
+
   private final AccountService accountService;
 
   @PostMapping("/register")
@@ -63,5 +68,21 @@ public class AuthController {
   public ResponseEntity<RegisterFieldsCheckResponse> registerValidation(
       @RequestBody RegisterFieldsCheckRequest request) {
     return ResponseEntity.ok(accountService.checkRegisterFields(request));
+  }
+
+  @PostMapping("/logout")
+  public ResponseEntity<Void> logout(
+      @RequestHeader(value = "Authorization") String authorizationHeader) {
+    if (authorizationHeader == null || !authorizationHeader.startsWith(BEARER_PREFIX)) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid token");
+    }
+
+    String token = authorizationHeader.substring(BEARER_PREFIX.length()).trim();
+    if (token.isEmpty()) {
+      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid token");
+    }
+
+    accountService.logout(token);
+    return ResponseEntity.noContent().build();
   }
 }

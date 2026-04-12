@@ -1,37 +1,54 @@
 import { useNavigate } from 'react-router';
 import { useState, type FormEvent } from 'react';
-import apiClient from '../api/apiClient';
-import type { LoginRequest, LoginResponse } from '../types/Account';
 import { BizError } from '../types/Error';
-import useAccount from './useAccount';
+import useAuth from './useAuth';
 
 export default function useLogin() {
   const navigate = useNavigate();
-  const { fetchAccount } = useAccount();
+  const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
-  const [errorMessage, setErrorMessage] = useState('');
+  const [usernameMessage, setUsernameMessage] = useState('');
+  const [passwordMessage, setPasswordMessage] = useState('');
+  const [submitErrorMessage, setSubmitErrorMessage] = useState('');
   const [isSubmitting, setIsSubmitting] = useState(false);
+
+  const handleUsernameChange = (value: string) => {
+    setUsername(value);
+    setUsernameMessage('');
+    setSubmitErrorMessage('');
+  };
+
+  const handlePasswordChange = (value: string) => {
+    setPassword(value);
+    setPasswordMessage('');
+    setSubmitErrorMessage('');
+  };
 
   const handleLoginSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
 
     if (username.trim() === '') {
-      setErrorMessage('用户名不能为空。');
+      setUsernameMessage('用户名不能为空。');
+      setPasswordMessage('');
+      setSubmitErrorMessage('');
       return;
     }
 
     if (password.trim() === '') {
-      setErrorMessage('密码不能为空。');
+      setPasswordMessage('密码不能为空。');
+      setUsernameMessage('');
+      setSubmitErrorMessage('');
       return;
     }
 
     setIsSubmitting(true);
-    setErrorMessage('');
+    setUsernameMessage('');
+    setPasswordMessage('');
+    setSubmitErrorMessage('');
 
     const result = await requestLogin(username, password);
     if (result) {
-      await fetchAccount();
       navigate('/');
       return;
     }
@@ -40,39 +57,35 @@ export default function useLogin() {
   };
 
   async function requestLogin(username: string, password: string): Promise<boolean> {
-    const request: LoginRequest = {
-      username,
-      password,
-    };
-
     try {
-      const response = await apiClient.post<LoginResponse>('/auth/login', request);
-      localStorage.setItem('accessToken', response.data.accessToken);
+      await login(username, password);
       return true;
     } catch (e) {
       if (e instanceof BizError) {
         switch (e.detail.code) {
           case 'LOGIN_FAILED_INVALID_CREDENTIALS':
-            setErrorMessage('用户名或密码错误');
+            setSubmitErrorMessage('用户名或密码错误。');
             break;
           default:
-            setErrorMessage('请重试。');
+            setSubmitErrorMessage('请重试。');
         }
 
         return false;
       }
 
-      setErrorMessage('网络异常，请稍后重试。');
+      setSubmitErrorMessage('网络异常，请稍后重试。');
       return false;
     }
   }
 
   return {
     username,
-    setUsername,
+    setUsername: handleUsernameChange,
     password,
-    setPassword,
-    errorMessage,
+    setPassword: handlePasswordChange,
+    usernameMessage,
+    passwordMessage,
+    submitErrorMessage,
     isSubmitting,
     handleLoginSubmit,
   };

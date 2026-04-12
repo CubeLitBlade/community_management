@@ -37,7 +37,7 @@ public class JwtTokenProvider {
   }
 
   public JwtAuthenticatedUser parseToken(String token) {
-    Claims claims = Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
+    Claims claims = parseClaims(token);
 
     Long accountId =
         Long.valueOf(Objects.requireNonNull(claims.getSubject(), "Account ID is null. "));
@@ -45,5 +45,14 @@ public class JwtTokenProvider {
         Role.from(Objects.requireNonNull(claims.get("role", String.class), "Role is null. "));
 
     return new JwtAuthenticatedUser(accountId, role);
+  }
+
+  public Date getExpirationDate(String token) {
+    Claims claims = parseClaims(token);
+    return claims.getExpiration();
+  }
+
+  private Claims parseClaims(String token) {
+    return Jwts.parser().verifyWith(key).build().parseSignedClaims(token).getPayload();
   }
 }
