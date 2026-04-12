@@ -1,9 +1,12 @@
 package io.github.cubelitblade.post.application;
 
+import io.github.cubelitblade.account.security.JwtAuthenticatedUser;
 import io.github.cubelitblade.common.time.TimeProvider;
 import io.github.cubelitblade.post.dto.PostResponse;
 import io.github.cubelitblade.post.dto.PublishPostRequest;
 import io.github.cubelitblade.post.dto.RecentPostsResponse;
+import io.github.cubelitblade.post.exception.PostForbiddenException;
+import io.github.cubelitblade.post.exception.PostNotFoundException;
 import io.github.cubelitblade.post.model.Post;
 import io.github.cubelitblade.post.persistence.PostQueryRepository;
 import io.github.cubelitblade.post.persistence.PostRepository;
@@ -25,6 +28,28 @@ public class PostService {
     postRepository.publishPost(post);
 
     return post.getId();
+  }
+
+  public void archivePost(JwtAuthenticatedUser authenticatedUser, long postId) {
+    Post post =
+        postRepository
+            .getPost(postId)
+            .orElseThrow(() -> new PostNotFoundException("Post not found"));
+
+    switch (authenticatedUser.role()) {
+      case USER -> {
+        if (!post.getAuthorId().equals(authenticatedUser.accountId())) {
+          throw new PostForbiddenException("You are not allowed to archive post");
+        }
+      }
+      case ADMIN, OWNER -> {
+        /* Admin can archive any post, so no additional check is needed */
+      }
+      default -> throw new IllegalStateException("Unexpected value: " + authenticatedUser.role());
+    }
+
+    post.archive(timeProvider.now());
+    postRepository.updatePost(post);
   }
 
   public RecentPostsResponse getRecentPosts(int count, Long lastId) {

@@ -29,11 +29,12 @@ public class Post {
     return post;
   }
 
-  public void archive() {
+  public void archive(Instant now) {
     if (status == Status.ARCHIVED) {
       return;
     }
     status = Status.ARCHIVED;
+    this.touch(now);
   }
 
   public static Post reconstitute(Snapshot snapshot) {
@@ -49,6 +50,10 @@ public class Post {
     post.updatedAt = snapshot.updatedAt;
 
     return post;
+  }
+
+  private void touch(Instant now) {
+    this.updatedAt = now;
   }
 
   @Builder

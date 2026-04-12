@@ -43,4 +43,11 @@ public class PostController {
 
     return ResponseEntity.ok(postService.getRecentPosts(count, lastId));
   }
+
+  @DeleteMapping("/{id}")
+  public ResponseEntity<Void> deletePost(
+      @AuthenticationPrincipal JwtAuthenticatedUser authenticatedUser, @PathVariable Long id) {
+    postService.archivePost(authenticatedUser, id);
+    return ResponseEntity.noContent().build();
+  }
 }
