@@ -1,7 +1,7 @@
 package io.github.cubelitblade.account.model;
 
 import io.github.cubelitblade.account.common.AccountErrorCode;
-import io.github.cubelitblade.account.exception.InputValidationException;
+import io.github.cubelitblade.account.exception.InputValidationExceptionLegacy;
 import java.util.Optional;
 import java.util.regex.Pattern;
 
@@ -14,7 +14,7 @@ public record Email(String value) {
         check(value)
             .map(
                 error -> {
-                  throw new InputValidationException(error);
+                  throw new InputValidationExceptionLegacy(error);
                 })
             .orElseGet(value::toLowerCase)
             .toString();

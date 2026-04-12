@@ -2,9 +2,8 @@ package io.github.cubelitblade.account.exception;
 
 import io.github.cubelitblade.account.common.AccountErrorCode;
 
-public class LoginFailedException extends AccountException {
-
-  public LoginFailedException(AccountErrorCode error) {
+public class AccountStateExceptionLegacy extends AccountExceptionLegacy {
+  public AccountStateExceptionLegacy(AccountErrorCode error) {
     super(error);
   }
 }

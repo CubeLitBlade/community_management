@@ -3,9 +3,9 @@ package io.github.cubelitblade.account.exception;
 import io.github.cubelitblade.account.common.AccountErrorCode;
 
 @Deprecated(forRemoval = true)
-public class AccountArchivedException extends AccountException {
+public class AccountArchivedExceptionLegacy extends AccountExceptionLegacy {
 
-  public AccountArchivedException() {
+  public AccountArchivedExceptionLegacy() {
     super(AccountErrorCode.LOGIN_FAILED_ARCHIVED);
   }
 }

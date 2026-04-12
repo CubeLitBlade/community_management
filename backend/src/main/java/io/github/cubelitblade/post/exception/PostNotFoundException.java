@@ -1,12 +1,13 @@
 package io.github.cubelitblade.post.exception;
 
+import io.github.cubelitblade.common.exception.DomainException;
 import lombok.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.ErrorResponse;
 
-public class PostNotFoundException extends RuntimeException implements ErrorResponse {
+public class PostNotFoundException extends DomainException {
   public PostNotFoundException(String message) {
     super(message);
   }

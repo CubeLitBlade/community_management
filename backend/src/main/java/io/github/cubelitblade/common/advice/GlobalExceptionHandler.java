@@ -2,6 +2,8 @@ package io.github.cubelitblade.common.advice;
 
 import io.github.cubelitblade.account.exception.*;
 import java.util.Objects;
+
+import io.github.cubelitblade.common.exception.DomainException;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ProblemDetail;
 import org.springframework.http.ResponseEntity;
@@ -12,6 +14,11 @@ import org.springframework.web.server.ResponseStatusException;
 
 @RestControllerAdvice
 public class GlobalExceptionHandler {
+
+  @ExceptionHandler(value = DomainException.class)
+  public ResponseEntity<ProblemDetail> handleErrorResponse(DomainException e) {
+    return ResponseEntity.status(e.getStatusCode()).body(e.getBody());
+  }
 
   @ExceptionHandler(value = ResponseStatusException.class)
   public ResponseEntity<ProblemDetail> handleResponseStatusException(ResponseStatusException e) {
@@ -24,8 +31,8 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(e.getStatusCode()).body(problem);
   }
 
-  @ExceptionHandler(value = LoginFailedException.class)
-  public ResponseEntity<ProblemDetail> handleLoginFailedException(LoginFailedException e) {
+  @ExceptionHandler(value = LoginFailedExceptionLegacy.class)
+  public ResponseEntity<ProblemDetail> handleLoginFailedException(LoginFailedExceptionLegacy e) {
     ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.UNAUTHORIZED);
 
     problem.setTitle("Failed to login");
@@ -35,8 +42,8 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.UNAUTHORIZED).body(problem);
   }
 
-  @ExceptionHandler(value = ConflictFieldsException.class)
-  public ResponseEntity<ProblemDetail> handleConflictFieldsException(ConflictFieldsException e) {
+  @ExceptionHandler(value = ConflictFieldsExceptionLegacy.class)
+  public ResponseEntity<ProblemDetail> handleConflictFieldsException(ConflictFieldsExceptionLegacy e) {
     ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.CONFLICT);
 
     problem.setTitle("Fields already exist");
@@ -46,8 +53,8 @@ public class GlobalExceptionHandler {
     return ResponseEntity.status(HttpStatus.CONFLICT).body(problem);
   }
 
-  @ExceptionHandler(value = InputValidationException.class)
-  public ResponseEntity<ProblemDetail> handleInputValidationException(InputValidationException e) {
+  @ExceptionHandler(value = InputValidationExceptionLegacy.class)
+  public ResponseEntity<ProblemDetail> handleInputValidationException(InputValidationExceptionLegacy e) {
     ProblemDetail problem = ProblemDetail.forStatus(HttpStatus.BAD_REQUEST);
 
     problem.setTitle("Invalid input");

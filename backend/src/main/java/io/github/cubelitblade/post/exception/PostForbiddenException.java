@@ -1,12 +1,13 @@
 package io.github.cubelitblade.post.exception;
 
+import io.github.cubelitblade.common.exception.DomainException;
 import lombok.NonNull;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.HttpStatusCode;
 import org.springframework.http.ProblemDetail;
 import org.springframework.web.ErrorResponse;
 
-public class PostForbiddenException extends RuntimeException implements ErrorResponse {
+public class PostForbiddenException extends DomainException {
   public PostForbiddenException(String message) {
     super(message);
   }

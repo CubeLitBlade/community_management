@@ -12,6 +12,10 @@ spring:
       skip:
         in-tests: false
 
+  mvc:
+    problemdetails:
+      enabled: true
+
 mybatis-plus:
   configuration:
     map-underscore-to-camel-case: true

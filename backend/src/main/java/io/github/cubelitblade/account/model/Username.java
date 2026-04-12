@@ -1,7 +1,7 @@
 package io.github.cubelitblade.account.model;
 
 import io.github.cubelitblade.account.common.AccountErrorCode;
-import io.github.cubelitblade.account.exception.InputValidationException;
+import io.github.cubelitblade.account.exception.InputValidationExceptionLegacy;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -17,7 +17,7 @@ public final class Username {
         check(value)
             .map(
                 error -> {
-                  throw new InputValidationException(error);
+                  throw new InputValidationExceptionLegacy(error);
                 })
             .orElseGet(() -> new Username(value));
   }

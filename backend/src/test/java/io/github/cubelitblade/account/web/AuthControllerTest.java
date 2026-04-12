@@ -7,7 +7,7 @@ import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.docu
 import io.github.cubelitblade.account.application.AccountService;
 import io.github.cubelitblade.account.common.AccountErrorCode;
 import io.github.cubelitblade.account.dto.AccountRegisterRequest;
-import io.github.cubelitblade.account.exception.ConflictFieldsException;
+import io.github.cubelitblade.account.exception.ConflictFieldsExceptionLegacy;
 import io.github.cubelitblade.account.model.Account;
 import io.github.cubelitblade.account.security.JwtTokenProvider;
 import org.junit.jupiter.api.Nested;
@@ -69,7 +69,7 @@ class AuthControllerTest {
           new AccountRegisterRequest("duplicate", "password123", "dup@example.com", null);
 
       doThrow(
-              new ConflictFieldsException(
+              new ConflictFieldsExceptionLegacy(
                   request.username(), AccountErrorCode.CONFLICT_USERNAME_EXISTS))
           .when(accountService)
           .register(request);

@@ -1,7 +1,7 @@
 package io.github.cubelitblade.account.model;
 
 import io.github.cubelitblade.account.common.AccountErrorCode;
-import io.github.cubelitblade.account.exception.InputValidationException;
+import io.github.cubelitblade.account.exception.InputValidationExceptionLegacy;
 import java.util.Optional;
 
 public record Phone(String value) {
@@ -9,7 +9,7 @@ public record Phone(String value) {
     check(value)
         .ifPresent(
             error -> {
-              throw new InputValidationException(error);
+              throw new InputValidationExceptionLegacy(error);
             });
   }
 

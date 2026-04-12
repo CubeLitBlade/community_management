@@ -1,6 +1,8 @@
 package io.github.cubelitblade.configuration;
 
 import io.github.cubelitblade.account.security.JwtAuthenticationFilter;
+import io.github.cubelitblade.common.security.CustomAuthenticationEntryPoint;
+import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpStatus;
@@ -16,7 +18,11 @@ import org.springframework.security.web.authentication.UsernamePasswordAuthentic
 
 @Configuration
 @EnableWebSecurity
+@RequiredArgsConstructor
 public class SecurityConfig {
+
+  private final CustomAuthenticationEntryPoint customAuthenticationEntryPoint;
+
   @Bean
   public PasswordEncoder passwordEncoder() {
     return PasswordEncoderFactories.createDelegatingPasswordEncoder();
@@ -31,11 +37,11 @@ public class SecurityConfig {
         .exceptionHandling(
             exception ->
                 exception.authenticationEntryPoint(
-                    new HttpStatusEntryPoint(HttpStatus.UNAUTHORIZED)))
+                    customAuthenticationEntryPoint))
         .authorizeHttpRequests(
             authorizeRequests ->
                 authorizeRequests
-                    .requestMatchers("/api/auth/**", "/api/posts/recent")
+                    .requestMatchers("/api/auth/**", "/api/posts/recent", "/error")
                     .permitAll()
                     .anyRequest()
                     .authenticated())

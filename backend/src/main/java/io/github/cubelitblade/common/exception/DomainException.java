@@ -1,19 +1,9 @@
 package io.github.cubelitblade.common.exception;
 
-import lombok.Getter;
+import org.springframework.web.ErrorResponse;
 
-@Getter
-public abstract class DomainException extends RuntimeException {
-
-  public final ErrorCode errorCode;
-
-  public DomainException(String message, ErrorCode errorCode) {
+public abstract class DomainException extends RuntimeException implements ErrorResponse {
+  public DomainException(String message) {
     super(message);
-    this.errorCode = errorCode;
-  }
-
-  public DomainException(ErrorCode errorCode) {
-    super(errorCode.getDefaultMessage());
-    this.errorCode = errorCode;
   }
 }
