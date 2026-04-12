@@ -2,7 +2,7 @@ package io.github.cubelitblade.post.persistence.query;
 
 import java.time.Instant;
 
-public record PostWithAuthorPo(
+public record PostWithAuthorVo(
     // from posts
     Long id,
     Long authorId,

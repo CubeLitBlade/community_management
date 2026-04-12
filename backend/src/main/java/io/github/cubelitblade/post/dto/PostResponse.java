@@ -1,17 +1,26 @@
 package io.github.cubelitblade.post.dto;
 
-import io.github.cubelitblade.post.model.Post;
+import io.github.cubelitblade.post.persistence.query.PostWithAuthorVo;
 import java.time.Instant;
 
 public record PostResponse(
-    Long id, Long authorId, String title, String content, Instant createdAt, Instant updatedAt) {
-  public static PostResponse from(Post post) {
+    Long id,
+    Long authorId,
+    String authorUsername,
+    String authorNickname,
+    String title,
+    String content,
+    Instant createdAt,
+    Instant updatedAt) {
+  public static PostResponse from(PostWithAuthorVo postWithAuthorVo) {
     return new PostResponse(
-        post.getId(),
-        post.getAuthorId(),
-        post.getTitle(),
-        post.getContent(),
-        post.getCreatedAt(),
-        post.getUpdatedAt());
+        postWithAuthorVo.id(),
+        postWithAuthorVo.authorId(),
+        postWithAuthorVo.username(),
+        postWithAuthorVo.nickname(),
+        postWithAuthorVo.title(),
+        postWithAuthorVo.content(),
+        postWithAuthorVo.createdAt(),
+        postWithAuthorVo.updatedAt());
   }
 }
