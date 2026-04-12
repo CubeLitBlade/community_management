@@ -89,10 +89,17 @@ alternatively:
 
 2. Set `spring.docker.compose.enabled` to `false`;
 
-3. Run the following command from the project root to start the database.
+3. Run the following command from the project root to start the infrastructure services (Postgres and Redis).
 
 ```bash
 podman compose up
+```
+
+For local Redis testing from the host, the service is exposed on `${REDIS_EXTERNAL_PORT}`.
+You can verify connectivity with:
+
+```bash
+redis-cli -p "$REDIS_EXTERNAL_PORT" ping
 ```
 
 #### From a built JAR

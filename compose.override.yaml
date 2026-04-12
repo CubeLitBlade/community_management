@@ -1,4 +1,5 @@
 services:
+
   app:
     build:
       context: ./backend
@@ -8,6 +9,10 @@ services:
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
+      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_PORT=${REDIS_PORT}
     depends_on:
       db:
+        condition: service_healthy
+      redis:
         condition: service_healthy

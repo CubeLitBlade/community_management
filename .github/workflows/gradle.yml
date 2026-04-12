@@ -28,6 +28,9 @@ jobs:
       DB_USER: dev_user
       DB_PASSWORD: dev_password
       DB_EXTERNAL_PORT: 5432
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      REDIS_EXTERNAL_PORT: 6379
 
     steps:
       - uses: actions/checkout@v4
