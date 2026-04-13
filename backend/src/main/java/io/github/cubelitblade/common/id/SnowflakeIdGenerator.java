@@ -31,7 +31,8 @@ public class SnowflakeIdGenerator {
     long currentTimestamp = System.currentTimeMillis();
 
     if (currentTimestamp < lastTimestamp) {
-      throw new IllegalStateException("The clock has been rolled back, ID generation has been disabled.");
+      throw new IllegalStateException(
+          "The clock has been rolled back, ID generation has been disabled.");
     }
 
     long seq;
@@ -49,9 +50,7 @@ public class SnowflakeIdGenerator {
 
     lastTimestamp = currentTimestamp;
 
-    return ((currentTimestamp - EPOCH) << TIMESTAMP_SHIFT)
-      | (workerId << WORKER_ID_SHIFT)
-      | seq;
+    return ((currentTimestamp - EPOCH) << TIMESTAMP_SHIFT) | (workerId << WORKER_ID_SHIFT) | seq;
   }
 
   private long waitNextMillis(long lastTimestamp) {
