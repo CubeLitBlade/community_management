@@ -5,9 +5,7 @@ import static org.mockito.Mockito.*;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 
 import io.github.cubelitblade.account.application.AccountService;
-import io.github.cubelitblade.account.common.AccountErrorCode;
 import io.github.cubelitblade.account.dto.AccountRegisterRequest;
-import io.github.cubelitblade.account.exception.ConflictFieldsExceptionLegacy;
 import io.github.cubelitblade.account.model.Account;
 import io.github.cubelitblade.account.security.JwtTokenProvider;
 import org.junit.jupiter.api.Nested;
@@ -15,11 +13,13 @@ import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.restdocs.test.autoconfigure.AutoConfigureRestDocs;
 import org.springframework.boot.webmvc.test.autoconfigure.WebMvcTest;
+import org.springframework.data.redis.core.StringRedisTemplate;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
+import org.springframework.web.server.ResponseStatusException;
 import tools.jackson.databind.ObjectMapper;
 
 @ActiveProfiles("test")
@@ -34,6 +34,8 @@ class AuthControllerTest {
   @MockitoBean private AccountService accountService;
 
   @MockitoBean private JwtTokenProvider jwtTokenProvider;
+
+  @MockitoBean private StringRedisTemplate stringRedisTemplate;
 
   private String serialize(Object obj) {
     return objectMapper.writeValueAsString(obj);
@@ -68,9 +70,7 @@ class AuthControllerTest {
       AccountRegisterRequest request =
           new AccountRegisterRequest("duplicate", "password123", "dup@example.com", null);
 
-      doThrow(
-              new ConflictFieldsExceptionLegacy(
-                  request.username(), AccountErrorCode.CONFLICT_USERNAME_EXISTS))
+      doThrow(new ResponseStatusException(HttpStatus.CONFLICT, "username already exists"))
           .when(accountService)
           .register(request);
 
