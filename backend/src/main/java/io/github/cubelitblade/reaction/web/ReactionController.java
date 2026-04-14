@@ -4,6 +4,7 @@ import io.github.cubelitblade.account.security.JwtAuthenticatedUser;
 import io.github.cubelitblade.reaction.application.ReactionService;
 import io.github.cubelitblade.reaction.dto.AddReactionRequest;
 import java.net.URI;
+import java.util.Optional;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
@@ -21,14 +22,21 @@ public class ReactionController {
   private final ReactionService reactionService;
 
   @PostMapping
-  public ResponseEntity<Void> createReaction(
+  public ResponseEntity<Void> setReaction(
       @AuthenticationPrincipal JwtAuthenticatedUser authenticatedUser,
       @RequestBody AddReactionRequest request) {
 
-    long id = reactionService.addReaction(authenticatedUser, request);
+    Optional<Long> createdReactionId = reactionService.setReaction(authenticatedUser, request);
+
+    if (createdReactionId.isEmpty()) {
+      return ResponseEntity.noContent().build();
+    }
 
     URI location =
-        ServletUriComponentsBuilder.fromCurrentRequest().path("/{id}").buildAndExpand(id).toUri();
+        ServletUriComponentsBuilder.fromCurrentRequest()
+            .path("/{id}")
+            .buildAndExpand(createdReactionId.get())
+            .toUri();
 
     return ResponseEntity.created(location).build();
   }

@@ -35,4 +35,9 @@ public class Reaction {
 
     return reaction;
   }
+
+  public void set(ReactionType reactionType, Instant now) {
+    this.reactionType = reactionType;
+    this.updatedAt = now;
+  }
 }
