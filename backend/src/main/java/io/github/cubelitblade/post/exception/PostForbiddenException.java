@@ -1,29 +1,18 @@
 package io.github.cubelitblade.post.exception;
 
+import io.github.cubelitblade.common.exception.ApiErrorCode;
 import io.github.cubelitblade.common.exception.DomainException;
-import lombok.NonNull;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ProblemDetail;
 
 public class PostForbiddenException extends DomainException {
-  public PostForbiddenException(String message) {
-    super(message);
+  private PostForbiddenException(String detail) {
+    super(ApiErrorCode.POST_FORBIDDEN, detail);
   }
 
-  @Override
-  public @NonNull HttpStatusCode getStatusCode() {
-    return HttpStatus.FORBIDDEN;
+  public static PostForbiddenException cannotArchive() {
+    return new PostForbiddenException("You are not allowed to archive post");
   }
 
-  @Override
-  public @NonNull ProblemDetail getBody() {
-    ProblemDetail problem = ProblemDetail.forStatus(getStatusCode());
-
-    problem.setTitle("Not allowed to access");
-    problem.setDetail(getMessage());
-    problem.setProperty("code", "POST_FORBIDDEN");
-
-    return problem;
+  public static PostForbiddenException cannotEdit() {
+    return new PostForbiddenException("You are not allowed to edit post");
   }
 }

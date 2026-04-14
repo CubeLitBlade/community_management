@@ -66,6 +66,12 @@ export default function useLogin() {
           case 'LOGIN_FAILED_INVALID_CREDENTIALS':
             setSubmitErrorMessage('用户名或密码错误。');
             break;
+          case 'LOGIN_FAILED_SUSPENDED':
+            setSubmitErrorMessage('账号已被停用，请联系管理员。');
+            break;
+          case 'LOGIN_FAILED_ARCHIVED':
+            setSubmitErrorMessage('账号已归档，无法登录。');
+            break;
           default:
             setSubmitErrorMessage('请重试。');
         }

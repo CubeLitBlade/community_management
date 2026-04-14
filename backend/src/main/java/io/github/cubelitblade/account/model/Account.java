@@ -1,9 +1,9 @@
 package io.github.cubelitblade.account.model;
 
 import io.github.cubelitblade.account.application.PasswordHasher;
-import io.github.cubelitblade.account.common.AccountErrorCode;
-import io.github.cubelitblade.account.exception.AccountStateExceptionLegacy;
-import io.github.cubelitblade.account.exception.LoginFailedExceptionLegacy;
+import io.github.cubelitblade.account.exception.AccountStateException;
+import io.github.cubelitblade.account.exception.LoginFailedException;
+import io.github.cubelitblade.common.exception.ApiErrorCode;
 import java.net.InetAddress;
 import java.time.Instant;
 import java.util.Objects;
@@ -65,14 +65,14 @@ public class Account {
   /**
    * Requires this account to be in {@link Status#NORMAL} status.
    *
-   * @throws AccountStateExceptionLegacy if the account has been archived or suspended.
+   * @throws AccountStateException if the account has been archived or suspended.
    */
   public void requireNormalStatus() {
     if (this.status == Status.ARCHIVED) {
-      throw new AccountStateExceptionLegacy(AccountErrorCode.ACCOUNT_STATE_ARCHIVED);
+      throw AccountStateException.from(ApiErrorCode.ACCOUNT_STATE_ARCHIVED);
     }
     if (this.status == Status.SUSPENDED) {
-      throw new AccountStateExceptionLegacy(AccountErrorCode.ACCOUNT_STATE_SUSPENDED);
+      throw AccountStateException.from(ApiErrorCode.ACCOUNT_STATE_SUSPENDED);
     }
   }
 
@@ -88,12 +88,12 @@ public class Account {
   /**
    * Changes the password. Requires verification of the current password.
    *
-   * @throws LoginFailedExceptionLegacy if the current password is incorrect.
+   * @throws LoginFailedException if the current password is incorrect.
    */
   public void changePassword(
       String currentPassword, String newPassword, PasswordHasher passwordHasher, Instant now) {
     if (!passwordHasher.matches(currentPassword, this.passwordHash)) {
-      throw new LoginFailedExceptionLegacy(AccountErrorCode.LOGIN_FAILED_INVALID_CREDENTIALS);
+      throw LoginFailedException.from(ApiErrorCode.LOGIN_FAILED_INVALID_CREDENTIALS);
     }
     this.passwordHash = passwordHasher.fromRaw(newPassword);
     this.touch(now);
@@ -137,13 +137,13 @@ public class Account {
   /**
    * Suspends this account.
    *
-   * @throws AccountStateExceptionLegacy if this account has been archived.
+   * @throws AccountStateException if this account has been archived.
    */
   public void suspend(Instant now) {
     if (this.status == Status.SUSPENDED) {
       return;
     } else if (this.status == Status.ARCHIVED) {
-      throw new AccountStateExceptionLegacy(AccountErrorCode.ACCOUNT_STATE_ARCHIVED);
+      throw AccountStateException.from(ApiErrorCode.ACCOUNT_STATE_ARCHIVED);
     }
     this.status = Status.SUSPENDED;
     this.touch(now);
@@ -152,13 +152,13 @@ public class Account {
   /**
    * Reactivates this account.
    *
-   * @throws AccountStateExceptionLegacy if this account has been archived.
+   * @throws AccountStateException if this account has been archived.
    */
   public void reactivate(Instant now) {
     if (this.status == Status.NORMAL) {
       return;
     } else if (this.status == Status.ARCHIVED) {
-      throw new AccountStateExceptionLegacy(AccountErrorCode.ACCOUNT_STATE_ARCHIVED);
+      throw AccountStateException.from(ApiErrorCode.ACCOUNT_STATE_ARCHIVED);
     }
     this.status = Status.NORMAL;
     this.touch(now);

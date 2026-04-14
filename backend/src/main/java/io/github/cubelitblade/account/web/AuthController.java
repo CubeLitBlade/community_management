@@ -6,6 +6,8 @@ import io.github.cubelitblade.account.dto.AccountRegisterRequest;
 import io.github.cubelitblade.account.dto.RegisterFieldsCheckRequest;
 import io.github.cubelitblade.account.dto.RegisterFieldsCheckResponse;
 import io.github.cubelitblade.account.dto.TokenResponse;
+import io.github.cubelitblade.common.exception.ApiErrorCode;
+import io.github.cubelitblade.common.exception.ValidationException;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.net.InetAddress;
@@ -13,10 +15,8 @@ import java.net.URI;
 import java.net.UnknownHostException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
-import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
-import org.springframework.web.server.ResponseStatusException;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
 @Slf4j
@@ -74,12 +74,12 @@ public class AuthController {
   public ResponseEntity<Void> logout(
       @RequestHeader(value = "Authorization") String authorizationHeader) {
     if (authorizationHeader == null || !authorizationHeader.startsWith(BEARER_PREFIX)) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid token");
+      throw new ValidationException(ApiErrorCode.INVALID_TOKEN, "Invalid token");
     }
 
     String token = authorizationHeader.substring(BEARER_PREFIX.length()).trim();
     if (token.isEmpty()) {
-      throw new ResponseStatusException(HttpStatus.BAD_REQUEST, "Invalid token");
+      throw new ValidationException(ApiErrorCode.INVALID_TOKEN, "Invalid token");
     }
 
     accountService.logout(token);

@@ -1,7 +1,7 @@
 package io.github.cubelitblade.account.model;
 
-import io.github.cubelitblade.account.common.AccountErrorCode;
-import io.github.cubelitblade.account.exception.InputValidationExceptionLegacy;
+import io.github.cubelitblade.account.exception.AccountInputException;
+import io.github.cubelitblade.common.exception.ApiErrorCode;
 import java.util.Optional;
 
 public record Phone(String value) {
@@ -9,7 +9,7 @@ public record Phone(String value) {
     check(value)
         .ifPresent(
             error -> {
-              throw new InputValidationExceptionLegacy(error);
+              throw AccountInputException.from(error);
             });
   }
 
@@ -17,11 +17,11 @@ public record Phone(String value) {
     return new Phone(value);
   }
 
-  public static Optional<AccountErrorCode> check(String value) {
+  public static Optional<ApiErrorCode> check(String value) {
     if (value == null || value.isBlank()) {
-      return Optional.of(AccountErrorCode.INPUT_PHONE_BLANK);
+      return Optional.of(ApiErrorCode.INPUT_PHONE_BLANK);
     } else if (!value.matches("^\\+?[0-9]{11}$")) {
-      return Optional.of(AccountErrorCode.INPUT_PHONE_BAD_FORMAT);
+      return Optional.of(ApiErrorCode.INPUT_PHONE_BAD_FORMAT);
     } else {
       return Optional.empty();
     }

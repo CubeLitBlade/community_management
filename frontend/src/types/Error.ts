@@ -3,10 +3,13 @@ export interface ProblemDetail {
   title: string;
   detail: string;
   code: ProblemCode;
-  instance: string;
+  instance?: string;
 }
 
 export type ProblemCode =
+  | 'INVALID_REQUEST'
+  | 'INVALID_TOKEN'
+  | 'UNAUTHORIZED'
   | 'INPUT_USERNAME_BLANK'
   | 'INPUT_EMAIL_BLANK'
   | 'INPUT_PHONE_BLANK'
@@ -24,7 +27,10 @@ export type ProblemCode =
   | 'LOGIN_FAILED_ARCHIVED'
   | 'LOGIN_FAILED_INVALID_CREDENTIALS'
   | 'ACCOUNT_STATE_SUSPENDED'
-  | 'ACCOUNT_STATE_ARCHIVED';
+  | 'ACCOUNT_STATE_ARCHIVED'
+  | 'ACCOUNT_NOT_FOUND'
+  | 'POST_NOT_FOUND'
+  | 'POST_FORBIDDEN';
 
 export class BizError extends Error {
   public readonly detail: ProblemDetail;

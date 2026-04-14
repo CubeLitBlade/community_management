@@ -32,15 +32,12 @@ public class PostService {
   }
 
   public void archivePost(JwtAuthenticatedUser authenticatedUser, long postId) {
-    Post post =
-        postRepository
-            .getPost(postId)
-            .orElseThrow(() -> new PostNotFoundException("Post not found"));
+    Post post = postRepository.getPost(postId).orElseThrow(PostNotFoundException::notFound);
 
     switch (authenticatedUser.role()) {
       case USER -> {
         if (!post.getAuthorId().equals(authenticatedUser.accountId())) {
-          throw new PostForbiddenException("You are not allowed to archive post");
+          throw PostForbiddenException.cannotArchive();
         }
       }
       case ADMIN, OWNER -> {
@@ -55,13 +52,10 @@ public class PostService {
 
   public Post editPost(
       JwtAuthenticatedUser authenticatedUser, long postId, EditPostRequest request) {
-    Post post =
-        postRepository
-            .getPost(postId)
-            .orElseThrow(() -> new PostNotFoundException("Post not found"));
+    Post post = postRepository.getPost(postId).orElseThrow(PostNotFoundException::notFound);
 
     if (!post.getAuthorId().equals(authenticatedUser.accountId())) {
-      throw new PostForbiddenException("You are not allowed to edit post");
+      throw PostForbiddenException.cannotEdit();
     }
 
     post.edit(request.title(), request.content(), timeProvider.now());

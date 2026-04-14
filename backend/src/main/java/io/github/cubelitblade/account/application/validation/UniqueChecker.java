@@ -1,7 +1,7 @@
 package io.github.cubelitblade.account.application.validation;
 
-import io.github.cubelitblade.account.common.AccountErrorCode;
+import io.github.cubelitblade.common.exception.ApiErrorCode;
 
 public interface UniqueChecker {
-  AccountErrorCode conflictErrorCode();
+  ApiErrorCode conflictErrorCode();
 }

@@ -1,29 +1,14 @@
 package io.github.cubelitblade.post.exception;
 
+import io.github.cubelitblade.common.exception.ApiErrorCode;
 import io.github.cubelitblade.common.exception.DomainException;
-import lombok.NonNull;
-import org.springframework.http.HttpStatus;
-import org.springframework.http.HttpStatusCode;
-import org.springframework.http.ProblemDetail;
 
 public class PostNotFoundException extends DomainException {
-  public PostNotFoundException(String message) {
-    super(message);
+  private PostNotFoundException(String detail) {
+    super(ApiErrorCode.POST_NOT_FOUND, detail);
   }
 
-  @Override
-  public @NonNull HttpStatusCode getStatusCode() {
-    return HttpStatus.NOT_FOUND;
-  }
-
-  @Override
-  public @NonNull ProblemDetail getBody() {
-    ProblemDetail problem = ProblemDetail.forStatus(getStatusCode());
-
-    problem.setTitle("Post not found");
-    problem.setDetail(getMessage());
-    problem.setProperty("code", "POST_NOT_FOUND");
-
-    return problem;
+  public static PostNotFoundException notFound() {
+    return new PostNotFoundException("Post not found");
   }
 }

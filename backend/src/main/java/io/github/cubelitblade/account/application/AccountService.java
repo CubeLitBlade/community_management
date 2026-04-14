@@ -1,23 +1,20 @@
 package io.github.cubelitblade.account.application;
 
-import static io.github.cubelitblade.account.common.AccountErrorCode.ACCOUNT_STATE_ARCHIVED;
-import static io.github.cubelitblade.account.common.AccountErrorCode.ACCOUNT_STATE_SUSPENDED;
-
 import io.github.cubelitblade.account.application.validation.*;
-import io.github.cubelitblade.account.common.AccountErrorCode;
 import io.github.cubelitblade.account.dto.AccountLoginRequest;
 import io.github.cubelitblade.account.dto.AccountRegisterRequest;
 import io.github.cubelitblade.account.dto.RegisterFieldsCheckRequest;
 import io.github.cubelitblade.account.dto.RegisterFieldsCheckResponse;
 import io.github.cubelitblade.account.dto.TokenResponse;
-import io.github.cubelitblade.account.exception.AccountStateExceptionLegacy;
-import io.github.cubelitblade.account.exception.ConflictFieldsExceptionLegacy;
-import io.github.cubelitblade.account.exception.InputValidationExceptionLegacy;
-import io.github.cubelitblade.account.exception.LoginFailedExceptionLegacy;
+import io.github.cubelitblade.account.exception.AccountConflictException;
+import io.github.cubelitblade.account.exception.AccountInputException;
+import io.github.cubelitblade.account.exception.AccountStateException;
+import io.github.cubelitblade.account.exception.LoginFailedException;
 import io.github.cubelitblade.account.model.Account;
 import io.github.cubelitblade.account.model.Username;
 import io.github.cubelitblade.account.persistence.AccountRepository;
 import io.github.cubelitblade.account.security.JwtTokenProvider;
+import io.github.cubelitblade.common.exception.ApiErrorCode;
 import io.github.cubelitblade.common.time.TimeProvider;
 import java.net.InetAddress;
 import java.time.Duration;
@@ -49,13 +46,13 @@ public class AccountService {
     // Fast-fail for required fields.
     // The engine skips nulls, so mandatory blanks must be caught early.
     if (request.username() == null || request.username().isBlank()) {
-      throw new InputValidationExceptionLegacy(AccountErrorCode.INPUT_USERNAME_BLANK);
+      throw AccountInputException.from(ApiErrorCode.INPUT_USERNAME_BLANK);
     }
     if (request.password() == null || request.password().isBlank()) {
-      throw new InputValidationExceptionLegacy(AccountErrorCode.INPUT_PASSWORD_BLANK);
+      throw AccountInputException.from(ApiErrorCode.INPUT_PASSWORD_BLANK);
     }
     if (nullIfBlank(request.email()) == null && nullIfBlank(request.phone()) == null) {
-      throw new InputValidationExceptionLegacy(AccountErrorCode.INPUT_NO_CONTACT);
+      throw AccountInputException.from(ApiErrorCode.INPUT_NO_CONTACT);
     }
 
     // Unified format and uniqueness validation via the rule engine.
@@ -86,22 +83,22 @@ public class AccountService {
 
     // Fail securely with a generic error to prevent user enumeration.
     if (candidate == null) {
-      throw new LoginFailedExceptionLegacy(AccountErrorCode.LOGIN_FAILED_INVALID_CREDENTIALS);
+      throw LoginFailedException.from(ApiErrorCode.LOGIN_FAILED_INVALID_CREDENTIALS);
     }
 
     if (!candidate.passwordMatches(request.password(), passwordHasher)) {
-      throw new LoginFailedExceptionLegacy(AccountErrorCode.LOGIN_FAILED_INVALID_CREDENTIALS);
+      throw LoginFailedException.from(ApiErrorCode.LOGIN_FAILED_INVALID_CREDENTIALS);
     }
 
     // Translate domain state exceptions into API-friendly login failures.
     try {
       candidate.requireNormalStatus();
-    } catch (AccountStateExceptionLegacy e) {
+    } catch (AccountStateException e) {
       switch (e.getErrorCode()) {
         case ACCOUNT_STATE_ARCHIVED ->
-            throw new LoginFailedExceptionLegacy(AccountErrorCode.LOGIN_FAILED_ARCHIVED);
+            throw LoginFailedException.from(ApiErrorCode.LOGIN_FAILED_ARCHIVED);
         case ACCOUNT_STATE_SUSPENDED ->
-            throw new LoginFailedExceptionLegacy(AccountErrorCode.LOGIN_FAILED_SUSPENDED);
+            throw LoginFailedException.from(ApiErrorCode.LOGIN_FAILED_SUSPENDED);
         default -> throw e;
       }
     }
@@ -142,7 +139,7 @@ public class AccountService {
                 evaluateFieldRule(
                     request.phone(), new PhoneChecker(), accountRepository::existsUserByPhone))
             .flatMap(Optional::stream)
-            .map(AccountErrorCode::name)
+            .map(ApiErrorCode::name)
             .toList();
 
     return new RegisterFieldsCheckResponse(reasons.isEmpty(), reasons);
@@ -152,7 +149,7 @@ public class AccountService {
    * Evaluates a field against format and uniqueness rules. Uses {@code instanceof} to dynamically
    * probe checker capabilities, keeping the validation flow unified.
    */
-  private Optional<AccountErrorCode> evaluateFieldRule(
+  private Optional<ApiErrorCode> evaluateFieldRule(
       String value, FormatChecker formatChecker, Predicate<String> existenceChecker) {
     if (value == null) {
       return Optional.empty();
@@ -164,7 +161,7 @@ public class AccountService {
       }
     }
 
-    Optional<AccountErrorCode> formatError = formatChecker.checkFormat(value);
+    Optional<ApiErrorCode> formatError = formatChecker.checkFormat(value);
     if (formatError.isPresent()) return formatError;
 
     if (formatChecker instanceof UniqueChecker uniqueChecker) {
@@ -176,12 +173,12 @@ public class AccountService {
     return Optional.empty();
   }
 
-  private void requireValid(Optional<AccountErrorCode> result) {
+  private void requireValid(Optional<ApiErrorCode> result) {
     result.ifPresent(
         error -> {
           switch (error.getCategory()) {
-            case INPUT_VALIDATION -> throw new InputValidationExceptionLegacy(error);
-            case CONFLICT -> throw new ConflictFieldsExceptionLegacy(error);
+            case INPUT_VALIDATION -> throw AccountInputException.from(error);
+            case CONFLICT -> throw AccountConflictException.from(error);
             default ->
                 throw new AssertionError(
                     "Validation engine returned unexpected error type: " + error.getCategory());

@@ -1,7 +1,7 @@
 package io.github.cubelitblade.account.model;
 
-import io.github.cubelitblade.account.common.AccountErrorCode;
-import io.github.cubelitblade.account.exception.InputValidationExceptionLegacy;
+import io.github.cubelitblade.account.exception.AccountInputException;
+import io.github.cubelitblade.common.exception.ApiErrorCode;
 import java.util.Objects;
 import java.util.Optional;
 
@@ -17,7 +17,7 @@ public final class Username {
         check(value)
             .map(
                 error -> {
-                  throw new InputValidationExceptionLegacy(error);
+                  throw AccountInputException.from(error);
                 })
             .orElseGet(() -> new Username(value));
   }
@@ -47,11 +47,11 @@ public final class Username {
     return this.value;
   }
 
-  public static Optional<AccountErrorCode> check(String value) {
+  public static Optional<ApiErrorCode> check(String value) {
     if (value == null || value.isBlank()) {
-      return Optional.of(AccountErrorCode.INPUT_USERNAME_BLANK);
+      return Optional.of(ApiErrorCode.INPUT_USERNAME_BLANK);
     } else if (value.length() > 20) {
-      return Optional.of(AccountErrorCode.INPUT_USERNAME_BAD_LENGTH);
+      return Optional.of(ApiErrorCode.INPUT_USERNAME_BAD_LENGTH);
     } else {
       return Optional.empty();
     }
