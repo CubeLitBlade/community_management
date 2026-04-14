@@ -1,5 +1,6 @@
 package io.github.cubelitblade.reaction.persistence;
 
+import io.github.cubelitblade.reaction.persistence.query.ReactionCountVo;
 import java.util.Collection;
 import java.util.List;
 import java.util.Optional;
@@ -37,6 +38,14 @@ public interface ReactionMapper
   @SelectProvider(type = SqlProviderAdapter.class, method = "select")
   @ResultMap("ReactionResult")
   Optional<ReactionPo> selectOne(SelectStatementProvider selectStatement);
+
+  @SelectProvider(type = SqlProviderAdapter.class, method = "select")
+  @Results(id = "ReactionCountResult")
+  @ConstructorArgs({
+    @Arg(column = "reaction_type", javaType = String.class, jdbcType = JdbcType.VARCHAR),
+    @Arg(column = "count", javaType = Long.class, jdbcType = JdbcType.BIGINT)
+  })
+  List<ReactionCountVo> selectReactionCounts(SelectStatementProvider selectStatement);
 
   default int insert(ReactionPo record) {
     return MyBatis3Utils.insert(
