@@ -133,7 +133,15 @@ export default function LoginPage() {
         <CardPreview>
           <Title3 className={styles.title}>登录</Title3>
           <Text className={styles.subtitle}>提供您的登录凭据。</Text>
-          <form className={styles.form} onSubmit={handleLoginSubmit}>
+          <form
+            className={styles.form}
+            onSubmit={async (event) => {
+              const targetPath = await handleLoginSubmit(event);
+              if (targetPath) {
+                navigate(targetPath, { replace: true });
+              }
+            }}
+          >
             <div className={styles.inputGroup}>
               <Field
                 label="用户名"

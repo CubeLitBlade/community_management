@@ -35,6 +35,7 @@ public class AccountPo {
 
   private String username;
   private String passwordHash;
+  private Boolean mustChangePassword;
   private String nickname;
   private String email;
   private String phone;
@@ -59,6 +60,7 @@ public class AccountPo {
         .id(account.getId())
         .username(mapIfNotNull(account.getUsername(), Username::value))
         .passwordHash(mapIfNotNull(account.getPasswordHash(), PasswordHash::value))
+        .mustChangePassword(account.isMustChangePassword())
         .nickname(account.getNickname())
         .email(mapIfNotNull(account.getEmail(), Email::value))
         .phone(mapIfNotNull(account.getPhone(), Phone::value))
@@ -78,6 +80,7 @@ public class AccountPo {
             .id(id)
             .username(mapIfNotNull(username, Username::reconstitute))
             .passwordHash(mapIfNotNull(passwordHash, PasswordHash::new))
+            .mustChangePassword(Boolean.TRUE.equals(mustChangePassword))
             .nickname(nickname)
             .email(mapIfNotNull(email, Email::new))
             .phone(mapIfNotNull(phone, Phone::new))

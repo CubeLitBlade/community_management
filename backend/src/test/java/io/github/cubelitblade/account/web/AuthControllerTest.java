@@ -5,9 +5,12 @@ import static org.mockito.Mockito.*;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 
 import io.github.cubelitblade.account.application.AccountService;
+import io.github.cubelitblade.account.dto.AccountLoginRequest;
 import io.github.cubelitblade.account.dto.AccountRegisterRequest;
+import io.github.cubelitblade.account.dto.TokenResponse;
 import io.github.cubelitblade.account.model.Account;
 import io.github.cubelitblade.account.security.JwtTokenProvider;
+import java.net.InetAddress;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -83,5 +86,28 @@ class AuthControllerTest {
           .hasStatus(HttpStatus.CONFLICT)
           .apply(document("auth-register-duplicate-username"));
     }
+  }
+
+  @Test
+  void should_return_token_and_password_change_flag_on_login() {
+    AccountLoginRequest request = new AccountLoginRequest("owner", "password123");
+
+    when(accountService.login(eq(request), any(InetAddress.class)))
+        .thenReturn(new TokenResponse("jwt-token", true));
+
+    assertThat(
+            mvc.post()
+                .uri("/api/auth/login")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(serialize(request))
+                .accept(MediaType.APPLICATION_JSON))
+        .hasStatus(HttpStatus.OK)
+        .apply(document("auth-login"))
+        .bodyJson()
+        .satisfies(
+            json -> {
+              assertThat(json).extractingPath("$.accessToken").isEqualTo("jwt-token");
+              assertThat(json).extractingPath("$.mustChangePassword").isEqualTo(true);
+            });
   }
 }

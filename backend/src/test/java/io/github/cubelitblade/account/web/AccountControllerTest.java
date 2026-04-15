@@ -1,10 +1,12 @@
 package io.github.cubelitblade.account.web;
 
 import static org.assertj.core.api.Assertions.assertThat;
+import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.when;
 import static org.springframework.restdocs.mockmvc.MockMvcRestDocumentation.document;
 
 import io.github.cubelitblade.account.application.AccountService;
+import io.github.cubelitblade.account.dto.ChangePasswordRequest;
 import io.github.cubelitblade.account.model.Account;
 import io.github.cubelitblade.account.model.Role;
 import io.github.cubelitblade.account.model.Status;
@@ -22,6 +24,7 @@ import org.springframework.http.MediaType;
 import org.springframework.test.context.ActiveProfiles;
 import org.springframework.test.context.bean.override.mockito.MockitoBean;
 import org.springframework.test.web.servlet.assertj.MockMvcTester;
+import tools.jackson.databind.ObjectMapper;
 
 @ActiveProfiles("test")
 @SpringBootTest
@@ -31,9 +34,15 @@ class AccountControllerTest {
 
   @Autowired private MockMvcTester mvc;
 
+  @Autowired private ObjectMapper objectMapper;
+
   @MockitoBean private AccountService accountService;
 
   @MockitoBean private JwtTokenProvider jwtTokenProvider;
+
+  private String serialize(Object obj) {
+    return objectMapper.writeValueAsString(obj);
+  }
 
   @Test
   void should_return_unauthorized_without_token() {
@@ -52,6 +61,7 @@ class AccountControllerTest {
                 .nickname("Alice")
                 .role(Role.USER)
                 .status(Status.NORMAL)
+                .mustChangePassword(true)
                 .build());
 
     when(accountService.findAccount(1L)).thenReturn(Optional.of(account));
@@ -73,6 +83,27 @@ class AccountControllerTest {
               assertThat(json).extractingPath("$.nickname").isEqualTo("Alice");
               assertThat(json).extractingPath("$.role").isEqualTo("user");
               assertThat(json).extractingPath("$.status").isEqualTo("normal");
+              assertThat(json).extractingPath("$.mustChangePassword").isEqualTo(true);
             });
+  }
+
+  @Test
+  void should_change_password_with_valid_token() {
+    ChangePasswordRequest request = new ChangePasswordRequest("password123", "password456");
+
+    when(jwtTokenProvider.parseToken("valid-token"))
+        .thenReturn(new JwtAuthenticatedUser(1L, Role.USER));
+
+    assertThat(
+            mvc.post()
+                .uri("/api/account/change-password")
+                .header("Authorization", "Bearer valid-token")
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(serialize(request))
+                .accept(MediaType.APPLICATION_JSON))
+        .hasStatus(HttpStatus.NO_CONTENT)
+        .apply(document("account-change-password"));
+
+    verify(accountService).changePassword(1L, request);
   }
 }

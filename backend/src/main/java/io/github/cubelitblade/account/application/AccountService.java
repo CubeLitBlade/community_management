@@ -3,11 +3,13 @@ package io.github.cubelitblade.account.application;
 import io.github.cubelitblade.account.application.validation.*;
 import io.github.cubelitblade.account.dto.AccountLoginRequest;
 import io.github.cubelitblade.account.dto.AccountRegisterRequest;
+import io.github.cubelitblade.account.dto.ChangePasswordRequest;
 import io.github.cubelitblade.account.dto.RegisterFieldsCheckRequest;
 import io.github.cubelitblade.account.dto.RegisterFieldsCheckResponse;
 import io.github.cubelitblade.account.dto.TokenResponse;
 import io.github.cubelitblade.account.exception.AccountConflictException;
 import io.github.cubelitblade.account.exception.AccountInputException;
+import io.github.cubelitblade.account.exception.AccountNotFoundException;
 import io.github.cubelitblade.account.exception.AccountStateException;
 import io.github.cubelitblade.account.exception.LoginFailedException;
 import io.github.cubelitblade.account.model.Account;
@@ -114,7 +116,8 @@ public class AccountService {
     accountRepository.updateAccount(candidate);
 
     return new TokenResponse(
-        jwtTokenProvider.generateToken(candidate.getId(), candidate.getRole(), now));
+        jwtTokenProvider.generateToken(candidate.getId(), candidate.getRole(), now),
+        candidate.isMustChangePassword());
   }
 
   public void logout(String token) {
@@ -125,6 +128,25 @@ public class AccountService {
       String key = "jwt:blacklist:" + token;
       stringRedisTemplate.opsForValue().set(key, "logout", timeout);
     }
+  }
+
+  @Transactional
+  public void changePassword(Long accountId, ChangePasswordRequest request) {
+    Account account =
+        accountRepository
+            .findAccountById(accountId)
+            .orElseThrow(AccountNotFoundException::notFound);
+
+    if (request.currentPassword() == null || request.currentPassword().isBlank()) {
+      throw AccountInputException.from(ApiErrorCode.INPUT_PASSWORD_BLANK);
+    }
+
+    requireValid(
+        evaluateFieldRule(request.newPassword(), new PasswordChecker(), SKIP_UNIQUENESS_CHECK));
+
+    account.changePassword(
+        request.currentPassword(), request.newPassword(), passwordHasher, timeProvider.now());
+    accountRepository.updateAccount(account);
   }
 
   @Transactional(readOnly = true)

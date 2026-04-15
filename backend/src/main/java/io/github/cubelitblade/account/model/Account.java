@@ -18,6 +18,7 @@ public class Account {
   private Long id;
   private Username username;
   private PasswordHash passwordHash;
+  private boolean mustChangePassword;
   private String nickname;
   private Email email;
   private Phone phone;
@@ -36,6 +37,8 @@ public class Account {
     account.username = username;
     account.nickname = username.value();
     account.passwordHash = hasher.fromRaw(submittedPassword);
+    account.mustChangePassword = false;
+    account.role = Role.USER;
     account.status = Status.NORMAL;
     account.createdAt = now;
     account.touch(now);
@@ -49,6 +52,7 @@ public class Account {
     account.id = snapshot.id;
     account.username = snapshot.username;
     account.passwordHash = snapshot.passwordHash;
+    account.mustChangePassword = snapshot.mustChangePassword;
     account.nickname = snapshot.nickname;
     account.email = snapshot.email;
     account.phone = snapshot.phone;
@@ -97,12 +101,14 @@ public class Account {
       throw LoginFailedException.from(ApiErrorCode.LOGIN_FAILED_INVALID_CREDENTIALS);
     }
     this.passwordHash = passwordHasher.fromRaw(newPassword);
+    this.mustChangePassword = false;
     this.touch(now);
   }
 
   /** Resets the password without verifying the current password. */
   public void resetPassword(String newPassword, PasswordHasher passwordHasher, Instant now) {
     this.passwordHash = passwordHasher.fromRaw(newPassword);
+    this.mustChangePassword = true;
     this.touch(now);
   }
 
@@ -195,6 +201,7 @@ public class Account {
       Long id,
       Username username,
       PasswordHash passwordHash,
+      boolean mustChangePassword,
       String nickname,
       Email email,
       Phone phone,

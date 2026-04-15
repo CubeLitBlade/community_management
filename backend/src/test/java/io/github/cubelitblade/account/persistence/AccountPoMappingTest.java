@@ -17,6 +17,7 @@ class AccountPoMappingTest {
         AccountPo.builder()
             .username("domain_user")
             .passwordHash("db_hash")
+            .mustChangePassword(true)
             .email("domain@test.com")
             .phone("13900139000")
             .role("user")
@@ -31,6 +32,7 @@ class AccountPoMappingTest {
         .extracting(
             a -> a.getUsername().value(),
             a -> a.getPasswordHash().value(),
+            Account::isMustChangePassword,
             a -> a.getEmail().value(),
             a -> a.getPhone().value(),
             Account::getRole,
@@ -38,6 +40,7 @@ class AccountPoMappingTest {
         .containsExactly(
             "domain_user",
             "db_hash",
+            true,
             "domain@test.com",
             "13900139000",
             Role.USER,
@@ -52,6 +55,7 @@ class AccountPoMappingTest {
         AccountPo.builder()
             .username("round_trip")
             .passwordHash("hash")
+            .mustChangePassword(true)
             .email("rt@test.com")
             .phone("13800138000")
             .role("user")
@@ -67,10 +71,12 @@ class AccountPoMappingTest {
         .extracting(
             AccountPo::getUsername,
             AccountPo::getPasswordHash,
+            AccountPo::getMustChangePassword,
             AccountPo::getEmail,
             AccountPo::getPhone,
             AccountPo::getRole,
             AccountPo::getStatus)
-        .containsExactly("round_trip", "hash", "rt@test.com", "13800138000", "user", "normal");
+        .containsExactly(
+            "round_trip", "hash", true, "rt@test.com", "13800138000", "user", "normal");
   }
 }

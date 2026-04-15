@@ -16,6 +16,18 @@ export default function useAuth() {
       const response = await apiClient.post<LoginResponse>('/auth/login', request);
       localStorage.setItem('accessToken', response.data.accessToken);
       await fetchAccount();
+      return response.data;
+    },
+    [fetchAccount],
+  );
+
+  const changePassword = useCallback(
+    async (currentPassword: string, newPassword: string) => {
+      await apiClient.post('/account/change-password', {
+        currentPassword,
+        newPassword,
+      });
+      await fetchAccount();
     },
     [fetchAccount],
   );
@@ -27,6 +39,7 @@ export default function useAuth() {
     isLoading,
     isAuthenticated,
     login,
+    changePassword,
     logout,
     fetchAccount,
   };

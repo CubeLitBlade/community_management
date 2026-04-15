@@ -12,7 +12,7 @@ import {
   tokens,
 } from '@fluentui/react-components';
 
-import { type ComponentProps } from 'react';
+import { type ComponentProps, useEffect } from 'react';
 import { useLocation, useNavigate, Outlet } from 'react-router';
 import {
   CalendarMultipleIcon,
@@ -67,7 +67,17 @@ export default function Layout() {
   const styles = useStyles();
   const location = useLocation();
   const navigate = useNavigate();
-  const { profile, isLoading, logout } = useAuth();
+  const { profile, isLoading } = useAuth();
+
+  useEffect(() => {
+    if (isLoading || !profile?.mustChangePassword) {
+      return;
+    }
+
+    if (location.pathname !== '/account/change-password') {
+      navigate('/account/change-password', { replace: true });
+    }
+  }, [isLoading, location.pathname, navigate, profile?.mustChangePassword]);
 
   const handleNavSelect: NavSelectHandler = (_event, data) => {
     if (!data.value) {
@@ -88,7 +98,7 @@ export default function Layout() {
       >
         <NavDrawerBody className={styles.navBody}>
           <div>
-            <AccountNavItem profile={profile} isLoading={isLoading} onLogout={logout} />
+            <AccountNavItem profile={profile} isLoading={isLoading} />
             <NavItem icon={<HomeIcon />} value="/">
               首页
             </NavItem>

@@ -16,22 +16,30 @@ create sequence post_id_seq;
 
 create sequence comment_id_seq;
 
+create sequence event_id_seq;
+
+create sequence account_id_seq;
+
+create sequence post_id_seq;
+
+create sequence comment_id_seq;
+
 create table if not exists events
 (
-  id bigint not null
-    primary key,
-  type varchar(100) not null,
-  payload jsonb,
-  status varchar(20) default 'waiting'::character varying not null
-    constraint chk_event_status
-      check ((status)::text = ANY (ARRAY[('waiting'::character varying)::text, ('pending'::character varying)::text, ('running'::character varying)::text, ('succeeded'::character varying)::text, ('failed'::character varying)::text, ('dead'::character varying)::text])),
-  retry_count integer default 0 not null,
-  error_msg text,
-  created_at timestamp with time zone default CURRENT_TIMESTAMP,
-  next_run_at timestamp with time zone default CURRENT_TIMESTAMP,
-  updated_at timestamp with time zone default CURRENT_TIMESTAMP,
-  current_step varchar(50),
-  version integer default 0 not null
+	id bigint not null
+		primary key,
+	type varchar(100) not null,
+	payload jsonb,
+	status varchar(20) default 'waiting'::character varying not null
+		constraint chk_event_status
+			check ((status)::text = ANY (ARRAY[('waiting'::character varying)::text, ('pending'::character varying)::text, ('running'::character varying)::text, ('succeeded'::character varying)::text, ('failed'::character varying)::text, ('dead'::character varying)::text])),
+	retry_count integer default 0 not null,
+	error_msg text,
+	created_at timestamp with time zone default CURRENT_TIMESTAMP,
+	next_run_at timestamp with time zone default CURRENT_TIMESTAMP,
+	updated_at timestamp with time zone default CURRENT_TIMESTAMP,
+	current_step varchar(50),
+	version integer default 0 not null
 );
 
 comment on column events.id is '事件的唯一标识符。';
@@ -57,36 +65,37 @@ comment on column events.current_step is '当前所在的步骤。';
 alter sequence event_id_seq owned by events.id;
 
 create index if not exists idx_event_waiting
-  on events (next_run_at)
-  where ((status)::text = 'waiting'::text);
+	on events (next_run_at)
+	where ((status)::text = 'waiting'::text);
 
 create table if not exists accounts
 (
-  id bigint not null
-    constraint pk_account
-      primary key,
-  username varchar(50) not null
-    constraint uq_account_username
-      unique,
-  password_hash varchar(255) not null,
-  email varchar(255)
-    constraint uq_account_email
-      unique,
-  phone varchar(20)
-    constraint uq_account_phone
-      unique,
-  profile jsonb,
-  status varchar(20) default 'normal'::character varying not null
-    constraint chk_account_status
-      check ((status)::text = ANY (ARRAY[('normal'::character varying)::text, ('suspended'::character varying)::text, ('archived'::character varying)::text])),
-  role varchar(20) default 'user'::character varying not null
-    constraint chk_account_role
-      check ((role)::text = ANY (ARRAY[('user'::character varying)::text, ('admin'::character varying)::text, ('owner'::character varying)::text])),
-  created_at timestamp with time zone default CURRENT_TIMESTAMP not null,
-  updated_at timestamp with time zone default CURRENT_TIMESTAMP not null,
-  last_login_at timestamp with time zone,
-  last_login_ip inet,
-  nickname varchar(50)
+	id bigint not null
+		constraint pk_account
+			primary key,
+	username varchar(50) not null
+		constraint uq_account_username
+			unique,
+	nickname varchar(50),
+	password_hash varchar(255) not null,
+	must_change_password boolean default false not null，
+	email varchar(255)
+		constraint uq_account_email
+			unique,
+	phone varchar(20)
+		constraint uq_account_phone
+			unique,
+	profile jsonb,
+	status varchar(20) default 'normal'::character varying not null
+		constraint chk_account_status
+			check ((status)::text = ANY (ARRAY[('normal'::character varying)::text, ('suspended'::character varying)::text, ('archived'::character varying)::text])),
+	role varchar(20) default 'user'::character varying not null
+		constraint chk_account_role
+			check ((role)::text = ANY (ARRAY[('user'::character varying)::text, ('admin'::character varying)::text, ('owner'::character varying)::text])),
+	created_at timestamp with time zone default CURRENT_TIMESTAMP not null,
+	updated_at timestamp with time zone default CURRENT_TIMESTAMP not null,
+	last_login_at timestamp with time zone,
+	last_login_ip inet
 );
 
 comment on column accounts.id is '账户的唯一标识符';
@@ -113,71 +122,87 @@ comment on column accounts.last_login_at is '账户上次的登录时间';
 
 comment on column accounts.last_login_ip is '账户上次的登录IP地址';
 
+create unique index if not exists idx_only_one_owner
+  on accounts (role)
+  where ((role)::text = 'owner'::text);
+
 create table if not exists posts
 (
-  id bigserial
-    constraint pk_post
-      primary key,
-  author_id bigint not null,
-  title varchar(50),
-  content text not null,
-  status varchar(20) default 'normal'::character varying not null
-    constraint chk_post_status
-      check ((status)::text = ANY (ARRAY[('normal'::character varying)::text, ('archived'::character varying)::text])),
-  created_at timestamp with time zone default CURRENT_TIMESTAMP not null,
-  updated_at timestamp with time zone
+	id bigserial
+		constraint pk_post
+			primary key,
+	author_id bigint not null,
+	title varchar(50),
+	content text not null,
+	status varchar(20) default 'normal'::character varying not null
+		constraint chk_post_status
+			check ((status)::text = ANY (ARRAY[('normal'::character varying)::text, ('archived'::character varying)::text])),
+	created_at timestamp with time zone default CURRENT_TIMESTAMP not null,
+	updated_at timestamp with time zone
 );
 
 create index if not exists idx_post_account
-  on posts (author_id);
+	on posts (author_id);
 
 create index if not exists idx_post_list
-  on posts (status asc, created_at desc);
+	on posts (status asc, created_at desc);
 
 create table if not exists comments
 (
-  id bigint not null
-    constraint pk_comment
-      primary key,
-  target_type varchar(20) not null
-    constraint chk_comment_target_type
-      check ((target_type)::text = ANY ((ARRAY['post'::character varying, 'comment'::character varying, 'activity'::character varying])::text[])),
-  target_id bigint not null,
-  account_id bigint not null,
-  parent_id bigint,
-  content text not null,
-  status varchar(20) default 'normal'::character varying not null
-    constraint chk_comment_status
-      check ((status)::text = ANY (ARRAY[('normal'::character varying)::text, ('archived'::character varying)::text])),
-  created_at timestamp with time zone default CURRENT_TIMESTAMP not null,
-  updated_at timestamp with time zone not null
+	id bigint not null
+		constraint pk_comment
+			primary key,
+	target_type varchar(20) not null
+		constraint chk_comment_target_type
+			check ((target_type)::text = ANY ((ARRAY['post'::character varying, 'comment'::character varying, 'activity'::character varying])::text[])),
+	target_id bigint not null,
+	account_id bigint not null,
+	parent_id bigint,
+	content text not null,
+	status varchar(20) default 'normal'::character varying not null
+		constraint chk_comment_status
+			check ((status)::text = ANY (ARRAY[('normal'::character varying)::text, ('archived'::character varying)::text])),
+	created_at timestamp with time zone default CURRENT_TIMESTAMP not null,
+	updated_at timestamp with time zone
 );
 
 create index if not exists idx_comment_target
-  on comments (target_type, target_id);
+	on comments (target_type, target_id);
 
 create index if not exists idx_comment_parent
-  on comments (parent_id);
+	on comments (parent_id);
 
 create table if not exists reactions
 (
-  id bigint not null
-    constraint pk_reactions
-      primary key,
-  account_id bigint not null,
-  target_type varchar not null
-    constraint chk_target_type
-      check ((target_type)::text = ANY ((ARRAY['post'::character varying, 'comment'::character varying, 'activity'::character varying])::text[])),
-  target_id bigint not null,
-  reaction_type varchar not null
-    constraint chk_reaction_type
-      check ((reaction_type)::text = ANY ((ARRAY['like'::character varying, 'love'::character varying, 'laugh'::character varying, 'sad'::character varying])::text[])),
-  created_at timestamp with time zone default now() not null,
-  updated_at timestamp with time zone,
-  constraint uq_account_target
-    unique (account_id, target_type, target_id)
+	id bigint not null
+		constraint pk_reactions
+			primary key,
+	account_id bigint not null,
+	target_type varchar not null
+		constraint chk_target_type
+			check ((target_type)::text = ANY ((ARRAY['post'::character varying, 'comment'::character varying, 'activity'::character varying])::text[])),
+	target_id bigint not null,
+	reaction_type varchar not null
+		constraint chk_reaction_type
+			check ((reaction_type)::text = ANY ((ARRAY['like'::character varying, 'love'::character varying, 'laugh'::character varying, 'sad'::character varying])::text[])),
+	created_at timestamp with time zone default now() not null,
+	updated_at timestamp with time zone,
+	constraint uq_account_target
+		unique (account_id, target_type, target_id)
 );
 
 create index if not exists idx_reactions_target
-  on reactions (target_type, target_id);
+	on reactions (target_type, target_id);
 
+/* Insert default owner account. Default password is "password123456". */
+/* MUST change password after first login. */
+insert into accounts(id, username, nickname, must_change_password, password_hash, status, role, created_at, updated_at)
+values (1,
+        'owner',
+        'Owner',
+        true,
+        '{bcrypt}$2a$10$okgQzA7rsCF1veD1B11/A.OkqJKMDfVjNKDuZRYZtiSx1bJSVsL9O',
+        'normal',
+        'owner',
+        current_timestamp,
+        current_timestamp) on conflict (username) do nothing;

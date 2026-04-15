@@ -5,6 +5,8 @@ import PostDetailPage from '../pages/PostDetailPage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
 import SettingsPage from '../pages/SettingsPage';
+import ChangePasswordPage from '../pages/ChangePasswordPage';
+import SettingsChangePasswordPage from '../pages/SettingsChangePasswordPage';
 import Layout from '../components/Layout/Layout';
 
 const router = createBrowserRouter([
@@ -28,6 +30,10 @@ const router = createBrowserRouter([
         path: '/settings',
         element: <SettingsPage />,
       },
+      {
+        path: '/settings/password',
+        element: <SettingsChangePasswordPage />,
+      },
     ],
   },
   {
@@ -37,6 +43,10 @@ const router = createBrowserRouter([
   {
     path: '/auth/register',
     element: <RegisterPage />,
+  },
+  {
+    path: '/account/change-password',
+    element: <ChangePasswordPage />,
   },
 ]);
 

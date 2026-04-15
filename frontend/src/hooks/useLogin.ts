@@ -1,10 +1,10 @@
-import { useNavigate } from 'react-router';
 import { useState, type FormEvent } from 'react';
 import { BizError } from '../types/Error';
 import useAuth from './useAuth';
 
+type LoginSubmitResult = '/' | '/account/change-password' | null;
+
 export default function useLogin() {
-  const navigate = useNavigate();
   const { login } = useAuth();
   const [username, setUsername] = useState('');
   const [password, setPassword] = useState('');
@@ -25,21 +25,21 @@ export default function useLogin() {
     setSubmitErrorMessage('');
   };
 
-  const handleLoginSubmit = async (e: FormEvent<HTMLFormElement>) => {
+  const handleLoginSubmit = async (e: FormEvent<HTMLFormElement>): Promise<LoginSubmitResult> => {
     e.preventDefault();
 
     if (username.trim() === '') {
       setUsernameMessage('用户名不能为空。');
       setPasswordMessage('');
       setSubmitErrorMessage('');
-      return;
+      return null;
     }
 
     if (password.trim() === '') {
       setPasswordMessage('密码不能为空。');
       setUsernameMessage('');
       setSubmitErrorMessage('');
-      return;
+      return null;
     }
 
     setIsSubmitting(true);
@@ -47,19 +47,16 @@ export default function useLogin() {
     setPasswordMessage('');
     setSubmitErrorMessage('');
 
-    const result = await requestLogin(username, password);
-    if (result) {
-      navigate('/');
-      return;
-    }
-
-    setIsSubmitting(false);
+    return requestLogin(username, password);
   };
 
-  async function requestLogin(username: string, password: string): Promise<boolean> {
+  async function requestLogin(username: string, password: string): Promise<LoginSubmitResult> {
     try {
-      await login(username, password);
-      return true;
+      const response = await login(username, password);
+      if (response.mustChangePassword) {
+        return '/account/change-password';
+      }
+      return '/';
     } catch (e) {
       if (e instanceof BizError) {
         switch (e.detail.code) {
@@ -76,11 +73,13 @@ export default function useLogin() {
             setSubmitErrorMessage('请重试。');
         }
 
-        return false;
+        return null;
       }
 
       setSubmitErrorMessage('网络异常，请稍后重试。');
-      return false;
+      return null;
+    } finally {
+      setIsSubmitting(false);
     }
   }
 
