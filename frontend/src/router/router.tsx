@@ -4,6 +4,7 @@ import FeedPage from '../pages/FeedPage';
 import PostDetailPage from '../pages/PostDetailPage';
 import LoginPage from '../pages/LoginPage';
 import RegisterPage from '../pages/RegisterPage';
+import SettingsPage from '../pages/SettingsPage';
 import Layout from '../components/Layout/Layout';
 
 const router = createBrowserRouter([
@@ -22,6 +23,10 @@ const router = createBrowserRouter([
       {
         path: '/posts/:postId',
         element: <PostDetailPage />,
+      },
+      {
+        path: '/settings',
+        element: <SettingsPage />,
       },
     ],
   },

@@ -124,7 +124,7 @@ export default function Layout() {
           </div>
           <div>
             <NavDivider />
-            <NavItem icon={<SettingsIcon />} value="/settings" disabled>
+            <NavItem icon={<SettingsIcon />} value="/settings">
               设置
             </NavItem>
           </div>

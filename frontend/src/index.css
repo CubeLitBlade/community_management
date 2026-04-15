@@ -14,10 +14,17 @@
   font-weight: 400;
   color: #0f172a;
   background: #e2e8f0;
+  color-scheme: light;
   font-synthesis: none;
   text-rendering: optimizeLegibility;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+}
+
+:root[data-theme='dark'] {
+  color: #e5eefc;
+  background: #08111f;
+  color-scheme: dark;
 }
 
 html,
@@ -34,6 +41,17 @@ body {
     radial-gradient(circle at 82% 0%, rgba(14, 165, 233, 0.15), transparent 22%),
     linear-gradient(180deg, #f8fbff 0%, #edf2ff 100%);
   color: #0f172a;
+  transition:
+    background 160ms ease,
+    color 160ms ease;
+}
+
+:root[data-theme='dark'] body {
+  background:
+    radial-gradient(circle at 18% 12%, rgba(56, 189, 248, 0.18), transparent 28%),
+    radial-gradient(circle at 82% 0%, rgba(59, 130, 246, 0.16), transparent 22%),
+    linear-gradient(180deg, #0b1220 0%, #111827 100%);
+  color: #e5eefc;
 }
 
 a {
