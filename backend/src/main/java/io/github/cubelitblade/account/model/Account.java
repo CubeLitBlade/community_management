@@ -30,8 +30,9 @@ public class Account {
   private InetAddress lastLoginIp;
 
   public static Account register(
-      Username username, String submittedPassword, PasswordHasher hasher, Instant now) {
+      Long id, Username username, String submittedPassword, PasswordHasher hasher, Instant now) {
     Account account = new Account();
+    account.id = id;
     account.username = username;
     account.nickname = username.value();
     account.passwordHash = hasher.fromRaw(submittedPassword);
@@ -183,16 +184,6 @@ public class Account {
     this.phone = null;
     this.profile = null;
     this.touch(now);
-  }
-
-  public void initIdentifier(long id) {
-    if (this.id != null) {
-      throw new IllegalStateException("Identifier already initialized.");
-    }
-    if (id <= 0) {
-      throw new IllegalArgumentException("Identifier must be greater than zero, got: " + id);
-    }
-    this.id = id;
   }
 
   private void touch(Instant now) {

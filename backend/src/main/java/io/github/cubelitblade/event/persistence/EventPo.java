@@ -17,7 +17,7 @@ import tools.jackson.databind.JsonNode;
 @TableName(value = "events", autoResultMap = true)
 public class EventPo {
 
-  @TableId(type = IdType.AUTO)
+  @TableId(type = IdType.INPUT)
   private Long id;
 
   private String type;

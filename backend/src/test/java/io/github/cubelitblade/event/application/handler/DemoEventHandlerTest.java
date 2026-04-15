@@ -45,7 +45,8 @@ class DemoEventHandlerTest {
 
   @BeforeEach
   void setUp() {
-    event = Event.create(Type.DEMO_EVENT, JsonNodeFactory.instance.nullNode(), Instant.now(clock));
+    event =
+        Event.create(1L, Type.DEMO_EVENT, JsonNodeFactory.instance.nullNode(), Instant.now(clock));
     event.run(Instant.now(clock));
 
     willAnswer(

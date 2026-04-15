@@ -21,7 +21,6 @@ public class AccountRepository {
     AccountPo accountPo = AccountPo.fromDomain(account);
 
     accountMapper.insert(accountPo);
-    account.initIdentifier(accountPo.getId());
 
     return account;
   }

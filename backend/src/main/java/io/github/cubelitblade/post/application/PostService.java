@@ -1,6 +1,7 @@
 package io.github.cubelitblade.post.application;
 
 import io.github.cubelitblade.account.security.JwtAuthenticatedUser;
+import io.github.cubelitblade.common.id.SnowflakeIdGenerator;
 import io.github.cubelitblade.common.time.TimeProvider;
 import io.github.cubelitblade.post.dto.EditPostRequest;
 import io.github.cubelitblade.post.dto.PostDetailView;
@@ -28,10 +29,13 @@ public class PostService {
   private final PostRepository postRepository;
   private final PostQueryRepository postQueryRepository;
   private final ReactionQueryRepository reactionQueryRepository;
+  private final SnowflakeIdGenerator idGenerator;
   private final TimeProvider timeProvider;
 
   public Long publishPost(Long authorId, PublishPostRequest request) {
-    Post post = Post.createPost(authorId, request.title(), request.content(), timeProvider.now());
+    Post post =
+        Post.createPost(
+            idGenerator.nextId(), authorId, request.title(), request.content(), timeProvider.now());
     postRepository.publishPost(post);
 
     return post.getId();

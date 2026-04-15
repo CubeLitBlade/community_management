@@ -26,6 +26,8 @@ public class PostRepository {
     InsertStatementProvider<PostPo> insertStatement =
         insert(postPo)
             .into(PostDynamicSqlSupport.posts)
+            .map(PostDynamicSqlSupport.id)
+            .toProperty("id")
             .map(PostDynamicSqlSupport.authorId)
             .toProperty("authorId")
             .map(PostDynamicSqlSupport.title)

@@ -27,10 +27,10 @@ import org.apache.ibatis.type.JdbcType;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@TableName("account")
+@TableName("accounts")
 public class AccountPo {
 
-  @TableId(type = IdType.AUTO)
+  @TableId(type = IdType.INPUT)
   private Long id;
 
   private String username;

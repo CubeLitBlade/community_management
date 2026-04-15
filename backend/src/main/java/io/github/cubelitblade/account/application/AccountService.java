@@ -15,6 +15,7 @@ import io.github.cubelitblade.account.model.Username;
 import io.github.cubelitblade.account.persistence.AccountRepository;
 import io.github.cubelitblade.account.security.JwtTokenProvider;
 import io.github.cubelitblade.common.exception.ApiErrorCode;
+import io.github.cubelitblade.common.id.SnowflakeIdGenerator;
 import io.github.cubelitblade.common.time.TimeProvider;
 import java.net.InetAddress;
 import java.time.Duration;
@@ -33,6 +34,7 @@ import org.springframework.transaction.annotation.Transactional;
 public class AccountService {
   private final AccountRepository accountRepository;
   private final PasswordHasher passwordHasher;
+  private final SnowflakeIdGenerator idGenerator;
   private final TimeProvider timeProvider;
   private final JwtTokenProvider jwtTokenProvider;
 
@@ -69,7 +71,12 @@ public class AccountService {
             request.phone(), new PhoneChecker(), accountRepository::existsUserByPhone));
 
     Account account =
-        Account.register(Username.of(request.username()), request.password(), passwordHasher, now);
+        Account.register(
+            idGenerator.nextId(),
+            Username.of(request.username()),
+            request.password(),
+            passwordHasher,
+            now);
     account.updateContactInfo(request.email(), request.phone(), now);
 
     accountRepository.register(account);

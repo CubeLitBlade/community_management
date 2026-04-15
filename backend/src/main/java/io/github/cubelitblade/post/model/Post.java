@@ -17,9 +17,10 @@ public class Post {
   private Instant createdAt;
   private Instant updatedAt;
 
-  public static Post createPost(Long authorId, String title, String content, Instant now) {
+  public static Post createPost(Long id, Long authorId, String title, String content, Instant now) {
     Post post = new Post();
 
+    post.id = id;
     post.authorId = authorId;
     post.title = title;
     post.content = content;

@@ -25,9 +25,10 @@ public class Event {
   private String currentStep;
   private Integer version;
 
-  public static Event create(Type type, JsonNode payload, Instant now) {
+  public static Event create(Long id, Type type, JsonNode payload, Instant now) {
     Event event = new Event();
 
+    event.id = id;
     event.type = type;
     event.payload = payload;
     event.status = Status.WAITING;

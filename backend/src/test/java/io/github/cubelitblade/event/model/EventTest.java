@@ -13,7 +13,7 @@ class EventTest {
   @Test
   @DisplayName("Create: should initialize a waiting event with version 0 and retry count 0")
   void should_create_event_with_initial_state() {
-    Event event = Event.create(Type.DEMO_EVENT, JsonNodeFactory.instance.nullNode(), NOW);
+    Event event = Event.create(1L, Type.DEMO_EVENT, JsonNodeFactory.instance.nullNode(), NOW);
 
     assertThat(event)
         .extracting(
@@ -88,7 +88,7 @@ class EventTest {
   @Test
   @DisplayName("Lifecycle: should run, advance, retry and tick correctly")
   void should_run_advance_retry_and_tick() {
-    Event event = Event.create(Type.DEMO_EVENT, JsonNodeFactory.instance.nullNode(), NOW);
+    Event event = Event.create(1L, Type.DEMO_EVENT, JsonNodeFactory.instance.nullNode(), NOW);
 
     event.run(NOW.plusSeconds(1));
     event.advanceTo("step-1", NOW.plusSeconds(2));

@@ -50,7 +50,7 @@ class EventLifecycleManagerTest {
   @DisplayName("Complete: should mark event as SUCCEEDED")
   void should_mark_as_succeeded_when_complete_is_called() {
     // Given
-    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeProvider.now());
+    Event event = Event.create(1L, Type.EVENT, JsonNodeFactory.instance.nullNode(), timeProvider.now());
 
     // When
     lifecycleManager.complete(event);
@@ -66,7 +66,7 @@ class EventLifecycleManagerTest {
   @DisplayName("Abort: should mark event as FAILED")
   void should_mark_as_failed_when_abort_is_called() {
     // Given
-    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeProvider.now());
+    Event event = Event.create(1L, Type.EVENT, JsonNodeFactory.instance.nullNode(), timeProvider.now());
     String reason = "for testing purposes";
 
     // When
@@ -84,7 +84,7 @@ class EventLifecycleManagerTest {
   @DisplayName("GiveUp: should mark event as DEAD")
   void should_mark_as_dead_when_giveUp_is_called() {
     // Given
-    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeProvider.now());
+    Event event = Event.create(1L, Type.EVENT, JsonNodeFactory.instance.nullNode(), timeProvider.now());
     String reason = "for testing purposes";
 
     // When
@@ -102,7 +102,7 @@ class EventLifecycleManagerTest {
   @DisplayName("Reschedule: should delay execution and increment retry count")
   void should_reschedule_with_delay_when_reschedule_is_called() {
     // Given
-    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeProvider.now());
+    Event event = Event.create(1L, Type.EVENT, JsonNodeFactory.instance.nullNode(), timeProvider.now());
     lifecycleManager.run(event);
     String reason = "for testing purposes";
 
@@ -122,7 +122,7 @@ class EventLifecycleManagerTest {
   @DisplayName("Max Retries: should mark as DEAD when limit exceeded")
   void should_mark_as_dead_when_retry_limit_exceeded() {
     // Given
-    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeProvider.now());
+    Event event = Event.create(1L, Type.EVENT, JsonNodeFactory.instance.nullNode(), timeProvider.now());
     String reason = "for testing purposes";
 
     // When
@@ -144,7 +144,7 @@ class EventLifecycleManagerTest {
   @Test
   void should_update_step_when_advanceEventToStep_is_called() {
     // Given
-    Event event = Event.create(Type.EVENT, JsonNodeFactory.instance.nullNode(), timeProvider.now());
+    Event event = Event.create(1L, Type.EVENT, JsonNodeFactory.instance.nullNode(), timeProvider.now());
     lifecycleManager.run(event);
     String step = "checkpoint";
 

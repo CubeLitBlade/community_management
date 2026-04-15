@@ -1,5 +1,6 @@
 package io.github.cubelitblade.event.application;
 
+import io.github.cubelitblade.common.id.SnowflakeIdGenerator;
 import io.github.cubelitblade.common.time.TimeProvider;
 import io.github.cubelitblade.event.model.Event;
 import io.github.cubelitblade.event.model.Type;
@@ -18,6 +19,7 @@ import tools.jackson.databind.JsonNode;
 @RequiredArgsConstructor
 public class EventService {
   private final EventRepository eventRepository;
+  private final SnowflakeIdGenerator idGenerator;
   private final TimeProvider timeProvider;
 
   public List<Event> getWaitingEvents(int count) {
@@ -33,7 +35,7 @@ public class EventService {
       throw new IllegalArgumentException("Unknown event type: " + type);
     }
 
-    Event event = Event.create(Type.from(type), payloadJson, timeProvider.now());
+    Event event = Event.create(idGenerator.nextId(), Type.from(type), payloadJson, timeProvider.now());
 
     eventRepository.save(event);
     return event;
