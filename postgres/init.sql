@@ -8,6 +8,14 @@ drop table if exists "comment" cascade;
 
 drop table if exists "reactions" cascade;
 
+create sequence event_id_seq;
+
+create sequence account_id_seq;
+
+create sequence post_id_seq;
+
+create sequence comment_id_seq;
+
 create table if not exists events
 (
   id bigint not null
@@ -45,6 +53,8 @@ comment on column events.next_run_at is '事件下一次尝试的时间戳。';
 comment on column events.updated_at is '事件更新的时间戳。';
 
 comment on column events.current_step is '当前所在的步骤。';
+
+alter sequence event_id_seq owned by events.id;
 
 create index if not exists idx_event_waiting
   on events (next_run_at)
@@ -129,7 +139,9 @@ create table if not exists comments
   id bigint not null
     constraint pk_comment
       primary key,
-  target_type varchar(20) not null,
+  target_type varchar(20) not null
+    constraint chk_comment_target_type
+      check ((target_type)::text = ANY ((ARRAY['post'::character varying, 'comment'::character varying, 'activity'::character varying])::text[])),
   target_id bigint not null,
   account_id bigint not null,
   parent_id bigint,

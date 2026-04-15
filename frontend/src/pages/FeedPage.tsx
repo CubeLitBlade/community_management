@@ -15,6 +15,7 @@ import {
   DialogTitle,
   Field,
   Input,
+  Link,
   Menu,
   MenuItem,
   MenuList,
@@ -33,6 +34,7 @@ import { DeleteRegular, MoreHorizontalRegular, SlideTextEditRegular } from '@flu
 import { useEffect, useRef, useState, type SubmitEvent } from 'react';
 import { useNavigate } from 'react-router';
 import useAccount from '../hooks/useAccount';
+import useComments from '../hooks/useComments';
 import useFeedPosts from '../hooks/useFeedPosts';
 import type { PostReactionView } from '../types/Post';
 
@@ -133,6 +135,48 @@ const useStyles = makeStyles({
     textAlign: 'center',
     fontVariantNumeric: 'tabular-nums',
   },
+  commentSection: {
+    display: 'grid',
+    gap: tokens.spacingVerticalM,
+  },
+  commentHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalM,
+    flexWrap: 'wrap',
+  },
+  commentList: {
+    display: 'grid',
+    gap: tokens.spacingVerticalM,
+  },
+  commentItem: {
+    display: 'grid',
+    gap: tokens.spacingVerticalS,
+    padding: tokens.spacingHorizontalM,
+    borderRadius: tokens.borderRadiusLarge,
+    backgroundColor: tokens.colorNeutralBackground2,
+  },
+  commentContent: {
+    whiteSpace: 'pre-wrap',
+    lineHeight: tokens.lineHeightBase300,
+  },
+  commentMeta: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalS,
+    flexWrap: 'wrap',
+  },
+  emptyCommentState: {
+    color: tokens.colorNeutralForeground3,
+  },
+  previewActions: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalM,
+    flexWrap: 'wrap',
+  },
 });
 
 const postDateFormatter = new Intl.DateTimeFormat('zh-CN', {
@@ -216,6 +260,12 @@ export default function FeedPage() {
   const navigate = useNavigate();
   const { profile } = useAccount();
   const {
+    commentsByPostId,
+    loadingPosts,
+    errorMessage: commentErrorMessage,
+    loadComments,
+  } = useComments();
+  const {
     posts,
     hasMore,
     isInitialLoading,
@@ -265,6 +315,14 @@ export default function FeedPage() {
 
     return () => observer.disconnect();
   }, [loadMore]);
+
+  useEffect(() => {
+    posts.forEach((post) => {
+      if (!commentsByPostId[post.id] && !loadingPosts[post.id]) {
+        void loadComments(post.id);
+      }
+    });
+  }, [commentsByPostId, loadComments, loadingPosts, posts]);
 
   const handleSubmit = async (event: SubmitEvent) => {
     event.preventDefault();
@@ -437,6 +495,10 @@ export default function FeedPage() {
         <Caption1 className={styles.muted}>{reactionErrorMessage}</Caption1>
       ) : null}
 
+      {commentErrorMessage ? (
+        <Caption1 className={styles.muted}>{commentErrorMessage}</Caption1>
+      ) : null}
+
       {errorMessage ? (
         <Card>
           <div className={styles.cardBody}>
@@ -562,6 +624,59 @@ export default function FeedPage() {
                     </Menu>
                   ) : null}
                 </CardFooter>
+                <Divider />
+                <div className={styles.commentSection}>
+                  <div className={styles.commentHeader}>
+                    <Subtitle2>评论</Subtitle2>
+                    <Caption1 className={styles.muted}>
+                      {(commentsByPostId[post.id] ?? []).length} 条主评论
+                    </Caption1>
+                  </div>
+                  {loadingPosts[post.id] && !(commentsByPostId[post.id] ?? []).length ? (
+                    <Spinner size="tiny" label="加载评论" />
+                  ) : null}
+                  {(commentsByPostId[post.id] ?? []).length > 0 ? (
+                    <div className={styles.commentList}>
+                      {(commentsByPostId[post.id] ?? []).slice(0, 2).map((comment) => {
+                        const authorNickname = comment.authorNickname || '已注销用户';
+                        const authorUsername = comment.authorUsername?.trim() || '';
+
+                        return (
+                          <div key={comment.id} className={styles.commentItem}>
+                            <div className={styles.commentMeta}>
+                              <Body1Strong>{authorNickname}</Body1Strong>
+                              {authorUsername ? (
+                                <Caption1 className={styles.muted}>@{authorUsername}</Caption1>
+                              ) : null}
+                              <Caption1 className={styles.muted}>
+                                {getPostTimeLabel(comment.createdAt, comment.updatedAt)}
+                              </Caption1>
+                            </div>
+                            <Body1 className={styles.commentContent}>{comment.content}</Body1>
+                          </div>
+                        );
+                      })}
+                    </div>
+                  ) : !loadingPosts[post.id] ? (
+                    <Caption1 className={styles.emptyCommentState}>
+                      还没有评论，来留下第一条吧。
+                    </Caption1>
+                  ) : null}
+                  <div className={styles.previewActions}>
+                    <Caption1 className={styles.muted}>
+                      {profile ? '' : '登录后可在详情页参与评论。'}
+                    </Caption1>
+                    <Link
+                      href={`/posts/${post.id}`}
+                      onClick={(event) => {
+                        event.preventDefault();
+                        navigate(`/posts/${post.id}`);
+                      }}
+                    >
+                      详情
+                    </Link>
+                  </div>
+                </div>
               </div>
             </Card>
           );

@@ -5,6 +5,7 @@ import io.github.cubelitblade.common.security.CustomAuthenticationEntryPoint;
 import lombok.RequiredArgsConstructor;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
+import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
 import org.springframework.security.config.annotation.web.configuration.EnableWebSecurity;
 import org.springframework.security.config.annotation.web.configurers.AbstractHttpConfigurer;
@@ -38,6 +39,10 @@ public class SecurityConfig {
             authorizeRequests ->
                 authorizeRequests
                     .requestMatchers("/api/auth/**", "/api/posts/recent", "/error")
+                    .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/posts/*")
+                    .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/comments")
                     .permitAll()
                     .anyRequest()
                     .authenticated())

@@ -16,7 +16,7 @@ public class AccountDynamicSqlSupport {
     public final SqlColumn<String> nickname = column("nickname", JDBCType.VARCHAR);
 
     Accounts() {
-      super("account", Accounts::new);
+      super("accounts", Accounts::new);
     }
   }
 }

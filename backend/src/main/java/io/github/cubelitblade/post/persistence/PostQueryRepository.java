@@ -44,4 +44,28 @@ public class PostQueryRepository {
 
     return postQueryMapper.selectPostsWith(selectStatement);
   }
+
+  @Transactional(readOnly = true)
+  public PostWithAuthorVo getPostById(Long id) {
+    SelectStatementProvider selectStatement =
+        select(
+                PostDynamicSqlSupport.id,
+                PostDynamicSqlSupport.authorId,
+                PostDynamicSqlSupport.title,
+                PostDynamicSqlSupport.content,
+                PostDynamicSqlSupport.status,
+                PostDynamicSqlSupport.createdAt,
+                PostDynamicSqlSupport.updatedAt,
+                AccountDynamicSqlSupport.username.as("username"),
+                AccountDynamicSqlSupport.nickname.as("nickname"))
+            .from(PostDynamicSqlSupport.posts)
+            .leftJoin(AccountDynamicSqlSupport.accounts)
+            .on(PostDynamicSqlSupport.authorId, isEqualTo(AccountDynamicSqlSupport.id))
+            .where(PostDynamicSqlSupport.id, isEqualTo(id))
+            .and(PostDynamicSqlSupport.status, isEqualTo(Status.NORMAL.getValue()))
+            .build()
+            .render(RenderingStrategies.MYBATIS3);
+
+    return postQueryMapper.selectPostWithAuthor(selectStatement).orElse(null);
+  }
 }

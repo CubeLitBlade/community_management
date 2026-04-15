@@ -157,7 +157,7 @@ export default function HomePage() {
                       key={post.id}
                       appearance="subtle"
                       className={styles.streamItemButton}
-                      onClick={() => navigate(`/feed#post-${post.id}`)}
+                      onClick={() => navigate(`/posts/${post.id}`)}
                     >
                       <div className={styles.streamItem}>
                         <div className={styles.row}>

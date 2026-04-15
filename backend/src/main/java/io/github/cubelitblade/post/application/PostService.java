@@ -100,6 +100,24 @@ public class PostService {
         fetchedPosts.size() > count);
   }
 
+  public PostDetailView getPostDetail(JwtAuthenticatedUser authenticatedUser, long postId) {
+    PostWithAuthorVo post =
+        postQueryRepository.getPostById(postId);
+    if (post == null) {
+      throw PostNotFoundException.notFound();
+    }
+
+    Map<Long, List<ReactionCountVo>> reactionsByPostId =
+        reactionQueryRepository.selectReactionsByTargets(TargetType.POST, List.of(postId));
+    Map<Long, String> viewerReactionsByPostId =
+        authenticatedUser == null
+            ? Map.of()
+            : reactionQueryRepository.findUserReactionsByTargets(
+                authenticatedUser.accountId(), TargetType.POST, List.of(postId));
+
+    return toPostDetailView(post, reactionsByPostId, viewerReactionsByPostId);
+  }
+
   private PostDetailView toPostDetailView(
       PostWithAuthorVo postWithAuthorVo,
       Map<Long, List<ReactionCountVo>> reactionsByPostId,

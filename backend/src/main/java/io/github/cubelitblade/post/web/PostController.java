@@ -6,6 +6,7 @@ import io.github.cubelitblade.common.exception.ValidationException;
 import io.github.cubelitblade.post.application.PostService;
 import io.github.cubelitblade.post.dto.EditPostRequest;
 import io.github.cubelitblade.post.dto.EditPostResponse;
+import io.github.cubelitblade.post.dto.PostDetailView;
 import io.github.cubelitblade.post.dto.PublishPostRequest;
 import io.github.cubelitblade.post.dto.RecentPostsResponse;
 import java.net.URI;
@@ -46,6 +47,12 @@ public class PostController {
     }
 
     return ResponseEntity.ok(postService.getRecentPosts(authenticatedUser, count, lastId));
+  }
+
+  @GetMapping("/{id}")
+  public ResponseEntity<PostDetailView> getPostDetail(
+      @AuthenticationPrincipal JwtAuthenticatedUser authenticatedUser, @PathVariable Long id) {
+    return ResponseEntity.ok(postService.getPostDetail(authenticatedUser, id));
   }
 
   @DeleteMapping("/{id}")
