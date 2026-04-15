@@ -2,6 +2,7 @@ package io.github.cubelitblade.post.dto;
 
 import io.github.cubelitblade.post.persistence.query.PostWithAuthorVo;
 import java.time.Instant;
+import java.util.List;
 
 public record PostDetailView(
     Long id,
@@ -10,9 +11,12 @@ public record PostDetailView(
     String authorNickname,
     String title,
     String content,
+    List<PostReactionView> reactions,
+    String viewerReaction,
     Instant createdAt,
     Instant updatedAt) {
-  public static PostDetailView from(PostWithAuthorVo postWithAuthorVo) {
+  public static PostDetailView from(
+      PostWithAuthorVo postWithAuthorVo, List<PostReactionView> reactions, String viewerReaction) {
     return new PostDetailView(
         postWithAuthorVo.id(),
         postWithAuthorVo.authorId(),
@@ -20,6 +24,8 @@ public record PostDetailView(
         postWithAuthorVo.nickname(),
         postWithAuthorVo.title(),
         postWithAuthorVo.content(),
+        reactions,
+        viewerReaction,
         postWithAuthorVo.createdAt(),
         postWithAuthorVo.updatedAt());
   }

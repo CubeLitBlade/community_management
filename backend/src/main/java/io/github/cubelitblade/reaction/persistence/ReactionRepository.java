@@ -4,10 +4,9 @@ import static org.mybatis.dynamic.sql.SqlBuilder.*;
 
 import io.github.cubelitblade.reaction.model.Reaction;
 import io.github.cubelitblade.reaction.model.TargetType;
-import io.github.cubelitblade.reaction.persistence.query.ReactionCountVo;
-import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.mybatis.dynamic.sql.delete.render.DeleteStatementProvider;
 import org.mybatis.dynamic.sql.render.RenderingStrategies;
 import org.mybatis.dynamic.sql.select.render.SelectStatementProvider;
 import org.mybatis.dynamic.sql.update.render.UpdateStatementProvider;
@@ -60,16 +59,13 @@ public class ReactionRepository {
     reactionMapper.update(updateStatement);
   }
 
-  public List<ReactionCountVo> selectReactions(TargetType targetType, Long targetId) {
-    SelectStatementProvider selectStatement =
-        select(ReactionDynamicSqlSupport.reactionType, count().as("count"))
-            .from(ReactionDynamicSqlSupport.reactions)
-            .where(ReactionDynamicSqlSupport.targetType, isEqualTo(targetType.getValue()))
-            .and(ReactionDynamicSqlSupport.targetId, isEqualTo(targetId))
-            .groupBy(ReactionDynamicSqlSupport.reactionType)
+  public void deleteReaction(Long reactionId) {
+    DeleteStatementProvider deleteStatement =
+        deleteFrom(ReactionDynamicSqlSupport.reactions)
+            .where(ReactionDynamicSqlSupport.id, isEqualTo(reactionId))
             .build()
             .render(RenderingStrategies.MYBATIS3);
 
-    return reactionMapper.selectReactionCounts(selectStatement);
+    reactionMapper.delete(deleteStatement);
   }
 }

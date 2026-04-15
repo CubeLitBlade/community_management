@@ -1,6 +1,8 @@
 package io.github.cubelitblade.reaction.application;
 
 import io.github.cubelitblade.account.security.JwtAuthenticatedUser;
+import io.github.cubelitblade.common.exception.ApiErrorCode;
+import io.github.cubelitblade.common.exception.ValidationException;
 import io.github.cubelitblade.common.id.SnowflakeIdGenerator;
 import io.github.cubelitblade.common.time.TimeProvider;
 import io.github.cubelitblade.reaction.dto.AddReactionRequest;
@@ -19,13 +21,13 @@ import org.springframework.web.server.ResponseStatusException;
 public class ReactionService {
 
   private final ReactionRepository reactionRepository;
+  private final ReactionCountCache reactionCountCache;
   private final SnowflakeIdGenerator idGenerator;
   private final TimeProvider timeProvider;
 
-  // TODO: Replace Optional<Long> with an explicit result type after the MVP phase.
-  public Optional<Long> setReaction(
+  public SetReactionResult setReaction(
       JwtAuthenticatedUser authenticatedUser, AddReactionRequest request) {
-    TargetType targetType = TargetType.from(request.targetType());
+    TargetType targetType = parseTargetType(request.targetType());
 
     // Temporarily omit features that are not yet implemented;
     // remove them once they are implemented
@@ -33,31 +35,64 @@ public class ReactionService {
       throw new ResponseStatusException(HttpStatus.NOT_IMPLEMENTED, "Not implemented yet");
     }
 
-    ReactionType reactionType = ReactionType.from(request.reactionType());
     Optional<Reaction> existingReaction =
         reactionRepository.findUserReaction(
             authenticatedUser.accountId(), targetType, request.targetId());
 
+    if (request.reactionType() == null || request.reactionType().isBlank()) {
+      if (existingReaction.isPresent()) {
+        Reaction reaction = existingReaction.get();
+        reactionRepository.deleteReaction(reaction.getId());
+        reactionCountCache.applyReactionChange(
+            request.targetId(), reaction.getReactionType().getValue(), null);
+        return SetReactionResult.removed(reaction.getId());
+      }
+
+      return SetReactionResult.unchanged();
+    }
+
+    ReactionType reactionType = parseReactionType(request.reactionType());
+
     if (existingReaction.isPresent()) {
       Reaction reaction = existingReaction.get();
+      String previousReactionType = reaction.getReactionType().getValue();
       reaction.set(reactionType, timeProvider.now());
       reactionRepository.updateReaction(reaction);
+      reactionCountCache.applyReactionChange(
+          request.targetId(), previousReactionType, reactionType.getValue());
 
-      return Optional.empty();
-    } else {
-      long candidateId = idGenerator.nextId();
+      return SetReactionResult.updated(reaction.getId());
+    }
 
-      Reaction reaction =
+    long candidateId = idGenerator.nextId();
+
+    Reaction reaction =
         Reaction.create(
-          candidateId,
-          authenticatedUser.accountId(),
-          targetType,
-          request.targetId(),
-          reactionType,
-          timeProvider.now());
+            candidateId,
+            authenticatedUser.accountId(),
+            targetType,
+            request.targetId(),
+            reactionType,
+            timeProvider.now());
 
-      reactionRepository.createReaction(reaction);
-      return Optional.of(reaction.getId());
+    reactionRepository.createReaction(reaction);
+    reactionCountCache.applyReactionChange(request.targetId(), null, reactionType.getValue());
+    return SetReactionResult.created(reaction.getId());
+  }
+
+  private TargetType parseTargetType(String targetType) {
+    try {
+      return TargetType.from(targetType);
+    } catch (IllegalArgumentException e) {
+      throw new ValidationException(ApiErrorCode.INVALID_REQUEST, e.getMessage());
+    }
+  }
+
+  private ReactionType parseReactionType(String reactionType) {
+    try {
+      return ReactionType.from(reactionType);
+    } catch (IllegalArgumentException e) {
+      throw new ValidationException(ApiErrorCode.INVALID_REQUEST, e.getMessage());
     }
   }
 }

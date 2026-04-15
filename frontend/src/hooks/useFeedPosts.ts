@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
 import apiClient from '../api/apiClient';
 import type {
   EditPostRequest,
@@ -14,7 +14,58 @@ function normalizePost(post: PostView): PostView {
   return {
     ...post,
     title: post.title?.trim() ? post.title.trim() : null,
+    viewerReaction: post.viewerReaction ?? null,
   };
+}
+
+function mergeViewerReactions(posts: PostView[], overrides: Map<number, string | null>) {
+  return posts.map((post) => {
+    const hasOverride = overrides.has(post.id);
+
+    return normalizePost({
+      ...post,
+      viewerReaction: hasOverride ? (overrides.get(post.id) ?? null) : post.viewerReaction ?? null,
+    });
+  });
+}
+
+function applyOptimisticReaction(
+  posts: PostView[],
+  postId: number,
+  nextReactionType: string | null,
+) {
+  return posts.map((post) => {
+    if (post.id !== postId) {
+      return post;
+    }
+
+    const currentReactionType = post.viewerReaction ?? null;
+    const reactionCountByType = new Map(
+      (post.reactions ?? []).map((reaction) => [reaction.reactionType, reaction.count] as const),
+    );
+
+    if (currentReactionType) {
+      const currentCount = reactionCountByType.get(currentReactionType) ?? 0;
+      if (currentCount <= 1) {
+        reactionCountByType.delete(currentReactionType);
+      } else {
+        reactionCountByType.set(currentReactionType, currentCount - 1);
+      }
+    }
+
+    if (nextReactionType) {
+      reactionCountByType.set(nextReactionType, (reactionCountByType.get(nextReactionType) ?? 0) + 1);
+    }
+
+    return {
+      ...post,
+      viewerReaction: nextReactionType,
+      reactions: Array.from(reactionCountByType.entries()).map(([reactionType, count]) => ({
+        reactionType,
+        count,
+      })),
+    };
+  });
 }
 
 export default function useFeedPosts() {
@@ -29,6 +80,9 @@ export default function useFeedPosts() {
   const [editErrorMessage, setEditErrorMessage] = useState('');
   const [deletingPostId, setDeletingPostId] = useState<number | null>(null);
   const [deleteErrorMessage, setDeleteErrorMessage] = useState('');
+  const [reactionErrorMessage, setReactionErrorMessage] = useState('');
+  const reactionRequestVersionRef = useRef(new Map<number, number>());
+  const sessionReactionOverridesRef = useRef(new Map<number, string | null>());
 
   const fetchRecentPosts = useCallback(
     async (lastId: number | null, mode: 'replace' | 'append') => {
@@ -48,7 +102,10 @@ export default function useFeedPosts() {
           },
         });
 
-        const nextPosts = response.data.items.map(normalizePost);
+        const nextPosts = mergeViewerReactions(
+          response.data.items,
+          sessionReactionOverridesRef.current,
+        );
 
         setPosts((current) => (mode === 'replace' ? nextPosts : [...current, ...nextPosts]));
         setHasMore(response.data.hasMore);
@@ -171,6 +228,52 @@ export default function useFeedPosts() {
     }
   }, []);
 
+  const setReaction = useCallback(
+    async (postId: number, reactionType: string | null) => {
+      setReactionErrorMessage('');
+      let previousPosts: PostView[] = [];
+      let previousViewerReaction: string | null = null;
+      const currentVersion = (reactionRequestVersionRef.current.get(postId) ?? 0) + 1;
+      reactionRequestVersionRef.current.set(postId, currentVersion);
+
+      setPosts((current) => {
+        previousPosts = current;
+        previousViewerReaction =
+          current.find((post) => post.id === postId)?.viewerReaction ?? null;
+        sessionReactionOverridesRef.current.set(postId, reactionType);
+        return applyOptimisticReaction(current, postId, reactionType);
+      });
+
+      try {
+        const response = await apiClient.post('/reactions', {
+          targetType: 'post',
+          targetId: postId,
+          reactionType,
+        });
+
+        if (response.status !== 201 && response.status !== 204) {
+          throw new Error('Unexpected response status');
+        }
+
+        return true;
+      } catch {
+        if (reactionRequestVersionRef.current.get(postId) !== currentVersion) {
+          return false;
+        }
+
+        if (previousViewerReaction === null) {
+          sessionReactionOverridesRef.current.delete(postId);
+        } else {
+          sessionReactionOverridesRef.current.set(postId, previousViewerReaction);
+        }
+        setPosts(previousPosts);
+        setReactionErrorMessage('互动失败，请稍后重试。');
+        return false;
+      }
+    },
+    [],
+  );
+
   return useMemo(
     () => ({
       posts,
@@ -181,6 +284,7 @@ export default function useFeedPosts() {
       publishErrorMessage,
       editErrorMessage,
       deleteErrorMessage,
+      reactionErrorMessage,
       isPublishing,
       updatingPostId,
       deletingPostId,
@@ -189,6 +293,7 @@ export default function useFeedPosts() {
       publishPost,
       editPost,
       deletePost,
+      setReaction,
     }),
     [
       posts,
@@ -199,6 +304,7 @@ export default function useFeedPosts() {
       publishErrorMessage,
       editErrorMessage,
       deleteErrorMessage,
+      reactionErrorMessage,
       isPublishing,
       updatingPostId,
       deletingPostId,
@@ -207,6 +313,7 @@ export default function useFeedPosts() {
       publishPost,
       editPost,
       deletePost,
+      setReaction,
     ],
   );
 }

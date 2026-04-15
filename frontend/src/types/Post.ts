@@ -14,8 +14,15 @@ export type PostView = {
   authorUsername?: string | null;
   title: string | null;
   content: string;
+  reactions?: PostReactionView[];
+  viewerReaction?: string | null;
   createdAt: string;
   updatedAt: string;
+};
+
+export type PostReactionView = {
+  reactionType: string;
+  count: number;
 };
 
 export type PublishPostRequest = {

@@ -24,6 +24,7 @@ import {
   Spinner,
   Subtitle2,
   Textarea,
+  ToggleButton,
   Title2,
   makeStyles,
   tokens,
@@ -33,6 +34,7 @@ import { useEffect, useRef, useState, type SubmitEvent } from 'react';
 import { useNavigate } from 'react-router';
 import useAccount from '../hooks/useAccount';
 import useFeedPosts from '../hooks/useFeedPosts';
+import type { PostReactionView } from '../types/Post';
 
 const useStyles = makeStyles({
   page: {
@@ -101,6 +103,36 @@ const useStyles = makeStyles({
     alignItems: 'center',
     gap: tokens.spacingHorizontalM,
   },
+  footerMeta: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalM,
+    flexWrap: 'wrap',
+    minWidth: 0,
+  },
+  reactionList: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalS,
+    flexWrap: 'wrap',
+  },
+  reactionButton: {
+    minWidth: '3.25rem',
+  },
+  reactionButtonContent: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.35rem',
+  },
+  reactionIcon: {
+    fontSize: tokens.fontSizeBase300,
+    lineHeight: 1,
+  },
+  reactionCount: {
+    minWidth: '1.5ch',
+    textAlign: 'center',
+    fontVariantNumeric: 'tabular-nums',
+  },
 });
 
 const postDateFormatter = new Intl.DateTimeFormat('zh-CN', {
@@ -133,6 +165,52 @@ function getPostTimeLabel(createdAt: string, updatedAt?: string | null) {
   return formattedCreatedAt ? `发布于 ${formattedCreatedAt}` : '';
 }
 
+function getReactionLabel(reactionType: string) {
+  switch (reactionType) {
+    case 'like':
+      return '点赞';
+    case 'love':
+      return '爱心';
+    case 'laugh':
+      return '好笑';
+    case 'sad':
+      return '难过';
+    default:
+      return reactionType;
+  }
+}
+
+function getReactionIcon(reactionType: string) {
+  switch (reactionType) {
+    case 'like':
+      return '👍';
+    case 'love':
+      return '❤️';
+    case 'laugh':
+      return '😄';
+    case 'sad':
+      return '😢';
+    default:
+      return '•';
+  }
+}
+
+const REACTION_OPTIONS = ['like', 'love', 'laugh', 'sad'] as const;
+
+function sortReactions(reactions?: PostReactionView[]) {
+  if (!reactions?.length) {
+    return [];
+  }
+
+  return [...reactions].sort((left, right) => {
+    if (right.count !== left.count) {
+      return right.count - left.count;
+    }
+
+    return left.reactionType.localeCompare(right.reactionType);
+  });
+}
+
 export default function FeedPage() {
   const styles = useStyles();
   const navigate = useNavigate();
@@ -146,6 +224,7 @@ export default function FeedPage() {
     publishErrorMessage,
     editErrorMessage,
     deleteErrorMessage,
+    reactionErrorMessage,
     isPublishing,
     updatingPostId,
     deletingPostId,
@@ -153,6 +232,7 @@ export default function FeedPage() {
     publishPost,
     editPost,
     deletePost,
+    setReaction,
     refresh,
   } = useFeedPosts();
   const [title, setTitle] = useState('');
@@ -246,6 +326,19 @@ export default function FeedPage() {
 
   const isAdmin = profile?.role === 'admin' || profile?.role === 'owner';
   const profileId = profile ? Number(profile.id) : Number.NaN;
+  const handleReactionClick = async (
+    postId: number,
+    currentReaction: string | null,
+    nextReaction: string,
+  ) => {
+    if (!profile) {
+      navigate('/auth/login');
+      return;
+    }
+
+    const targetReaction = currentReaction === nextReaction ? null : nextReaction;
+    await setReaction(postId, targetReaction);
+  };
 
   return (
     <div className={styles.page}>
@@ -340,6 +433,10 @@ export default function FeedPage() {
 
       {editErrorMessage ? <Caption1 className={styles.muted}>{editErrorMessage}</Caption1> : null}
 
+      {reactionErrorMessage ? (
+        <Caption1 className={styles.muted}>{reactionErrorMessage}</Caption1>
+      ) : null}
+
       {errorMessage ? (
         <Card>
           <div className={styles.cardBody}>
@@ -366,6 +463,11 @@ export default function FeedPage() {
           const hasTitle = post.title?.trim() != '';
           const authorNickname = post.authorNickname?.trim() || '已注销用户';
           const authorUsername = post.authorUsername?.trim() || '';
+          const reactions = sortReactions(post.reactions);
+          const reactionCountByType = new Map(
+            reactions.map((reaction) => [reaction.reactionType, reaction.count]),
+          );
+          const viewerReaction = post.viewerReaction ?? null;
           const isAuthor = !Number.isNaN(profileId) && profileId === post.authorId;
           const canEdit = isAuthor;
           const canDelete = Boolean(profile) && (isAdmin || isAuthor);
@@ -378,7 +480,7 @@ export default function FeedPage() {
                   image={
                     <Persona
                       name={authorNickname}
-                      secondaryText={authorUsername}
+                      secondaryText={'@' + authorUsername}
                       size="small"
                       textAlignment="center"
                     />
@@ -396,7 +498,37 @@ export default function FeedPage() {
                 </div>
                 <Divider />
                 <CardFooter className={styles.postFooter}>
-                  <Caption1 className={styles.muted}>社区动态</Caption1>
+                  <div className={styles.footerMeta}>
+                    <Caption1 className={styles.muted}>社区动态</Caption1>
+                    <div className={styles.reactionList} aria-label="帖子互动统计">
+                      {REACTION_OPTIONS.map((reactionType) => {
+                        const reactionCount = reactionCountByType.get(reactionType) ?? 0;
+                        const isSelected = viewerReaction === reactionType;
+
+                        return (
+                          <ToggleButton
+                            key={reactionType}
+                            size="small"
+                            shape="circular"
+                            checked={isSelected}
+                            className={styles.reactionButton}
+                            title={`${getReactionLabel(reactionType)} ${reactionCount}`}
+                            onClick={() =>
+                              void handleReactionClick(post.id, viewerReaction, reactionType)
+                            }
+                            isAccessible
+                          >
+                            <span className={styles.reactionButtonContent}>
+                              <span className={styles.reactionIcon} aria-hidden="true">
+                                {getReactionIcon(reactionType)}
+                              </span>
+                              <span className={styles.reactionCount}>{reactionCount}</span>
+                            </span>
+                          </ToggleButton>
+                        );
+                      })}
+                    </div>
+                  </div>
                   {canManagePost ? (
                     <Menu>
                       <MenuTrigger disableButtonEnhancement>

@@ -38,12 +38,14 @@ public class PostController {
 
   @GetMapping("/recent")
   public ResponseEntity<RecentPostsResponse> getRecentPosts(
-      @RequestParam(defaultValue = "10") int count, @RequestParam(required = false) Long lastId) {
+      @AuthenticationPrincipal JwtAuthenticatedUser authenticatedUser,
+      @RequestParam(defaultValue = "10") int count,
+      @RequestParam(required = false) Long lastId) {
     if (count <= 0 || count > 50) {
       throw new ValidationException(ApiErrorCode.INVALID_REQUEST, "Count must be between 1 and 50");
     }
 
-    return ResponseEntity.ok(postService.getRecentPosts(count, lastId));
+    return ResponseEntity.ok(postService.getRecentPosts(authenticatedUser, count, lastId));
   }
 
   @DeleteMapping("/{id}")
