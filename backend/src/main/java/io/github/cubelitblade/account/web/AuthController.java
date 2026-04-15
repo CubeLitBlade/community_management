@@ -6,8 +6,7 @@ import io.github.cubelitblade.account.dto.AccountRegisterRequest;
 import io.github.cubelitblade.account.dto.RegisterFieldsCheckRequest;
 import io.github.cubelitblade.account.dto.RegisterFieldsCheckResponse;
 import io.github.cubelitblade.account.dto.TokenResponse;
-import io.github.cubelitblade.common.exception.ApiErrorCode;
-import io.github.cubelitblade.common.exception.ValidationException;
+import io.github.cubelitblade.account.security.AuthCookieService;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import java.net.InetAddress;
@@ -15,7 +14,9 @@ import java.net.URI;
 import java.net.UnknownHostException;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.web.csrf.CsrfToken;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 
@@ -25,9 +26,8 @@ import org.springframework.web.servlet.support.ServletUriComponentsBuilder;
 @RequiredArgsConstructor
 public class AuthController {
 
-  private static final String BEARER_PREFIX = "Bearer ";
-
   private final AccountService accountService;
+  private final AuthCookieService authCookieService;
 
   @PostMapping("/register")
   public ResponseEntity<Void> register(@RequestBody AccountRegisterRequest request) {
@@ -61,7 +61,10 @@ public class AuthController {
       log.warn("Unknown host: ", e);
     }
 
-    return ResponseEntity.ok(accountService.login(request, inetAddress));
+    AccountService.LoginResult loginResult = accountService.login(request, inetAddress);
+    HttpHeaders headers = new HttpHeaders();
+    authCookieService.writeAuthCookie(headers, loginResult.token());
+    return ResponseEntity.ok().headers(headers).body(loginResult.response());
   }
 
   @PostMapping("/register/check")
@@ -71,18 +74,20 @@ public class AuthController {
   }
 
   @PostMapping("/logout")
-  public ResponseEntity<Void> logout(
-      @RequestHeader(value = "Authorization") String authorizationHeader) {
-    if (authorizationHeader == null || !authorizationHeader.startsWith(BEARER_PREFIX)) {
-      throw new ValidationException(ApiErrorCode.INVALID_TOKEN, "Invalid token");
+  public ResponseEntity<Void> logout(HttpServletRequest request) {
+    String token = authCookieService.resolveToken(request);
+    if (token != null) {
+      accountService.logout(token);
     }
 
-    String token = authorizationHeader.substring(BEARER_PREFIX.length()).trim();
-    if (token.isEmpty()) {
-      throw new ValidationException(ApiErrorCode.INVALID_TOKEN, "Invalid token");
-    }
+    HttpHeaders headers = new HttpHeaders();
+    authCookieService.clearAuthCookie(headers);
+    return ResponseEntity.noContent().headers(headers).build();
+  }
 
-    accountService.logout(token);
+  @GetMapping("/csrf")
+  public ResponseEntity<Void> csrf(CsrfToken csrfToken) {
+    csrfToken.getToken();
     return ResponseEntity.noContent().build();
   }
 }

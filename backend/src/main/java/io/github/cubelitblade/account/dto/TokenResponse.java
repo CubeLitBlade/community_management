@@ -1,3 +1,3 @@
 package io.github.cubelitblade.account.dto;
 
-public record TokenResponse(String accessToken, boolean mustChangePassword) {}
+public record TokenResponse(boolean mustChangePassword) {}

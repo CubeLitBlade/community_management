@@ -13,6 +13,7 @@ import io.github.cubelitblade.account.model.Status;
 import io.github.cubelitblade.account.model.Username;
 import io.github.cubelitblade.account.security.JwtAuthenticatedUser;
 import io.github.cubelitblade.account.security.JwtTokenProvider;
+import jakarta.servlet.http.Cookie;
 import java.util.Optional;
 import org.junit.jupiter.api.Test;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -31,6 +32,7 @@ import tools.jackson.databind.ObjectMapper;
 @AutoConfigureMockMvc
 @AutoConfigureRestDocs
 class AccountControllerTest {
+  private static final String CSRF_TOKEN = "test-csrf-token";
 
   @Autowired private MockMvcTester mvc;
 
@@ -71,7 +73,7 @@ class AccountControllerTest {
     assertThat(
             mvc.get()
                 .uri("/api/account/me")
-                .header("Authorization", "Bearer valid-token")
+                .cookie(new Cookie("TEST_AUTH_TOKEN", "valid-token"))
                 .accept(MediaType.APPLICATION_JSON))
         .hasStatus(HttpStatus.OK)
         .apply(document("account-me"))
@@ -97,7 +99,9 @@ class AccountControllerTest {
     assertThat(
             mvc.post()
                 .uri("/api/account/change-password")
-                .header("Authorization", "Bearer valid-token")
+                .cookie(new Cookie("TEST_AUTH_TOKEN", "valid-token"))
+                .cookie(new Cookie("XSRF-TOKEN", CSRF_TOKEN))
+                .header("X-XSRF-TOKEN", CSRF_TOKEN)
                 .contentType(MediaType.APPLICATION_JSON)
                 .content(serialize(request))
                 .accept(MediaType.APPLICATION_JSON))
@@ -105,5 +109,22 @@ class AccountControllerTest {
         .apply(document("account-change-password"));
 
     verify(accountService).changePassword(1L, request);
+  }
+
+  @Test
+  void should_reject_change_password_without_csrf() {
+    ChangePasswordRequest request = new ChangePasswordRequest("password123", "password456");
+
+    when(jwtTokenProvider.parseToken("valid-token"))
+        .thenReturn(new JwtAuthenticatedUser(1L, Role.USER));
+
+    assertThat(
+            mvc.post()
+                .uri("/api/account/change-password")
+                .cookie(new Cookie("TEST_AUTH_TOKEN", "valid-token"))
+                .contentType(MediaType.APPLICATION_JSON)
+                .content(serialize(request))
+                .accept(MediaType.APPLICATION_JSON))
+        .hasStatus(HttpStatus.FORBIDDEN);
   }
 }

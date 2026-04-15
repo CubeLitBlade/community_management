@@ -18,7 +18,6 @@ export type LoginRequest = {
 };
 
 export type LoginResponse = {
-  accessToken: string;
   mustChangePassword: boolean;
 };
 

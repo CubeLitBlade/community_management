@@ -15,3 +15,7 @@ worker:
 
 jwt:
   secret: TestTestTestTestTestTestTestTestTestTestTest
+  cookie-name: TEST_AUTH_TOKEN
+  cookie-path: /
+  cookie-secure: false
+  cookie-same-site: Lax

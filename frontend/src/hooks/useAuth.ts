@@ -1,5 +1,5 @@
 import { useCallback, useMemo } from 'react';
-import apiClient from '../api/apiClient';
+import apiClient, { refreshCsrfToken } from '../api/apiClient';
 import type { LoginRequest, LoginResponse } from '../types/Account';
 import useAccount from './useAccount';
 
@@ -13,8 +13,8 @@ export default function useAuth() {
         password,
       };
 
+      await refreshCsrfToken();
       const response = await apiClient.post<LoginResponse>('/auth/login', request);
-      localStorage.setItem('accessToken', response.data.accessToken);
       await fetchAccount();
       return response.data;
     },
@@ -23,6 +23,7 @@ export default function useAuth() {
 
   const changePassword = useCallback(
     async (currentPassword: string, newPassword: string) => {
+      await refreshCsrfToken();
       await apiClient.post('/account/change-password', {
         currentPassword,
         newPassword,

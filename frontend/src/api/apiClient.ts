@@ -1,25 +1,41 @@
 import axios, { AxiosError } from 'axios';
 import { BizError, type ProblemDetail } from '../types/Error';
 
+export const AUTH_UNAUTHORIZED_EVENT = 'app:auth-unauthorized';
+
 const apiClient = axios.create({
   baseURL: '/api',
   timeout: 5000,
+  withCredentials: true,
+  xsrfCookieName: 'XSRF-TOKEN',
+  xsrfHeaderName: 'X-XSRF-TOKEN',
 });
 
-apiClient.interceptors.request.use(
-  (config) => {
-    const accessToken = localStorage.getItem('accessToken');
-
-    if (accessToken) {
-      config.headers.Authorization = `Bearer ${accessToken}`;
+function readCookie(name: string) {
+  const cookies = document.cookie.split(';');
+  for (const cookie of cookies) {
+    const [rawKey, ...rawValueParts] = cookie.trim().split('=');
+    if (rawKey === name) {
+      return decodeURIComponent(rawValueParts.join('='));
     }
+  }
+  return null;
+}
 
-    return config;
-  },
-  (error) => {
-    return Promise.reject(error);
-  },
-);
+apiClient.interceptors.request.use((config) => {
+  const method = config.method?.toLowerCase();
+  const requiresCsrf =
+    method === 'post' || method === 'put' || method === 'patch' || method === 'delete';
+
+  if (requiresCsrf) {
+    const csrfToken = readCookie('XSRF-TOKEN');
+    if (csrfToken) {
+      config.headers.set('X-XSRF-TOKEN', csrfToken);
+    }
+  }
+
+  return config;
+});
 
 apiClient.interceptors.response.use(
   (response) => {
@@ -28,15 +44,26 @@ apiClient.interceptors.response.use(
   (error: AxiosError<ProblemDetail>) => {
     if (error.response) {
       if (error.response.status === 401) {
-        localStorage.removeItem('accessToken');
+        window.dispatchEvent(new Event(AUTH_UNAUTHORIZED_EVENT));
       }
 
-      const response = error.response.data;
+      const response =
+        error.response.data ??
+        ({
+          status: error.response.status,
+          title: 'Request failed',
+          detail: '请求失败',
+          code: error.response.status === 401 ? 'UNAUTHORIZED' : 'INVALID_REQUEST',
+        } satisfies ProblemDetail);
 
       return Promise.reject(new BizError(response));
     }
     return Promise.reject(error);
   },
 );
+
+export async function refreshCsrfToken() {
+  await apiClient.get('/auth/csrf');
+}
 
 export default apiClient;

@@ -86,7 +86,7 @@ public class AccountService {
   }
 
   @Transactional
-  public TokenResponse login(AccountLoginRequest request, InetAddress clientIpAddress) {
+  public LoginResult login(AccountLoginRequest request, InetAddress clientIpAddress) {
     Instant now = timeProvider.now();
     Account candidate = accountRepository.findByUsername(request.username());
 
@@ -115,9 +115,9 @@ public class AccountService {
     candidate.recordLoginSuccess(clientIpAddress, now);
     accountRepository.updateAccount(candidate);
 
-    return new TokenResponse(
+    return new LoginResult(
         jwtTokenProvider.generateToken(candidate.getId(), candidate.getRole(), now),
-        candidate.isMustChangePassword());
+        new TokenResponse(candidate.isMustChangePassword()));
   }
 
   public void logout(String token) {
@@ -218,4 +218,6 @@ public class AccountService {
   private static String nullIfBlank(String value) {
     return (value == null || value.isBlank()) ? null : value;
   }
+
+  public record LoginResult(String token, TokenResponse response) {}
 }

@@ -11,4 +11,8 @@ import org.springframework.stereotype.Component;
 public class JwtProperties {
   private String secret;
   private Duration expiration;
+  private String cookieName = "AUTH_TOKEN";
+  private String cookiePath = "/";
+  private boolean cookieSecure = false;
+  private String cookieSameSite = "Lax";
 }

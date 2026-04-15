@@ -9,6 +9,7 @@ public enum ApiErrorCode {
   INVALID_REQUEST(Category.REQUEST, HttpStatus.BAD_REQUEST, "Invalid request"),
   INVALID_TOKEN(Category.REQUEST, HttpStatus.BAD_REQUEST, "Invalid token"),
   UNAUTHORIZED(Category.SECURITY, HttpStatus.UNAUTHORIZED, "Unauthorized"),
+  FORBIDDEN(Category.FORBIDDEN, HttpStatus.FORBIDDEN, "Forbidden"),
 
   INPUT_USERNAME_BLANK(Category.INPUT_VALIDATION, HttpStatus.BAD_REQUEST, "Invalid input"),
   INPUT_EMAIL_BLANK(Category.INPUT_VALIDATION, HttpStatus.BAD_REQUEST, "Invalid input"),

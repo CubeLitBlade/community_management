@@ -1,5 +1,5 @@
 import { useCallback, useEffect, useMemo, useRef, useState } from 'react';
-import apiClient from '../api/apiClient';
+import apiClient, { refreshCsrfToken } from '../api/apiClient';
 import type {
   EditPostRequest,
   PostRecord,
@@ -148,6 +148,7 @@ export default function useFeedPosts() {
       const normalizedTitle = request.title?.trim() ? request.title.trim() : null;
 
       try {
+        await refreshCsrfToken();
         await apiClient.post('/posts', {
           title: normalizedTitle,
           content: request.content.trim(),
@@ -170,6 +171,7 @@ export default function useFeedPosts() {
     setDeleteErrorMessage('');
 
     try {
+      await refreshCsrfToken();
       const response = await apiClient.delete(`/posts/${postId}`);
       if (response.status !== 204) {
         throw new Error('Unexpected response status');
@@ -193,6 +195,7 @@ export default function useFeedPosts() {
     const normalizedContent = request.content.trim();
 
     try {
+      await refreshCsrfToken();
       const response = await apiClient.patch<PostRecord>(`/posts/${postId}`, {
         title: normalizedTitle,
         content: normalizedContent,
@@ -245,6 +248,7 @@ export default function useFeedPosts() {
       });
 
       try {
+        await refreshCsrfToken();
         const response = await apiClient.post('/reactions', {
           targetType: 'post',
           targetId: postId,

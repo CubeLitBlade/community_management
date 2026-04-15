@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type FormEvent } from 'react';
 import { useNavigate } from 'react-router';
-import apiClient from '../api/apiClient';
+import apiClient, { refreshCsrfToken } from '../api/apiClient';
 import type { FieldsCheckRequest, FieldsCheckResponse, RegisterRequest } from '../types/Account';
 import { BizError, type ProblemCode } from '../types/Error';
 
@@ -96,6 +96,7 @@ function useFieldCheck(fieldKey: 'username' | 'email' | 'phone') {
     };
 
     try {
+      await refreshCsrfToken();
       const response = await apiClient.post<FieldsCheckResponse>('/auth/register/check', request);
       if (requestId !== latestRequestId.current) return;
       lastValidatedRef.current = val;
@@ -293,6 +294,7 @@ export default function useRegister() {
     };
 
     try {
+      await refreshCsrfToken();
       await apiClient.post('/auth/register', request);
       navigate('/auth/login', { replace: true });
     } catch (e) {

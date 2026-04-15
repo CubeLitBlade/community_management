@@ -28,6 +28,7 @@ spring-boot-starter-validation = { module = "org.springframework.boot:spring-boo
 spring-boot-starter-webmvc-test = { module = "org.springframework.boot:spring-boot-starter-webmvc-test" }
 spring-boot-starter-restdocs = { module = "org.springframework.boot:spring-boot-starter-restdocs" }
 spring-restdocs-mockmvc = {module = "org.springframework.restdocs:spring-restdocs-mockmvc"}
+spring-security-test = { module = "org.springframework.security:spring-security-test" }
 postgresql = { module = "org.postgresql:postgresql" }
 junit-jupiter = { module = "org.junit.jupiter:junit-jupiter" }
 junit-platform-launcher = { module = "org.junit.platform:junit-platform-launcher" }

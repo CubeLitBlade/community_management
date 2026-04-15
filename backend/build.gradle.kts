@@ -45,6 +45,7 @@ dependencies {
     testImplementation(libs.spring.boot.starter.webmvc.test)
     testImplementation(libs.spring.boot.starter.restdocs)
     testImplementation(libs.spring.restdocs.mockmvc)
+    testImplementation(libs.spring.security.test)
     testImplementation(libs.mockito.core)
     testImplementation(libs.junit.jupiter)
     testRuntimeOnly(libs.junit.platform.launcher)
