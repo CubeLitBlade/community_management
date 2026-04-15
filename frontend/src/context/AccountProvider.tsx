@@ -19,6 +19,7 @@ export const AccountProvider = ({ children }: { children: ReactNode }) => {
       // Always clear local session even if remote logout fails.
     } finally {
       clearAccountSession();
+      window.location.reload();
     }
   }, [clearAccountSession]);
 

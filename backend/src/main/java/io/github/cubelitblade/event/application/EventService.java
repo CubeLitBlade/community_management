@@ -35,7 +35,8 @@ public class EventService {
       throw new IllegalArgumentException("Unknown event type: " + type);
     }
 
-    Event event = Event.create(idGenerator.nextId(), Type.from(type), payloadJson, timeProvider.now());
+    Event event =
+        Event.create(idGenerator.nextId(), Type.from(type), payloadJson, timeProvider.now());
 
     eventRepository.save(event);
     return event;

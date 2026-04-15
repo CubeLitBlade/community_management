@@ -101,8 +101,7 @@ public class PostService {
   }
 
   public PostDetailView getPostDetail(JwtAuthenticatedUser authenticatedUser, long postId) {
-    PostWithAuthorVo post =
-        postQueryRepository.getPostById(postId);
+    PostWithAuthorVo post = postQueryRepository.getPostById(postId);
     if (post == null) {
       throw PostNotFoundException.notFound();
     }
