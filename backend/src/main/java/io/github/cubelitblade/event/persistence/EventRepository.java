@@ -34,13 +34,6 @@ public class EventRepository {
             .last("limit " + count);
 
     return eventMapper.selectList(query).stream()
-        .peek(
-            po ->
-                log.info(
-                    "[DEBUG][Event #{}] EventPo.payload is null? {}, class: {}",
-                    po.getId(),
-                    po.getPayload() == null,
-                    po.getPayload() != null ? po.getPayload().getClass().getSimpleName() : "N/A"))
         .map(EventPo::toEvent)
         .collect(Collectors.toList());
   }
