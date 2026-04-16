@@ -9,7 +9,12 @@ import {
   NavSectionHeader,
   NavSubItem,
   NavSubItemGroup,
+  Toast,
+  ToastBody,
+  Toaster,
+  ToastTitle,
   tokens,
+  useToastController,
 } from '@fluentui/react-components';
 
 import { type ComponentProps, useEffect } from 'react';
@@ -26,8 +31,19 @@ import {
 } from './icons';
 import AccountNavItem from './AccountNavItem';
 import useAuth from '../../hooks/useAuth';
+import type { NotificationView } from '../../types/Notification';
+import { toNotificationItem } from '../Notifications/notificationPresentation';
 
 const NAV_WIDTH = '16.25rem';
+const APP_TOASTER_ID = 'app-notifications';
+
+function parseNotificationEvent(data: string) {
+  try {
+    return JSON.parse(data) as NotificationView;
+  } catch {
+    return null;
+  }
+}
 
 const useStyles = makeStyles({
   root: {
@@ -68,6 +84,7 @@ export default function Layout() {
   const location = useLocation();
   const navigate = useNavigate();
   const { profile, isLoading } = useAuth();
+  const { dispatchToast } = useToastController(APP_TOASTER_ID);
 
   useEffect(() => {
     if (isLoading || !profile?.mustChangePassword) {
@@ -78,6 +95,52 @@ export default function Layout() {
       navigate('/account/change-password', { replace: true });
     }
   }, [isLoading, location.pathname, navigate, profile?.mustChangePassword]);
+
+  useEffect(() => {
+    if (isLoading || !profile) {
+      return;
+    }
+
+    const eventSource = new EventSource('/api/notifications/stream', {
+      withCredentials: true,
+    });
+
+    const handleNotification = (event: MessageEvent<string>) => {
+      const notification = parseNotificationEvent(event.data);
+
+      if (notification) {
+        const item = toNotificationItem(notification);
+
+        dispatchToast(
+          <Toast>
+            <ToastTitle>{item.title}</ToastTitle>
+            <ToastBody>{item.summary}</ToastBody>
+          </Toast>,
+          {
+            intent: 'info',
+          },
+        );
+        return;
+      }
+
+      dispatchToast(
+        <Toast>
+          <ToastTitle>新通知</ToastTitle>
+          <ToastBody>{event.data || '你收到了一条新的通知。'}</ToastBody>
+        </Toast>,
+        {
+          intent: 'info',
+        },
+      );
+    };
+
+    eventSource.addEventListener('notification', handleNotification);
+
+    return () => {
+      eventSource.removeEventListener('notification', handleNotification);
+      eventSource.close();
+    };
+  }, [dispatchToast, isLoading, profile]);
 
   const handleNavSelect: NavSelectHandler = (_event, data) => {
     if (!data.value) {
@@ -145,6 +208,7 @@ export default function Layout() {
           <Outlet />
         </div>
       </div>
+      <Toaster toasterId={APP_TOASTER_ID} position="top-end" />
     </div>
   );
 }
