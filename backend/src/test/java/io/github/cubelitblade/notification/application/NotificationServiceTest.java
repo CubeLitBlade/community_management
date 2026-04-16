@@ -3,6 +3,7 @@ package io.github.cubelitblade.notification.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyList;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
@@ -17,6 +18,7 @@ import io.github.cubelitblade.event.infra.sse.SseService;
 import io.github.cubelitblade.event.model.Type;
 import io.github.cubelitblade.event.model.payload.EventPayloadMapper;
 import io.github.cubelitblade.event.model.payload.NotificationDeliveryEventPayload;
+import io.github.cubelitblade.account.persistence.AccountRepository;
 import io.github.cubelitblade.notification.dto.NotificationListResponse;
 import io.github.cubelitblade.notification.dto.NotificationUnreadCountResponse;
 import io.github.cubelitblade.notification.exception.NotificationNotFoundException;
@@ -45,6 +47,7 @@ class NotificationServiceTest {
   private static final Instant NOW = Instant.parse("2026-04-15T08:00:00Z");
 
   @Mock private NotificationRepository notificationRepository;
+  @Mock private AccountRepository accountRepository;
   @Mock private PostRepository postRepository;
   @Mock private SnowflakeIdGenerator idGenerator;
   @Mock private TimeProvider timeProvider;
@@ -59,6 +62,7 @@ class NotificationServiceTest {
     notificationService =
         new NotificationService(
             notificationRepository,
+            accountRepository,
             postRepository,
             idGenerator,
             timeProvider,
@@ -145,7 +149,7 @@ class NotificationServiceTest {
     Notification notification =
         Notification.create(
             100L, 1L, 2L, NotificationType.POST_COMMENT, "post", 55L, "New comment", NOW);
-    given(notificationRepository.findByRecipientAccountId(1L))
+    given(notificationRepository.findByRecipientAccountIdAndTypes(eq(1L), anyList()))
         .willReturn(List.of(NotificationPo.of(notification)));
 
     NotificationListResponse response = notificationService.getNotifications(1L);
@@ -158,7 +162,8 @@ class NotificationServiceTest {
   @Test
   @DisplayName("Unread count: should return unread count for account")
   void should_return_unread_count() {
-    given(notificationRepository.countUnreadByRecipientAccountId(1L)).willReturn(3L);
+    given(notificationRepository.countUnreadByRecipientAccountIdAndTypes(eq(1L), anyList()))
+        .willReturn(3L);
 
     NotificationUnreadCountResponse response = notificationService.getUnreadCount(1L);
 

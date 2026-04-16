@@ -27,7 +27,19 @@ class SseServiceTest {
 
     NotificationResponse notification =
         new NotificationResponse(
-            1L, 1L, 2L, "post_comment", "post", 3L, "content", false, null, Instant.now());
+            1L,
+            1L,
+            2L,
+            "Alice",
+            "post_comment",
+            "post",
+            3L,
+            "content",
+            "Post title",
+            "Post summary",
+            false,
+            null,
+            Instant.now());
 
     sseService.sendToUser(1L, notification);
 
@@ -50,7 +62,19 @@ class SseServiceTest {
 
     NotificationResponse notification =
         new NotificationResponse(
-            1L, 1L, 2L, "post_comment", "post", 3L, "content", false, null, Instant.now());
+            1L,
+            1L,
+            2L,
+            "Alice",
+            "post_comment",
+            "post",
+            3L,
+            "content",
+            "Post title",
+            "Post summary",
+            false,
+            null,
+            Instant.now());
 
     sseService.sendToUser(1L, notification);
     sseService.sendToUser(1L, notification);

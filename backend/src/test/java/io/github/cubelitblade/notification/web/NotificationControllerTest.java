@@ -12,6 +12,7 @@ import io.github.cubelitblade.notification.application.NotificationService;
 import io.github.cubelitblade.notification.dto.NotificationListResponse;
 import io.github.cubelitblade.notification.dto.NotificationResponse;
 import io.github.cubelitblade.notification.dto.NotificationUnreadCountResponse;
+import io.github.cubelitblade.notification.model.NotificationScope;
 import jakarta.servlet.http.Cookie;
 import java.time.Instant;
 import java.util.List;
@@ -50,7 +51,7 @@ class NotificationControllerTest {
   void should_return_notifications_with_valid_token() {
     when(jwtTokenProvider.parseToken("valid-token"))
         .thenReturn(new JwtAuthenticatedUser(1L, Role.USER));
-    when(notificationService.getNotifications(1L))
+    when(notificationService.getNotifications(1L, NotificationScope.ALL))
         .thenReturn(
             new NotificationListResponse(
                 List.of(
@@ -58,10 +59,13 @@ class NotificationControllerTest {
                         1L,
                         1L,
                         2L,
+                        "Alice",
                         "post_comment",
                         "post",
                         3L,
                         "New comment on your post",
+                        "Community update",
+                        "Alice commented on your post",
                         false,
                         null,
                         Instant.parse("2026-04-15T08:00:00Z")))));
@@ -86,7 +90,8 @@ class NotificationControllerTest {
   void should_return_unread_count_with_valid_token() {
     when(jwtTokenProvider.parseToken("valid-token"))
         .thenReturn(new JwtAuthenticatedUser(1L, Role.USER));
-    when(notificationService.getUnreadCount(1L)).thenReturn(new NotificationUnreadCountResponse(2));
+    when(notificationService.getUnreadCount(1L, NotificationScope.ALL))
+        .thenReturn(new NotificationUnreadCountResponse(2));
 
     assertThat(
             mvc.get()
