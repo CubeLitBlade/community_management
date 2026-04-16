@@ -6,6 +6,7 @@ import io.github.cubelitblade.event.model.Event;
 import io.github.cubelitblade.event.model.Type;
 import io.github.cubelitblade.event.model.payload.DemoEventPayload;
 import io.github.cubelitblade.event.model.payload.EventPayload;
+import io.github.cubelitblade.event.model.payload.NotificationDeliveryEventPayload;
 import io.github.cubelitblade.event.persistence.EventRepository;
 import java.time.Instant;
 import java.util.List;
@@ -53,6 +54,7 @@ public class EventService {
   private Class<? extends EventPayload> getPayloadClass(String type) {
     return switch (type) {
       case "demo" -> DemoEventPayload.class;
+      case "notification_delivery" -> NotificationDeliveryEventPayload.class;
       default -> null;
     };
   }

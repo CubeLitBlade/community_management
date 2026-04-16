@@ -1,5 +1,7 @@
 drop table if exists "events" cascade;
 
+drop table if exists "notifications" cascade;
+
 drop table if exists "account" cascade;
 
 drop table if exists "posts" cascade;
@@ -67,6 +69,28 @@ alter sequence event_id_seq owned by events.id;
 create index if not exists idx_event_waiting
 	on events (next_run_at)
 	where ((status)::text = 'waiting'::text);
+
+create table if not exists notifications
+(
+	id bigint not null
+		constraint pk_notifications
+			primary key,
+	recipient_account_id bigint not null,
+	actor_account_id bigint not null,
+	type varchar(50) not null,
+	target_type varchar(20) not null,
+	target_id bigint not null,
+	content text not null,
+	is_read boolean default false not null,
+	read_at timestamp with time zone,
+	created_at timestamp with time zone default CURRENT_TIMESTAMP not null
+);
+
+create index if not exists idx_notifications_recipient_created
+	on notifications (recipient_account_id, created_at desc);
+
+create index if not exists idx_notifications_recipient_unread
+	on notifications (recipient_account_id, is_read);
 
 create table if not exists accounts
 (

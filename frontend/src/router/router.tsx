@@ -7,6 +7,9 @@ import RegisterPage from '../pages/RegisterPage';
 import SettingsPage from '../pages/SettingsPage';
 import ChangePasswordPage from '../pages/ChangePasswordPage';
 import SettingsChangePasswordPage from '../pages/SettingsChangePasswordPage';
+import NotificationsPage from '../pages/NotificationsPage';
+import RepliesPage from '../pages/RepliesPage';
+import LikesPage from '../pages/LikesPage';
 import Layout from '../components/Layout/Layout';
 
 const router = createBrowserRouter([
@@ -33,6 +36,18 @@ const router = createBrowserRouter([
       {
         path: '/settings/password',
         element: <SettingsChangePasswordPage />,
+      },
+      {
+        path: '/replies',
+        element: <RepliesPage />,
+      },
+      {
+        path: '/likes',
+        element: <LikesPage />,
+      },
+      {
+        path: '/notifications',
+        element: <NotificationsPage />,
       },
     ],
   },

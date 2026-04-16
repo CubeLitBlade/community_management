@@ -8,7 +8,8 @@ import lombok.Getter;
 @Getter
 public enum Type {
   EVENT("event"),
-  DEMO_EVENT("demo");
+  DEMO_EVENT("demo"),
+  NOTIFICATION_DELIVERY("notification_delivery");
 
   private static final Map<String, Type> map =
       Arrays.stream(Type.values()).collect(Collectors.toMap(Type::getValue, v -> v));

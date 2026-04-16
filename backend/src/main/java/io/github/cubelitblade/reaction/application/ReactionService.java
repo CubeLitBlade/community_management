@@ -5,6 +5,7 @@ import io.github.cubelitblade.common.exception.ApiErrorCode;
 import io.github.cubelitblade.common.exception.ValidationException;
 import io.github.cubelitblade.common.id.SnowflakeIdGenerator;
 import io.github.cubelitblade.common.time.TimeProvider;
+import io.github.cubelitblade.notification.application.NotificationService;
 import io.github.cubelitblade.reaction.dto.AddReactionRequest;
 import io.github.cubelitblade.reaction.model.Reaction;
 import io.github.cubelitblade.reaction.model.ReactionType;
@@ -24,6 +25,7 @@ public class ReactionService {
   private final ReactionCountCache reactionCountCache;
   private final SnowflakeIdGenerator idGenerator;
   private final TimeProvider timeProvider;
+  private final NotificationService notificationService;
 
   public SetReactionResult setReaction(
       JwtAuthenticatedUser authenticatedUser, AddReactionRequest request) {
@@ -77,6 +79,7 @@ public class ReactionService {
 
     reactionRepository.createReaction(reaction);
     reactionCountCache.applyReactionChange(request.targetId(), null, reactionType.getValue());
+    notificationService.notifyPostReaction(reaction);
     return SetReactionResult.created(reaction.getId());
   }
 

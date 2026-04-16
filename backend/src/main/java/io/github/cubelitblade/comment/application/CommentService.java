@@ -12,6 +12,7 @@ import io.github.cubelitblade.common.exception.ApiErrorCode;
 import io.github.cubelitblade.common.exception.ValidationException;
 import io.github.cubelitblade.common.id.SnowflakeIdGenerator;
 import io.github.cubelitblade.common.time.TimeProvider;
+import io.github.cubelitblade.notification.application.NotificationService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -23,6 +24,7 @@ public class CommentService {
   private final CommentQueryRepository commentQueryRepository;
   private final SnowflakeIdGenerator idGenerator;
   private final TimeProvider timeProvider;
+  private final NotificationService notificationService;
 
   public Long createComment(JwtAuthenticatedUser authenticatedUser, CreateCommentRequest request) {
     TargetType targetType = parseTargetType(request.targetType());
@@ -39,6 +41,7 @@ public class CommentService {
             timeProvider.now());
 
     commentRepository.createComment(comment);
+    notificationService.notifyPostComment(comment);
 
     return comment.getId();
   }

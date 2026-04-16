@@ -118,13 +118,13 @@ export default function Layout() {
               </NavSubItemGroup>
             </NavCategory>
             <NavSectionHeader>与我相关</NavSectionHeader>
-            <NavItem icon={<CommentBadgeIcon />} value="/replies" disabled>
+            <NavItem icon={<CommentBadgeIcon />} value="/replies">
               回复我的
             </NavItem>
-            <NavItem icon={<ThumbLikeIcon />} value="/likes" disabled>
-              收到喜欢
+            <NavItem icon={<ThumbLikeIcon />} value="/likes">
+              收到回应
             </NavItem>
-            <NavItem icon={<MailInboxAllIcon />} value="/notifications" disabled>
+            <NavItem icon={<MailInboxAllIcon />} value="/notifications">
               通知
             </NavItem>
             <NavSectionHeader>管理</NavSectionHeader>
