@@ -20,8 +20,18 @@ export type ActivityView = {
   updatedAt: string;
 };
 
+export type ActivityParticipantView = {
+  accountId: number;
+  displayName: string;
+  registeredAt: string;
+};
+
 export type ActivityListResponse = {
   activities: ActivityView[];
+};
+
+export type ActivityParticipantListResponse = {
+  participants: ActivityParticipantView[];
 };
 
 export type MyActivitiesResponse = {

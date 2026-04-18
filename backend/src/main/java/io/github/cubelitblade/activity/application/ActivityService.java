@@ -26,10 +26,12 @@ import java.util.Comparator;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 import org.springframework.dao.DuplicateKeyException;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
+@Slf4j
 @Service
 @RequiredArgsConstructor
 public class ActivityService {
@@ -64,10 +66,15 @@ public class ActivityService {
   }
 
   @Transactional(readOnly = true)
-  public ActivityListResponse getApprovedActivities(JwtAuthenticatedUser authenticatedUser) {
+  public ActivityListResponse getApprovedActivities(
+      JwtAuthenticatedUser authenticatedUser, String keyword) {
+    String normalizedKeyword = normalize(keyword);
+    List<Activity> approvedActivities =
+        normalizedKeyword == null
+            ? activityRepository.findByStatus(ActivityStatus.APPROVED)
+            : activityRepository.searchApprovedActivities(normalizedKeyword);
     List<ActivityView> activities =
-        activityRepository.findByStatus(ActivityStatus.APPROVED).stream()
-            .sorted(Comparator.comparing(Activity::getStartTime))
+        approvedActivities.stream()
             .map(activity -> toView(activity, authenticatedUser))
             .toList();
     return new ActivityListResponse(activities);
@@ -80,6 +87,29 @@ public class ActivityService {
       throw ActivityForbiddenException.notVisible();
     }
     return toView(activity, authenticatedUser);
+  }
+
+  @Transactional(readOnly = true)
+  public ActivityParticipantListResponse getActivityParticipants(
+      JwtAuthenticatedUser authenticatedUser, Long activityId) {
+    Activity activity = getRequiredActivity(activityId);
+    if (!canViewParticipants(activity, authenticatedUser)) {
+      throw ActivityForbiddenException.participantListNotVisible();
+    }
+
+    List<ActivityParticipantView> participants =
+        activityRegistrationRepository.findByActivityId(activityId).stream()
+            .map(
+                registration ->
+                    new ActivityParticipantView(
+                        registration.accountId(),
+                        accountRepository
+                            .findAccountById(registration.accountId())
+                            .map(this::displayName)
+                            .orElse("未知用户"),
+                        registration.createdAt()))
+            .toList();
+    return new ActivityParticipantListResponse(participants);
   }
 
   @Transactional(readOnly = true)
@@ -116,7 +146,7 @@ public class ActivityService {
     requireModerator(moderator);
     Activity activity = getRequiredActivity(activityId);
     ensurePending(activity);
-    ensureNotSelfModeration(activity, moderator.accountId());
+    ensureNotSelfModeration(activity, moderator);
 
     Instant now = timeProvider.now();
     activity.approve(moderator.accountId(), now);
@@ -137,7 +167,7 @@ public class ActivityService {
 
     Activity activity = getRequiredActivity(activityId);
     ensurePending(activity);
-    ensureNotSelfModeration(activity, moderator.accountId());
+    ensureNotSelfModeration(activity, moderator);
 
     activity.reject(moderator.accountId(), reason, timeProvider.now());
     activityRepository.update(activity);
@@ -209,8 +239,9 @@ public class ActivityService {
     }
   }
 
-  private void ensureNotSelfModeration(Activity activity, Long moderatorAccountId) {
-    if (activity.getCreatorAccountId().equals(moderatorAccountId)) {
+  private void ensureNotSelfModeration(Activity activity, JwtAuthenticatedUser moderator) {
+    if (moderator.role() != Role.OWNER
+        && activity.getCreatorAccountId().equals(moderator.accountId())) {
       throw new ValidationException(ApiErrorCode.INVALID_REQUEST, "Activity creators cannot moderate their own activities");
     }
   }
@@ -235,10 +266,14 @@ public class ActivityService {
     }
 
     ActivityReminderEventPayload payload = new ActivityReminderEventPayload(activity.getId());
-    eventService.createEvent(
-        Type.ACTIVITY_REMINDER.getValue(),
-        eventPayloadMapper.toJsonNode(payload),
-        remindAt);
+    try {
+      eventService.createEvent(
+          Type.ACTIVITY_REMINDER.getValue(),
+          eventPayloadMapper.toJsonNode(payload),
+          remindAt);
+    } catch (RuntimeException e) {
+      log.error("Failed to schedule reminder event for activity #{}.", activity.getId(), e);
+    }
   }
 
   private Activity getRequiredActivity(Long activityId) {
@@ -249,6 +284,16 @@ public class ActivityService {
     if (activity.getStatus() == ActivityStatus.APPROVED) {
       return true;
     }
+    if (authenticatedUser == null) {
+      return false;
+    }
+    if (activity.getCreatorAccountId().equals(authenticatedUser.accountId())) {
+      return true;
+    }
+    return authenticatedUser.role() == Role.ADMIN || authenticatedUser.role() == Role.OWNER;
+  }
+
+  private boolean canViewParticipants(Activity activity, JwtAuthenticatedUser authenticatedUser) {
     if (authenticatedUser == null) {
       return false;
     }

@@ -1,6 +1,8 @@
 import {
   type FluentIcon,
   bundleIcon,
+  CalendarCheckmarkCenter20Filled,
+  CalendarCheckmarkCenter20Regular,
   CalendarMultiple20Filled,
   CalendarMultiple20Regular,
   CommentBadge20Filled,
@@ -27,6 +29,10 @@ export const SlideTextSparkleIcon = bundleIcon(
 export const CalendarMultipleIcon = bundleIcon(
   CalendarMultiple20Filled as FluentIcon,
   CalendarMultiple20Regular as FluentIcon,
+);
+export const CalendarCheckmarkCenterIcon = bundleIcon(
+  CalendarCheckmarkCenter20Filled as FluentIcon,
+  CalendarCheckmarkCenter20Regular as FluentIcon,
 );
 export const CommentBadgeIcon = bundleIcon(
   CommentBadge20Filled as FluentIcon,

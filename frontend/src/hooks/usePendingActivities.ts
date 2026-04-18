@@ -1,5 +1,6 @@
 import { useCallback, useEffect, useMemo, useState } from 'react';
 import apiClient, { refreshCsrfToken } from '../api/apiClient';
+import { BizError } from '../types/Error';
 import type { ActivityListResponse, ActivityView } from '../types/Activity';
 
 function sortPending(activities: ActivityView[]) {
@@ -46,11 +47,15 @@ export default function usePendingActivities(enabled: boolean) {
       setActionErrorMessage('');
       try {
         await refreshCsrfToken();
-        await apiClient.post(`/admin/activities/${activityId}/approve`);
+        await apiClient.post(`/admin/activities/${activityId}/approve`, {});
         await refresh();
         return true;
-      } catch {
-        setActionErrorMessage('审核通过失败，请稍后重试。');
+      } catch (error) {
+        if (error instanceof BizError) {
+          setActionErrorMessage(error.detail.detail || '审核通过失败，请稍后重试。');
+        } else {
+          setActionErrorMessage('审核通过失败，请稍后重试。');
+        }
         return false;
       } finally {
         setActioningId((current) => (current === activityId ? null : current));
@@ -68,8 +73,12 @@ export default function usePendingActivities(enabled: boolean) {
         await apiClient.post(`/admin/activities/${activityId}/reject`, { reason });
         await refresh();
         return true;
-      } catch {
-        setActionErrorMessage('驳回失败，请稍后重试。');
+      } catch (error) {
+        if (error instanceof BizError) {
+          setActionErrorMessage(error.detail.detail || '驳回失败，请稍后重试。');
+        } else {
+          setActionErrorMessage('驳回失败，请稍后重试。');
+        }
         return false;
       } finally {
         setActioningId((current) => (current === activityId ? null : current));

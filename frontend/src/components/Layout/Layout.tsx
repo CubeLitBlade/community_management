@@ -20,6 +20,7 @@ import {
 import { type ComponentProps, useEffect } from 'react';
 import { useLocation, useNavigate, Outlet } from 'react-router';
 import {
+  CalendarCheckmarkCenterIcon,
   CalendarMultipleIcon,
   CommentBadgeIcon,
   HomeIcon,
@@ -175,9 +176,6 @@ export default function Layout() {
               <NavSubItemGroup>
                 <NavSubItem value="/activities/plaza">广场</NavSubItem>
                 <NavSubItem value="/activities/about-me">我的</NavSubItem>
-                {profile?.role === 'admin' || profile?.role === 'owner' ? (
-                  <NavSubItem value="/activities/review">审核</NavSubItem>
-                ) : null}
               </NavSubItemGroup>
             </NavCategory>
             <NavSectionHeader>与我相关</NavSectionHeader>
@@ -191,6 +189,11 @@ export default function Layout() {
               通知
             </NavItem>
             <NavSectionHeader>管理</NavSectionHeader>
+            {profile?.role === 'admin' || profile?.role === 'owner' ? (
+              <NavItem icon={<CalendarCheckmarkCenterIcon />} value="/activities/review">
+                活动审批
+              </NavItem>
+            ) : null}
             <NavItem icon={<LayerDiagonalPersonIcon />} value="/management/accounts" disabled>
               用户管理
             </NavItem>

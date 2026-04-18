@@ -17,6 +17,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    mem_limit: 512m
 
   redis:
     image: docker.io/redis:7.4-alpine
@@ -32,6 +33,7 @@ services:
       interval: 5s
       timeout: 5s
       retries: 5
+    mem_limit: 256m
 
 volumes:
   postgres_data_vol:

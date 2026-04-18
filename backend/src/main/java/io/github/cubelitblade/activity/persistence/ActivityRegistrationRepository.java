@@ -75,6 +75,11 @@ public class ActivityRegistrationRepository {
 
   @Transactional(readOnly = true)
   public List<Long> findAccountIdsByActivityId(Long activityId) {
+    return findByActivityId(activityId).stream().map(ActivityRegistrationPo::accountId).toList();
+  }
+
+  @Transactional(readOnly = true)
+  public List<ActivityRegistrationPo> findByActivityId(Long activityId) {
     SelectStatementProvider selectStatement =
         select(
                 ActivityRegistrationDynamicSqlSupport.activityId,
@@ -85,9 +90,7 @@ public class ActivityRegistrationRepository {
             .orderBy(ActivityRegistrationDynamicSqlSupport.createdAt)
             .build()
             .render(RenderingStrategies.MYBATIS3);
-    return activityRegistrationMapper.selectMany(selectStatement).stream()
-        .map(ActivityRegistrationPo::accountId)
-        .toList();
+    return activityRegistrationMapper.selectMany(selectStatement);
   }
 
   @Transactional(readOnly = true)

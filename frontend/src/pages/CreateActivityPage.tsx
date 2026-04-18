@@ -4,9 +4,12 @@ import {
   Button,
   Caption1,
   Card,
-  CardHeader,
+  Divider,
   Field,
   Input,
+  MessageBar,
+  MessageBarBody,
+  MessageBarTitle,
   Subtitle2,
   Textarea,
   Title2,
@@ -45,6 +48,10 @@ const useStyles = makeStyles({
     display: 'grid',
     gap: tokens.spacingVerticalL,
   },
+  sectionLead: {
+    display: 'grid',
+    gap: tokens.spacingVerticalXS,
+  },
   formGrid: {
     display: 'grid',
     gap: tokens.spacingVerticalM,
@@ -75,12 +82,26 @@ const useStyles = makeStyles({
   asideBody: {
     padding: tokens.spacingHorizontalL,
     display: 'grid',
-    gap: tokens.spacingVerticalM,
+    gap: tokens.spacingVerticalL,
   },
   muted: {
     color: tokens.colorNeutralForeground2,
     whiteSpace: 'pre-wrap',
     lineHeight: tokens.lineHeightBase300,
+  },
+  detailItem: {
+    display: 'grid',
+    gap: tokens.spacingVerticalXXS,
+    padding: tokens.spacingHorizontalM,
+    borderRadius: tokens.borderRadiusLarge,
+    backgroundColor: tokens.colorNeutralBackground2,
+  },
+  detailLabel: {
+    color: tokens.colorNeutralForeground3,
+  },
+  tipList: {
+    display: 'grid',
+    gap: tokens.spacingVerticalS,
   },
   actions: {
     display: 'flex',
@@ -266,10 +287,15 @@ export default function CreateActivityPage() {
 
       <div className={styles.board}>
         <Card appearance="filled-alternative">
-          <CardHeader
-            header={<Subtitle2>活动信息</Subtitle2>}
-            description={<Caption1>填写标题、时间与地点，确保审核时信息完整可读</Caption1>}
-          />
+          <div className={styles.formCardBody}>
+            <div className={styles.sectionLead}>
+              <Subtitle2>活动信息</Subtitle2>
+              <Caption1 className={styles.muted}>
+                填写标题、时间与地点，确保审核时信息完整可读。
+              </Caption1>
+            </div>
+          </div>
+          <Divider />
           <div className={styles.formCardBody}>
             <form className={styles.formGrid} onSubmit={handleSubmit}>
               <Field label="活动标题">
@@ -397,7 +423,14 @@ export default function CreateActivityPage() {
                 </div>
               </Field>
 
-              {createErrorMessage ? <Caption1>{createErrorMessage}</Caption1> : null}
+              {createErrorMessage ? (
+                <MessageBar intent="error" layout="multiline">
+                  <MessageBarBody>
+                    <MessageBarTitle>提交失败</MessageBarTitle>
+                    {createErrorMessage}
+                  </MessageBarBody>
+                </MessageBar>
+              ) : null}
 
               <div className={styles.actions}>
                 <Button appearance="secondary" onClick={() => navigate('/activities/plaza')}>
@@ -413,34 +446,56 @@ export default function CreateActivityPage() {
 
         <div className={styles.aside}>
           <Card>
-            <CardHeader
-              header={<Subtitle2>填写建议</Subtitle2>}
-              description={<Caption1>审核更关注信息是否清晰完整</Caption1>}
-            />
             <div className={styles.asideBody}>
-              <Caption1 className={styles.muted}>
-                标题直接说明活动主题，例如“周末社区羽毛球局”。
-                {'\n'}
-                地点尽量写到楼栋、场馆或集合点。
-                {'\n'}
-                简介建议说明对象、流程和需要准备的物品。
-              </Caption1>
+              <div className={styles.sectionLead}>
+                <Subtitle2>填写建议</Subtitle2>
+                <Caption1 className={styles.muted}>审核更关注信息是否清晰完整。</Caption1>
+              </div>
+              <Divider />
+              <div className={styles.tipList}>
+                <div className={styles.detailItem}>
+                  <Caption1 className={styles.detailLabel}>标题</Caption1>
+                  <Caption1 className={styles.muted}>
+                    直接说明活动主题，例如“周末社区羽毛球局”。
+                  </Caption1>
+                </div>
+                <div className={styles.detailItem}>
+                  <Caption1 className={styles.detailLabel}>地点</Caption1>
+                  <Caption1 className={styles.muted}>尽量写到楼栋、场馆或集合点。</Caption1>
+                </div>
+                <div className={styles.detailItem}>
+                  <Caption1 className={styles.detailLabel}>简介</Caption1>
+                  <Caption1 className={styles.muted}>
+                    建议说明参与对象、流程和需要准备的物品。
+                  </Caption1>
+                </div>
+              </div>
             </div>
           </Card>
 
           <Card>
-            <CardHeader
-              header={<Subtitle2>发布后</Subtitle2>}
-              description={<Caption1>活动创建后的后续流程</Caption1>}
-            />
             <div className={styles.asideBody}>
-              <Caption1 className={styles.muted}>
-                提交后状态为“待审核”。
-                {'\n'}
-                管理员通过后，活动会出现在广场。
-                {'\n'}
-                审核结果和活动提醒会进入通知中心。
-              </Caption1>
+              <div className={styles.sectionLead}>
+                <Subtitle2>发布后</Subtitle2>
+                <Caption1 className={styles.muted}>活动创建后的后续流程。</Caption1>
+              </div>
+              <Divider />
+              <div className={styles.tipList}>
+                <div className={styles.detailItem}>
+                  <Caption1 className={styles.detailLabel}>提交后</Caption1>
+                  <Caption1 className={styles.muted}>活动状态会先进入“待审核”。</Caption1>
+                </div>
+                <div className={styles.detailItem}>
+                  <Caption1 className={styles.detailLabel}>审核通过</Caption1>
+                  <Caption1 className={styles.muted}>通过后会出现在活动广场。</Caption1>
+                </div>
+                <div className={styles.detailItem}>
+                  <Caption1 className={styles.detailLabel}>消息提醒</Caption1>
+                  <Caption1 className={styles.muted}>
+                    审核结果和后续提醒会进入通知中心。
+                  </Caption1>
+                </div>
+              </div>
               <Button appearance="secondary" onClick={() => navigate('/activities/about-me')}>
                 查看我的活动
               </Button>

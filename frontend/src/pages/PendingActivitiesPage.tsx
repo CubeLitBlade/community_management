@@ -1,5 +1,4 @@
 import {
-  Badge,
   Body1,
   Body1Strong,
   Button,
@@ -16,18 +15,31 @@ import {
   DialogTitle,
   DialogTrigger,
   Field,
+  InfoLabel,
+  MessageBar,
+  MessageBarBody,
+  MessageBarTitle,
+  ProgressBar,
+  Skeleton,
+  SkeletonItem,
   Spinner,
   Subtitle2,
   Textarea,
   Title2,
   makeStyles,
   tokens,
+  Tag,
 } from '@fluentui/react-components';
 import { useState } from 'react';
 import { useNavigate } from 'react-router';
 import useAuth from '../hooks/useAuth';
 import usePendingActivities from '../hooks/usePendingActivities';
-import { Checkmark12Regular, CheckmarkRegular } from '@fluentui/react-icons';
+import {
+  Calendar28Regular,
+  CheckmarkRegular,
+  DismissRegular,
+  TimerRegular,
+} from '@fluentui/react-icons';
 
 const useStyles = makeStyles({
   page: {
@@ -61,14 +73,15 @@ const useStyles = makeStyles({
     gap: tokens.spacingVerticalL,
     padding: tokens.spacingHorizontalL,
   },
-  statsRow: {
+  dashboardBody: {
     display: 'grid',
-    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
-    gap: tokens.spacingHorizontalM,
+    gap: tokens.spacingVerticalM,
+    padding: tokens.spacingHorizontalL,
   },
-  stat: {
-    display: 'grid',
-    gap: tokens.spacingVerticalXXS,
+  dashboardInfoLabel: {
+    fontSize: tokens.fontSizeBase400,
+    lineHeight: tokens.lineHeightBase400,
+    fontWeight: tokens.fontWeightSemibold,
   },
   list: {
     display: 'grid',
@@ -99,12 +112,35 @@ const useStyles = makeStyles({
       gridTemplateColumns: '1fr',
     },
   },
+  dashboardDetailGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gap: tokens.spacingHorizontalS,
+    '@media (max-width: 720px)': {
+      gridTemplateColumns: '1fr',
+    },
+  },
   detailItem: {
     display: 'grid',
     gap: tokens.spacingVerticalXXS,
     padding: tokens.spacingHorizontalM,
     borderRadius: tokens.borderRadiusLarge,
     backgroundColor: tokens.colorNeutralBackground2,
+  },
+  dashboardDetailItem: {
+    display: 'grid',
+    gap: tokens.spacingVerticalXXS,
+    padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalM}`,
+    borderRadius: tokens.borderRadiusLarge,
+    backgroundColor: tokens.colorNeutralBackground2,
+  },
+  dashboardMetricItem: {
+    display: 'grid',
+    gap: tokens.spacingVerticalXS,
+    padding: `${tokens.spacingVerticalM} ${tokens.spacingHorizontalM}`,
+    borderRadius: tokens.borderRadiusLarge,
+    backgroundColor: tokens.colorNeutralBackground2,
+    alignContent: 'start',
   },
   detailLabel: {
     color: tokens.colorNeutralForeground3,
@@ -139,11 +175,35 @@ const useStyles = makeStyles({
     display: 'grid',
     gap: tokens.spacingVerticalS,
   },
-  statusCard: {
+  progress: {
+    width: '100%',
+  },
+  skeletonCard: {
     padding: tokens.spacingHorizontalL,
     display: 'grid',
+    gap: tokens.spacingVerticalL,
+  },
+  skeletonHeader: {
+    display: 'grid',
     gap: tokens.spacingVerticalS,
-    borderLeft: `${tokens.strokeWidthThick} solid ${tokens.colorStatusDangerBorder1}`,
+  },
+  skeletonMetaRow: {
+    display: 'flex',
+    gap: tokens.spacingHorizontalM,
+    flexWrap: 'wrap',
+  },
+  skeletonGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(2, minmax(0, 1fr))',
+    gap: tokens.spacingHorizontalL,
+    '@media (max-width: 720px)': {
+      gridTemplateColumns: '1fr',
+    },
+  },
+  fallbackCard: {
+    padding: tokens.spacingHorizontalXL,
+    display: 'grid',
+    gap: tokens.spacingVerticalM,
   },
 });
 
@@ -158,6 +218,49 @@ const dateFormatter = new Intl.DateTimeFormat('zh-CN', {
 function formatTime(value: string) {
   const date = new Date(value);
   return Number.isNaN(date.getTime()) ? '' : dateFormatter.format(date);
+}
+
+function PendingActivityListSkeleton() {
+  const styles = useStyles();
+
+  return (
+    <div className={styles.list}>
+      {Array.from({ length: 2 }, (_, index) => (
+        <Card key={index}>
+          <div className={styles.skeletonCard}>
+            <div className={styles.skeletonHeader}>
+              <Skeleton>
+                <SkeletonItem shape="rectangle" size={20} style={{ width: '52%' }} />
+              </Skeleton>
+              <div className={styles.skeletonMetaRow}>
+                <Skeleton>
+                  <SkeletonItem shape="rectangle" size={12} style={{ width: '7rem' }} />
+                </Skeleton>
+                <Skeleton>
+                  <SkeletonItem shape="rectangle" size={12} style={{ width: '8rem' }} />
+                </Skeleton>
+              </div>
+            </div>
+            <div className={styles.skeletonGrid}>
+              {Array.from({ length: 4 }, (_, detailIndex) => (
+                <Skeleton key={detailIndex}>
+                  <SkeletonItem shape="rectangle" size={48} />
+                </Skeleton>
+              ))}
+            </div>
+            <div className={styles.skeletonHeader}>
+              <Skeleton>
+                <SkeletonItem shape="rectangle" size={14} style={{ width: '100%' }} />
+              </Skeleton>
+              <Skeleton>
+                <SkeletonItem shape="rectangle" size={14} style={{ width: '82%' }} />
+              </Skeleton>
+            </div>
+          </div>
+        </Card>
+      ))}
+    </div>
+  );
 }
 
 export default function PendingActivitiesPage() {
@@ -177,10 +280,14 @@ export default function PendingActivitiesPage() {
       <div className={styles.page}>
         <Card appearance="filled-alternative">
           <div className={styles.cardBody}>
-            <Title2>活动审核</Title2>
+            <Title2>活动审批</Title2>
             <Caption1 className={styles.muted}>仅管理员或站点所有者可以访问此页面。</Caption1>
             <div className={styles.row}>
-              <Button appearance="secondary" onClick={() => navigate('/activities/plaza')}>
+              <Button
+                type="button"
+                appearance="secondary"
+                onClick={() => navigate('/activities/plaza')}
+              >
                 返回活动广场
               </Button>
             </div>
@@ -193,36 +300,53 @@ export default function PendingActivitiesPage() {
   return (
     <div className={styles.page}>
       <div className={styles.hero}>
-        <Title2>活动审核</Title2>
+        <Title2>活动审批</Title2>
         <Body1 className={styles.muted}>
-          处理用户提交的待审核活动。通过后将立即公开，并向发起人发送通知。
+          处理用户提交的待审批活动。通过后将立即公开，并向发起人发送通知。
         </Body1>
       </div>
 
       <div className={styles.dashboardRow}>
         <Card appearance="filled-alternative" className={styles.dashboardCard}>
-          <div className={styles.cardBody}>
-            <Subtitle2>审核概览</Subtitle2>
-            <div className={styles.statsRow}>
-              <div className={styles.stat}>
-                <Body1Strong>{pendingCount}</Body1Strong>
-                <Caption1 className={styles.muted}>个待审核活动</Caption1>
+          <div className={styles.dashboardBody}>
+            <InfoLabel
+              label={{ className: styles.dashboardInfoLabel }}
+              info="优先处理最近提交且即将开始的活动。"
+            >
+              审核概览
+            </InfoLabel>
+            <div className={styles.dashboardDetailGrid}>
+              <div className={styles.dashboardMetricItem}>
+                <Caption1 className={styles.detailLabel}>待审核数量</Caption1>
+                <Title2>{pendingCount}</Title2>
               </div>
-              <div className={styles.stat}>
-                <Body1Strong>{latestCreatedAt}</Body1Strong>
-                <Caption1 className={styles.muted}>最近提交时间</Caption1>
+              <div className={styles.dashboardMetricItem}>
+                <Caption1 className={styles.detailLabel}>最近提交时间</Caption1>
+                <Subtitle2>{latestCreatedAt}</Subtitle2>
               </div>
             </div>
           </div>
         </Card>
 
         <Card className={styles.dashboardCard}>
-          <div className={styles.cardBody}>
-            <Subtitle2>审核提示</Subtitle2>
+          <div className={styles.dashboardBody}>
+            <InfoLabel
+              label={{ className: styles.dashboardInfoLabel }}
+              info="保持时间、地点、说明三项信息完整可读。"
+            >
+              审核提示
+            </InfoLabel>
             <div className={styles.tipList}>
-              <Caption1 className={styles.muted}>1. 先检查时间顺序是否合理。</Caption1>
-              <Caption1 className={styles.muted}>2. 再确认地点与描述是否足够清晰。</Caption1>
-              <Caption1 className={styles.muted}>3. 驳回时填写具体原因，便于发起人修改。</Caption1>
+              <div className={styles.dashboardDetailItem}>
+                <Caption1 className={styles.detailLabel}>时间与信息</Caption1>
+                <Caption1 className={styles.muted}>
+                  先看报名截止、开始结束顺序，再确认地点和描述是否清晰。
+                </Caption1>
+              </div>
+              <div className={styles.dashboardDetailItem}>
+                <Caption1 className={styles.detailLabel}>驳回反馈</Caption1>
+                <Caption1 className={styles.muted}>写清修改项，便于发起人尽快重提。</Caption1>
+              </div>
             </div>
           </div>
         </Card>
@@ -230,42 +354,43 @@ export default function PendingActivitiesPage() {
 
       <div className={styles.feedHeader}>
         <Subtitle2>待审核列表</Subtitle2>
-        {isLoading ? <Spinner size="tiny" label="加载中" /> : null}
       </div>
+      {isLoading ? <ProgressBar className={styles.progress} /> : null}
 
       {actionErrorMessage ? (
-        <Card className={styles.statusCard}>
-          <Body1Strong>操作失败</Body1Strong>
-          <Caption1 className={styles.muted}>{actionErrorMessage}</Caption1>
-        </Card>
+        <MessageBar intent="error" layout="multiline">
+          <MessageBarBody>
+            <MessageBarTitle>操作失败</MessageBarTitle>
+            {actionErrorMessage}
+          </MessageBarBody>
+        </MessageBar>
       ) : null}
 
       {errorMessage ? (
-        <Card>
-          <div className={styles.cardBody}>
-            <Caption1>{errorMessage}</Caption1>
-          </div>
-        </Card>
+        <MessageBar intent="error" layout="multiline">
+          <MessageBarBody>
+            <MessageBarTitle>加载失败</MessageBarTitle>
+            {errorMessage}
+          </MessageBarBody>
+        </MessageBar>
       ) : isLoading ? (
-        <Card>
-          <div className={styles.cardBody}>
-            <Caption1 className={styles.muted}>正在加载待审核活动</Caption1>
-          </div>
-        </Card>
+        <PendingActivityListSkeleton />
       ) : activities.length === 0 ? (
-        <Card>
-          <div className={styles.cardBody}>
+        <Card appearance="filled-alternative">
+          <div className={styles.fallbackCard}>
             <Body1Strong>当前没有待审核活动</Body1Strong>
             <Caption1 className={styles.muted}>
-              新活动提交后会自动出现在这里，便于集中审核。
+              新活动提交后会自动出现在这里，便于后续集中审核。
             </Caption1>
           </div>
         </Card>
       ) : (
         <div className={styles.list}>
           {activities.map((activity) => (
+            // Example Card
             <Card key={activity.id}>
               <CardHeader
+                image={<Calendar28Regular />}
                 header={<Body1Strong>{activity.title}</Body1Strong>}
                 description={
                   <div className={styles.headerMeta}>
@@ -277,7 +402,11 @@ export default function PendingActivitiesPage() {
                     </Caption1>
                   </div>
                 }
-                action={<Badge appearance="tint">待审核</Badge>}
+                action={
+                  <Tag shape="circular" icon={<TimerRegular />}>
+                    待审核
+                  </Tag>
+                }
               />
               <Divider />
               <div className={styles.cardBody}>
@@ -312,10 +441,16 @@ export default function PendingActivitiesPage() {
                 </div>
                 <div className={styles.row}>
                   <Button
+                    type="button"
                     appearance="primary"
-                    icon={actioningId === activity.id ? <Spinner /> : <CheckmarkRegular />}
+                    icon={
+                      actioningId === activity.id ? <Spinner size="tiny" /> : <CheckmarkRegular />
+                    }
                     disabled={actioningId === activity.id}
-                    onClick={() => void approve(activity.id)}
+                    onClick={(event) => {
+                      event.preventDefault();
+                      void approve(activity.id);
+                    }}
                   >
                     {actioningId === activity.id ? '处理中...' : '通过'}
                   </Button>
@@ -324,7 +459,12 @@ export default function PendingActivitiesPage() {
                     onOpenChange={(_, data) => setRejectTargetId(data.open ? activity.id : null)}
                   >
                     <DialogTrigger disableButtonEnhancement>
-                      <Button appearance="secondary" disabled={actioningId === activity.id}>
+                      <Button
+                        type="button"
+                        icon={<DismissRegular />}
+                        appearance="secondary"
+                        disabled={actioningId === activity.id}
+                      >
                         驳回
                       </Button>
                     </DialogTrigger>
@@ -340,10 +480,15 @@ export default function PendingActivitiesPage() {
                           </Field>
                         </DialogContent>
                         <DialogActions>
-                          <Button appearance="secondary" onClick={() => setRejectTargetId(null)}>
+                          <Button
+                            type="button"
+                            appearance="secondary"
+                            onClick={() => setRejectTargetId(null)}
+                          >
                             取消
                           </Button>
                           <Button
+                            type="button"
                             appearance="primary"
                             onClick={async () => {
                               const ok = await reject(activity.id, reason.trim());
@@ -360,6 +505,7 @@ export default function PendingActivitiesPage() {
                     </DialogSurface>
                   </Dialog>
                   <Button
+                    type="button"
                     appearance="subtle"
                     onClick={() => navigate(`/activities/${activity.id}`)}
                   >

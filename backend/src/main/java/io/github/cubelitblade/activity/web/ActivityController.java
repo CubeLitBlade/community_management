@@ -30,14 +30,21 @@ public class ActivityController {
 
   @GetMapping("/api/activities")
   public ResponseEntity<ActivityListResponse> getActivities(
-      @AuthenticationPrincipal JwtAuthenticatedUser authenticatedUser) {
-    return ResponseEntity.ok(activityService.getApprovedActivities(authenticatedUser));
+      @AuthenticationPrincipal JwtAuthenticatedUser authenticatedUser,
+      @RequestParam(required = false) String keyword) {
+    return ResponseEntity.ok(activityService.getApprovedActivities(authenticatedUser, keyword));
   }
 
   @GetMapping("/api/activities/{id}")
   public ResponseEntity<ActivityView> getActivityDetail(
       @AuthenticationPrincipal JwtAuthenticatedUser authenticatedUser, @PathVariable Long id) {
     return ResponseEntity.ok(activityService.getActivityDetail(authenticatedUser, id));
+  }
+
+  @GetMapping("/api/activities/{id}/participants")
+  public ResponseEntity<ActivityParticipantListResponse> getActivityParticipants(
+      @AuthenticationPrincipal JwtAuthenticatedUser authenticatedUser, @PathVariable Long id) {
+    return ResponseEntity.ok(activityService.getActivityParticipants(authenticatedUser, id));
   }
 
   @GetMapping("/api/activities/mine")

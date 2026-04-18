@@ -3,18 +3,22 @@ package io.github.cubelitblade.activity.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.doThrow;
 import static org.mockito.Mockito.verify;
 
 import io.github.cubelitblade.account.model.Role;
 import io.github.cubelitblade.account.persistence.AccountRepository;
 import io.github.cubelitblade.account.security.JwtAuthenticatedUser;
 import io.github.cubelitblade.activity.dto.CreateActivityRequest;
+import io.github.cubelitblade.activity.dto.ActivityParticipantListResponse;
 import io.github.cubelitblade.activity.dto.RejectActivityRequest;
 import io.github.cubelitblade.activity.model.Activity;
 import io.github.cubelitblade.activity.model.ActivityStatus;
+import io.github.cubelitblade.activity.persistence.ActivityRegistrationPo;
 import io.github.cubelitblade.activity.persistence.ActivityRegistrationRepository;
 import io.github.cubelitblade.activity.persistence.ActivityRepository;
 import io.github.cubelitblade.common.exception.ValidationException;
@@ -91,6 +95,61 @@ class ActivityServiceTest {
   }
 
   @Test
+  @DisplayName("Get approved activities: should return all approved activities when keyword is blank")
+  void should_return_all_approved_activities_when_keyword_is_blank() {
+    Activity earlierActivity =
+        approvedActivity(101L, "晨练活动", "操场", "一起跑步", NOW.plusSeconds(7200));
+    Activity laterActivity =
+        approvedActivity(102L, "羽毛球约练", "体育馆", "双打优先", NOW.plusSeconds(10800));
+    given(activityRepository.findByStatus(ActivityStatus.APPROVED))
+        .willReturn(List.of(earlierActivity, laterActivity));
+    given(accountRepository.findAccountById(anyLong())).willReturn(Optional.empty());
+
+    var response =
+        activityService.getApprovedActivities(new JwtAuthenticatedUser(9L, Role.USER), "   ");
+
+    verify(activityRepository).findByStatus(ActivityStatus.APPROVED);
+    verify(activityRepository, never()).searchApprovedActivities(any());
+    assertThat(response.activities()).extracting(activity -> activity.id()).containsExactly(101L, 102L);
+  }
+
+  @Test
+  @DisplayName("Get approved activities: should search approved activities by keyword")
+  void should_search_approved_activities_by_keyword() {
+    Activity titleMatch =
+        approvedActivity(201L, "羽毛球约练", "北区体育馆", "周末友谊赛", NOW.plusSeconds(7200));
+    Activity locationMatch =
+        approvedActivity(202L, "周末散步", "羽毛球中心", "轻松活动", NOW.plusSeconds(10800));
+    Activity descriptionMatch =
+        approvedActivity(203L, "室内运动", "综合馆", "欢迎羽毛球新手", NOW.plusSeconds(14400));
+    given(activityRepository.searchApprovedActivities("羽毛球"))
+        .willReturn(List.of(titleMatch, locationMatch, descriptionMatch));
+    given(accountRepository.findAccountById(anyLong())).willReturn(Optional.empty());
+
+    var response =
+        activityService.getApprovedActivities(new JwtAuthenticatedUser(9L, Role.USER), "羽毛球");
+
+    verify(activityRepository).searchApprovedActivities("羽毛球");
+    verify(activityRepository, never()).findByStatus(ActivityStatus.APPROVED);
+    assertThat(response.activities()).extracting(activity -> activity.id()).containsExactly(201L, 202L, 203L);
+  }
+
+  @Test
+  @DisplayName("Get approved activities: should trim keyword before search")
+  void should_trim_keyword_before_search() {
+    Activity activity =
+        approvedActivity(301L, "Badminton Night", "Gym", "Friendly doubles", NOW.plusSeconds(7200));
+    given(activityRepository.searchApprovedActivities("badminton")).willReturn(List.of(activity));
+    given(accountRepository.findAccountById(anyLong())).willReturn(Optional.empty());
+
+    var response =
+        activityService.getApprovedActivities(new JwtAuthenticatedUser(9L, Role.USER), "  badminton  ");
+
+    verify(activityRepository).searchApprovedActivities("badminton");
+    assertThat(response.activities()).extracting(view -> view.id()).containsExactly(301L);
+  }
+
+  @Test
   @DisplayName("Approve: should notify creator and schedule reminder")
   void should_approve_and_schedule_reminder() {
     Activity activity =
@@ -113,6 +172,87 @@ class ActivityServiceTest {
     verify(notificationService).notifyActivityApproved(activity, 2L);
     verify(eventService)
         .createEvent(eq(Type.ACTIVITY_REMINDER.getValue()), any(), eq(activity.getStartTime().minus(ActivityService.REMINDER_OFFSET)));
+  }
+
+  @Test
+  @DisplayName("Approve: should reject self moderation for admin")
+  void should_reject_self_moderation_for_admin() {
+    Activity activity =
+        Activity.create(
+            101L,
+            7L,
+            "晨练活动",
+            "一起跑步",
+            "操场",
+            NOW.plusSeconds(3600),
+            NOW.plusSeconds(7200),
+            NOW.plusSeconds(10800),
+            NOW);
+    given(activityRepository.findById(101L)).willReturn(Optional.of(activity));
+
+    assertThatThrownBy(() -> activityService.approveActivity(new JwtAuthenticatedUser(7L, Role.ADMIN), 101L))
+        .isInstanceOf(ValidationException.class);
+
+    verify(activityRepository, never()).update(any());
+    verify(notificationService, never()).notifyActivityApproved(any(), any());
+  }
+
+  @Test
+  @DisplayName("Approve: should allow owner to moderate own activity")
+  void should_allow_owner_to_approve_own_activity() {
+    Activity activity =
+        Activity.create(
+            101L,
+            7L,
+            "晨练活动",
+            "一起跑步",
+            "操场",
+            NOW.plusSeconds(3600),
+            NOW.plusSeconds(7200),
+            NOW.plusSeconds(10800),
+            NOW);
+    given(activityRepository.findById(101L)).willReturn(Optional.of(activity));
+    given(eventPayloadMapper.toJsonNode(any())).willReturn(JsonNodeFactory.instance.objectNode());
+
+    var result = activityService.approveActivity(new JwtAuthenticatedUser(7L, Role.OWNER), 101L);
+
+    verify(activityRepository).update(activity);
+    verify(notificationService).notifyActivityApproved(activity, 7L);
+    assertThat(result.status()).isEqualTo(ActivityStatus.APPROVED);
+    assertThat(activity.getStatus()).isEqualTo(ActivityStatus.APPROVED);
+  }
+
+  @Test
+  @DisplayName("Approve: should still approve when reminder scheduling fails")
+  void should_approve_even_if_reminder_scheduling_fails() {
+    Activity activity =
+        Activity.create(
+            101L,
+            7L,
+            "晨练活动",
+            "一起跑步",
+            "操场",
+            NOW.plusSeconds(3600),
+            NOW.plusSeconds(7200),
+            NOW.plusSeconds(10800),
+            NOW);
+    given(activityRepository.findById(101L)).willReturn(Optional.of(activity));
+    given(eventPayloadMapper.toJsonNode(any())).willReturn(JsonNodeFactory.instance.objectNode());
+    doThrow(new IllegalStateException("queue unavailable"))
+        .when(eventService)
+        .createEvent(eq(Type.ACTIVITY_REMINDER.getValue()), any(), any());
+
+    var result = activityService.approveActivity(new JwtAuthenticatedUser(2L, Role.ADMIN), 101L);
+
+    verify(activityRepository).update(activity);
+    verify(notificationService).notifyActivityApproved(activity, 2L);
+    verify(eventService)
+        .createEvent(
+            eq(Type.ACTIVITY_REMINDER.getValue()),
+            any(),
+            eq(activity.getStartTime().minus(ActivityService.REMINDER_OFFSET)));
+    assertThat(result.status()).isEqualTo(ActivityStatus.APPROVED);
+    assertThat(activity.getStatus()).isEqualTo(ActivityStatus.APPROVED);
   }
 
   @Test
@@ -216,5 +356,91 @@ class ActivityServiceTest {
     activityService.sendReminder(101L);
 
     verify(notificationService).notifyActivityReminder(activity, List.of(3L, 4L));
+  }
+
+  @Test
+  @DisplayName("Participants: should allow creator to view registered users")
+  void should_allow_creator_to_view_registered_users() {
+    Activity activity =
+        Activity.reconstitute(
+            Activity.Snapshot.builder()
+                .id(101L)
+                .creatorAccountId(7L)
+                .title("晨练活动")
+                .description("一起跑步")
+                .location("操场")
+                .registrationDeadline(NOW.plusSeconds(100))
+                .startTime(NOW.plusSeconds(7200))
+                .endTime(NOW.plusSeconds(10800))
+                .status(ActivityStatus.APPROVED)
+                .createdAt(NOW)
+                .updatedAt(NOW)
+                .build());
+    given(activityRepository.findById(101L)).willReturn(Optional.of(activity));
+    given(activityRegistrationRepository.findByActivityId(101L))
+        .willReturn(
+            List.of(
+                ActivityRegistrationPo.builder()
+                    .activityId(101L)
+                    .accountId(3L)
+                    .createdAt(NOW.plusSeconds(10))
+                    .build(),
+                ActivityRegistrationPo.builder()
+                    .activityId(101L)
+                    .accountId(4L)
+                    .createdAt(NOW.plusSeconds(20))
+                    .build()));
+    given(accountRepository.findAccountById(3L)).willReturn(Optional.empty());
+    given(accountRepository.findAccountById(4L)).willReturn(Optional.empty());
+
+    ActivityParticipantListResponse response =
+        activityService.getActivityParticipants(new JwtAuthenticatedUser(7L, Role.USER), 101L);
+
+    assertThat(response.participants()).hasSize(2);
+    assertThat(response.participants().get(0).accountId()).isEqualTo(3L);
+    assertThat(response.participants().get(1).accountId()).isEqualTo(4L);
+  }
+
+  @Test
+  @DisplayName("Participants: should reject normal viewer")
+  void should_reject_normal_viewer_from_participant_list() {
+    Activity activity =
+        Activity.reconstitute(
+            Activity.Snapshot.builder()
+                .id(101L)
+                .creatorAccountId(7L)
+                .title("晨练活动")
+                .description("一起跑步")
+                .location("操场")
+                .registrationDeadline(NOW.plusSeconds(100))
+                .startTime(NOW.plusSeconds(7200))
+                .endTime(NOW.plusSeconds(10800))
+                .status(ActivityStatus.APPROVED)
+                .createdAt(NOW)
+                .updatedAt(NOW)
+                .build());
+    given(activityRepository.findById(101L)).willReturn(Optional.of(activity));
+
+    assertThatThrownBy(
+            () -> activityService.getActivityParticipants(new JwtAuthenticatedUser(9L, Role.USER), 101L))
+        .isInstanceOf(io.github.cubelitblade.activity.exception.ActivityForbiddenException.class);
+  }
+
+  private Activity approvedActivity(
+      Long id, String title, String location, String description, Instant startTime) {
+    return Activity.reconstitute(
+        Activity.Snapshot.builder()
+            .id(id)
+            .creatorAccountId(7L)
+            .title(title)
+            .description(description)
+            .location(location)
+            .registrationDeadline(startTime.minusSeconds(1800))
+            .startTime(startTime)
+            .endTime(startTime.plusSeconds(3600))
+            .status(ActivityStatus.APPROVED)
+            .createdAt(NOW)
+            .updatedAt(NOW)
+            .build());
   }
 }

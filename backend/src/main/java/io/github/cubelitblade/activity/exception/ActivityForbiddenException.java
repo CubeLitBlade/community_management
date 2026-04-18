@@ -15,4 +15,8 @@ public class ActivityForbiddenException extends DomainException {
   public static ActivityForbiddenException moderationRequired() {
     return new ActivityForbiddenException("You are not allowed to moderate activities");
   }
+
+  public static ActivityForbiddenException participantListNotVisible() {
+    return new ActivityForbiddenException("You are not allowed to view activity participants");
+  }
 }
