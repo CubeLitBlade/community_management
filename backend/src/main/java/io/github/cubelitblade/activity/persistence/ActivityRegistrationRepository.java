@@ -42,14 +42,14 @@ public class ActivityRegistrationRepository {
   }
 
   @Transactional
-  public boolean delete(Long activityId, Long accountId) {
+  public void delete(Long activityId, Long accountId) {
     DeleteStatementProvider deleteStatement =
         deleteFrom(ActivityRegistrationDynamicSqlSupport.activityRegistrations)
             .where(ActivityRegistrationDynamicSqlSupport.activityId, isEqualTo(activityId))
             .and(ActivityRegistrationDynamicSqlSupport.accountId, isEqualTo(accountId))
             .build()
             .render(RenderingStrategies.MYBATIS3);
-    return activityRegistrationMapper.delete(deleteStatement) > 0;
+    activityRegistrationMapper.delete(deleteStatement);
   }
 
   @Transactional(readOnly = true)

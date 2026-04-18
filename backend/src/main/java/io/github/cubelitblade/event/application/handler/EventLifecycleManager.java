@@ -21,7 +21,7 @@ public class EventLifecycleManager implements EventStepper {
   private final EventRetryPolicy eventRetryPolicy;
 
   @Transactional(propagation = Propagation.REQUIRES_NEW)
-  public boolean reschedule(Event event, String reason) {
+  public void reschedule(Event event, String reason) {
     int retryCount = event.getRetryCount();
 
     if (eventRetryPolicy.canRetry(retryCount)) {
@@ -42,7 +42,7 @@ public class EventLifecycleManager implements EventStepper {
           event.getId());
     }
 
-    return this.persist(event);
+    this.persist(event);
   }
 
   public void revive(Event event, Instant nextRunAt) {
@@ -71,9 +71,9 @@ public class EventLifecycleManager implements EventStepper {
   }
 
   @Override
-  public boolean advanceEventToStep(Event event, String targetStep) {
+  public void advanceEventToStep(Event event, String targetStep) {
     event.advanceTo(targetStep, timeProvider.now());
-    return this.persist(event);
+    this.persist(event);
   }
 
   private boolean persist(Event event) {

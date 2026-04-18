@@ -154,7 +154,7 @@ create table if not exists accounts
 			unique,
 	nickname varchar(50),
 	password_hash varchar(255) not null,
-	must_change_password boolean default false not null，
+	must_change_password boolean default false not null,
 	email varchar(255)
 		constraint uq_account_email
 			unique,

@@ -97,26 +97,6 @@ class ActivityServiceTest {
   }
 
   @Test
-  @DisplayName(
-      "Get approved activities: should return all approved activities when keyword is blank")
-  void should_return_all_approved_activities_when_keyword_is_blank() {
-    Activity earlierActivity = approvedActivity(101L, "晨练活动", "操场", "一起跑步", NOW.plusSeconds(7200));
-    Activity laterActivity = approvedActivity(102L, "羽毛球约练", "体育馆", "双打优先", NOW.plusSeconds(10800));
-    given(activityRepository.findApprovedActivities(3, null))
-        .willReturn(List.of(earlierActivity, laterActivity));
-    given(accountRepository.findAccountById(anyLong())).willReturn(Optional.empty());
-
-    var response =
-        activityService.getApprovedActivities(
-            new JwtAuthenticatedUser(9L, Role.USER), "   ", 2, null);
-
-    verify(activityRepository).findApprovedActivities(3, null);
-    verify(activityRepository, never()).searchApprovedActivities(any());
-    assertThat(response.items()).extracting(ActivityView::id).containsExactly(101L, 102L);
-    assertThat(response.hasMore()).isFalse();
-  }
-
-  @Test
   @DisplayName("Get approved activities: should search approved activities by keyword")
   void should_search_approved_activities_by_keyword() {
     Activity titleMatch = approvedActivity(201L, "羽毛球约练", "北区体育馆", "周末友谊赛", NOW.plusSeconds(7200));

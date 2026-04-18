@@ -195,7 +195,7 @@ public class ActivityRepository {
   }
 
   @Transactional(readOnly = true)
-  public List<Activity> searchApprovedActivities(String keyword) {
+  public void searchApprovedActivities(String keyword) {
     String searchPattern = "%" + keyword + "%";
     SelectStatementProvider selectStatement =
         select(
@@ -226,7 +226,7 @@ public class ActivityRepository {
             .build()
             .render(RenderingStrategies.MYBATIS3);
 
-    return activityMapper.selectMany(selectStatement).stream().map(ActivityPo::toActivity).toList();
+    activityMapper.selectMany(selectStatement).stream().map(ActivityPo::toActivity).toList();
   }
 
   @Transactional(readOnly = true)

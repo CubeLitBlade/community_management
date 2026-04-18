@@ -57,8 +57,8 @@ public interface ReactionMapper
   })
   List<UserTargetReactionVo> selectUserTargetReactions(SelectStatementProvider selectStatement);
 
-  default int insert(ReactionPo record) {
-    return MyBatis3Utils.insert(
+  default void insert(ReactionPo record) {
+    MyBatis3Utils.insert(
         this::insert,
         record,
         ReactionDynamicSqlSupport.reactions,

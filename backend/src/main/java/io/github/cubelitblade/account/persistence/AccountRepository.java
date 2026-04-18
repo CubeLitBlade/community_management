@@ -17,12 +17,10 @@ public class AccountRepository {
     return Optional.ofNullable(accountPo).map(AccountPo::toDomain);
   }
 
-  public Account register(Account account) {
+  public void register(Account account) {
     AccountPo accountPo = AccountPo.fromDomain(account);
 
     accountMapper.insert(accountPo);
-
-    return account;
   }
 
   public boolean existsUserByUsername(String username) {

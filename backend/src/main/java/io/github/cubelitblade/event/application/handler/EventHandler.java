@@ -40,7 +40,7 @@ public abstract class EventHandler<PayloadType extends EventPayload> {
    *
    * @param event the event to process
    */
-  public abstract void process(Event event) throws Exception;
+  public abstract void process(Event event);
 
   /**
    * Main entry point for handling an event.

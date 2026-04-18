@@ -126,10 +126,7 @@ class AuthControllerTest {
                     .contains("TEST_AUTH_TOKEN=jwt-token")
                     .contains("HttpOnly"))
         .bodyJson()
-        .satisfies(
-            json -> {
-              assertThat(json).extractingPath("$.mustChangePassword").isEqualTo(true);
-            });
+        .satisfies(json -> assertThat(json).extractingPath("$.mustChangePassword").isEqualTo(true));
   }
 
   @Test
