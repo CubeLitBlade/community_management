@@ -3,18 +3,20 @@ package io.github.cubelitblade.activity.application;
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyInt;
 import static org.mockito.ArgumentMatchers.anyLong;
 import static org.mockito.ArgumentMatchers.eq;
 import static org.mockito.BDDMockito.given;
-import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.doThrow;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
 import io.github.cubelitblade.account.model.Role;
 import io.github.cubelitblade.account.persistence.AccountRepository;
 import io.github.cubelitblade.account.security.JwtAuthenticatedUser;
-import io.github.cubelitblade.activity.dto.CreateActivityRequest;
 import io.github.cubelitblade.activity.dto.ActivityParticipantListResponse;
+import io.github.cubelitblade.activity.dto.ActivityView;
+import io.github.cubelitblade.activity.dto.CreateActivityRequest;
 import io.github.cubelitblade.activity.dto.RejectActivityRequest;
 import io.github.cubelitblade.activity.model.Activity;
 import io.github.cubelitblade.activity.model.ActivityStatus;
@@ -95,43 +97,45 @@ class ActivityServiceTest {
   }
 
   @Test
-  @DisplayName("Get approved activities: should return all approved activities when keyword is blank")
+  @DisplayName(
+      "Get approved activities: should return all approved activities when keyword is blank")
   void should_return_all_approved_activities_when_keyword_is_blank() {
-    Activity earlierActivity =
-        approvedActivity(101L, "晨练活动", "操场", "一起跑步", NOW.plusSeconds(7200));
-    Activity laterActivity =
-        approvedActivity(102L, "羽毛球约练", "体育馆", "双打优先", NOW.plusSeconds(10800));
-    given(activityRepository.findByStatus(ActivityStatus.APPROVED))
+    Activity earlierActivity = approvedActivity(101L, "晨练活动", "操场", "一起跑步", NOW.plusSeconds(7200));
+    Activity laterActivity = approvedActivity(102L, "羽毛球约练", "体育馆", "双打优先", NOW.plusSeconds(10800));
+    given(activityRepository.findApprovedActivities(3, null))
         .willReturn(List.of(earlierActivity, laterActivity));
     given(accountRepository.findAccountById(anyLong())).willReturn(Optional.empty());
 
     var response =
-        activityService.getApprovedActivities(new JwtAuthenticatedUser(9L, Role.USER), "   ");
+        activityService.getApprovedActivities(
+            new JwtAuthenticatedUser(9L, Role.USER), "   ", 2, null);
 
-    verify(activityRepository).findByStatus(ActivityStatus.APPROVED);
+    verify(activityRepository).findApprovedActivities(3, null);
     verify(activityRepository, never()).searchApprovedActivities(any());
-    assertThat(response.activities()).extracting(activity -> activity.id()).containsExactly(101L, 102L);
+    assertThat(response.items()).extracting(ActivityView::id).containsExactly(101L, 102L);
+    assertThat(response.hasMore()).isFalse();
   }
 
   @Test
   @DisplayName("Get approved activities: should search approved activities by keyword")
   void should_search_approved_activities_by_keyword() {
-    Activity titleMatch =
-        approvedActivity(201L, "羽毛球约练", "北区体育馆", "周末友谊赛", NOW.plusSeconds(7200));
+    Activity titleMatch = approvedActivity(201L, "羽毛球约练", "北区体育馆", "周末友谊赛", NOW.plusSeconds(7200));
     Activity locationMatch =
         approvedActivity(202L, "周末散步", "羽毛球中心", "轻松活动", NOW.plusSeconds(10800));
     Activity descriptionMatch =
         approvedActivity(203L, "室内运动", "综合馆", "欢迎羽毛球新手", NOW.plusSeconds(14400));
-    given(activityRepository.searchApprovedActivities("羽毛球"))
+    given(activityRepository.searchApprovedActivities("羽毛球", 4, null))
         .willReturn(List.of(titleMatch, locationMatch, descriptionMatch));
     given(accountRepository.findAccountById(anyLong())).willReturn(Optional.empty());
 
     var response =
-        activityService.getApprovedActivities(new JwtAuthenticatedUser(9L, Role.USER), "羽毛球");
+        activityService.getApprovedActivities(
+            new JwtAuthenticatedUser(9L, Role.USER), "羽毛球", 3, null);
 
-    verify(activityRepository).searchApprovedActivities("羽毛球");
-    verify(activityRepository, never()).findByStatus(ActivityStatus.APPROVED);
-    assertThat(response.activities()).extracting(activity -> activity.id()).containsExactly(201L, 202L, 203L);
+    verify(activityRepository).searchApprovedActivities("羽毛球", 4, null);
+    verify(activityRepository, never()).findApprovedActivities(anyInt(), any());
+    assertThat(response.items()).extracting(ActivityView::id).containsExactly(201L, 202L, 203L);
+    assertThat(response.hasMore()).isFalse();
   }
 
   @Test
@@ -139,14 +143,17 @@ class ActivityServiceTest {
   void should_trim_keyword_before_search() {
     Activity activity =
         approvedActivity(301L, "Badminton Night", "Gym", "Friendly doubles", NOW.plusSeconds(7200));
-    given(activityRepository.searchApprovedActivities("badminton")).willReturn(List.of(activity));
+    given(activityRepository.searchApprovedActivities("badminton", 2, null))
+        .willReturn(List.of(activity));
     given(accountRepository.findAccountById(anyLong())).willReturn(Optional.empty());
 
     var response =
-        activityService.getApprovedActivities(new JwtAuthenticatedUser(9L, Role.USER), "  badminton  ");
+        activityService.getApprovedActivities(
+            new JwtAuthenticatedUser(9L, Role.USER), "  badminton  ", 1, null);
 
-    verify(activityRepository).searchApprovedActivities("badminton");
-    assertThat(response.activities()).extracting(view -> view.id()).containsExactly(301L);
+    verify(activityRepository).searchApprovedActivities("badminton", 2, null);
+    assertThat(response.items()).extracting(ActivityView::id).containsExactly(301L);
+    assertThat(response.hasMore()).isFalse();
   }
 
   @Test
@@ -171,7 +178,10 @@ class ActivityServiceTest {
     verify(activityRepository).update(activity);
     verify(notificationService).notifyActivityApproved(activity, 2L);
     verify(eventService)
-        .createEvent(eq(Type.ACTIVITY_REMINDER.getValue()), any(), eq(activity.getStartTime().minus(ActivityService.REMINDER_OFFSET)));
+        .createEvent(
+            eq(Type.ACTIVITY_REMINDER.getValue()),
+            any(),
+            eq(activity.getStartTime().minus(ActivityService.REMINDER_OFFSET)));
   }
 
   @Test
@@ -190,7 +200,8 @@ class ActivityServiceTest {
             NOW);
     given(activityRepository.findById(101L)).willReturn(Optional.of(activity));
 
-    assertThatThrownBy(() -> activityService.approveActivity(new JwtAuthenticatedUser(7L, Role.ADMIN), 101L))
+    assertThatThrownBy(
+            () -> activityService.approveActivity(new JwtAuthenticatedUser(7L, Role.ADMIN), 101L))
         .isInstanceOf(ValidationException.class);
 
     verify(activityRepository, never()).update(any());
@@ -218,7 +229,7 @@ class ActivityServiceTest {
 
     verify(activityRepository).update(activity);
     verify(notificationService).notifyActivityApproved(activity, 7L);
-    assertThat(result.status()).isEqualTo(ActivityStatus.APPROVED);
+    assertThat(result.status()).isEqualTo(ActivityStatus.APPROVED.getValue());
     assertThat(activity.getStatus()).isEqualTo(ActivityStatus.APPROVED);
   }
 
@@ -251,7 +262,7 @@ class ActivityServiceTest {
             eq(Type.ACTIVITY_REMINDER.getValue()),
             any(),
             eq(activity.getStartTime().minus(ActivityService.REMINDER_OFFSET)));
-    assertThat(result.status()).isEqualTo(ActivityStatus.APPROVED);
+    assertThat(result.status()).isEqualTo(ActivityStatus.APPROVED.getValue());
     assertThat(activity.getStatus()).isEqualTo(ActivityStatus.APPROVED);
   }
 
@@ -300,7 +311,8 @@ class ActivityServiceTest {
                 .build());
     given(activityRepository.findById(101L)).willReturn(Optional.of(activity));
 
-    assertThatThrownBy(() -> activityService.register(new JwtAuthenticatedUser(9L, Role.USER), 101L))
+    assertThatThrownBy(
+            () -> activityService.register(new JwtAuthenticatedUser(9L, Role.USER), 101L))
         .isInstanceOf(ValidationException.class);
   }
 
@@ -328,7 +340,8 @@ class ActivityServiceTest {
         .when(activityRegistrationRepository)
         .save(101L, 9L, NOW);
 
-    assertThatThrownBy(() -> activityService.register(new JwtAuthenticatedUser(9L, Role.USER), 101L))
+    assertThatThrownBy(
+            () -> activityService.register(new JwtAuthenticatedUser(9L, Role.USER), 101L))
         .isInstanceOf(ValidationException.class);
   }
 
@@ -351,7 +364,8 @@ class ActivityServiceTest {
                 .updatedAt(NOW)
                 .build());
     given(activityRepository.findById(101L)).willReturn(Optional.of(activity));
-    given(activityRegistrationRepository.findAccountIdsByActivityId(101L)).willReturn(List.of(3L, 4L));
+    given(activityRegistrationRepository.findAccountIdsByActivityId(101L))
+        .willReturn(List.of(3L, 4L));
 
     activityService.sendReminder(101L);
 
@@ -422,7 +436,9 @@ class ActivityServiceTest {
     given(activityRepository.findById(101L)).willReturn(Optional.of(activity));
 
     assertThatThrownBy(
-            () -> activityService.getActivityParticipants(new JwtAuthenticatedUser(9L, Role.USER), 101L))
+            () ->
+                activityService.getActivityParticipants(
+                    new JwtAuthenticatedUser(9L, Role.USER), 101L))
         .isInstanceOf(io.github.cubelitblade.activity.exception.ActivityForbiddenException.class);
   }
 

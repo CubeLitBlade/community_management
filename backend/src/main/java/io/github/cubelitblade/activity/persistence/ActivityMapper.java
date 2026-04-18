@@ -34,8 +34,14 @@ public interface ActivityMapper
         column = "registration_deadline",
         javaType = Instant.class,
         jdbcType = JdbcType.TIMESTAMP_WITH_TIMEZONE),
-    @Arg(column = "start_time", javaType = Instant.class, jdbcType = JdbcType.TIMESTAMP_WITH_TIMEZONE),
-    @Arg(column = "end_time", javaType = Instant.class, jdbcType = JdbcType.TIMESTAMP_WITH_TIMEZONE),
+    @Arg(
+        column = "start_time",
+        javaType = Instant.class,
+        jdbcType = JdbcType.TIMESTAMP_WITH_TIMEZONE),
+    @Arg(
+        column = "end_time",
+        javaType = Instant.class,
+        jdbcType = JdbcType.TIMESTAMP_WITH_TIMEZONE),
     @Arg(column = "status", javaType = String.class, jdbcType = JdbcType.VARCHAR),
     @Arg(column = "approved_by", javaType = Long.class, jdbcType = JdbcType.BIGINT),
     @Arg(

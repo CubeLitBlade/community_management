@@ -34,8 +34,7 @@ public final class ActivityDynamicSqlSupport {
         column("registration_deadline", JDBCType.TIMESTAMP_WITH_TIMEZONE);
     public final SqlColumn<Instant> startTime =
         column("start_time", JDBCType.TIMESTAMP_WITH_TIMEZONE);
-    public final SqlColumn<Instant> endTime =
-        column("end_time", JDBCType.TIMESTAMP_WITH_TIMEZONE);
+    public final SqlColumn<Instant> endTime = column("end_time", JDBCType.TIMESTAMP_WITH_TIMEZONE);
     public final SqlColumn<String> status = column("status", JDBCType.VARCHAR);
     public final SqlColumn<Long> approvedBy = column("approved_by", JDBCType.BIGINT);
     public final SqlColumn<Instant> approvedAt =

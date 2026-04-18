@@ -13,11 +13,11 @@ import {
   MessageBarTitle,
   ProgressBar,
   SearchBox,
+  Spinner,
   Skeleton,
   SkeletonItem,
   Subtitle2,
   Subtitle2Stronger,
-  Tag,
   Title2,
   makeStyles,
   tokens,
@@ -27,7 +27,7 @@ import {
   CalendarAddRegular,
   PersonArrowLeftRegular,
 } from '@fluentui/react-icons';
-import { useMemo } from 'react';
+import { useEffect, useMemo, useRef } from 'react';
 import { useNavigate } from 'react-router';
 import useAuth from '../hooks/useAuth';
 import useActivityPlaza from '../hooks/useActivityPlaza';
@@ -247,6 +247,12 @@ const useStyles = makeStyles({
     gap: tokens.spacingHorizontalM,
     flexWrap: 'wrap',
   },
+  loadMore: {
+    display: 'flex',
+    justifyContent: 'center',
+    alignItems: 'center',
+    minHeight: '2rem',
+  },
 });
 
 const dateFormatter = new Intl.DateTimeFormat('zh-CN', {
@@ -317,14 +323,40 @@ export default function ActivityPlazaPage() {
     activities,
     isLoading,
     isSearching,
+    isLoadingMore,
+    hasMore,
     hasLoaded,
     errorMessage,
     searchKeyword,
     activeSearchKeyword,
     setSearchKeyword,
+    loadMore,
   } = useActivityPlaza();
+  const sentinelRef = useRef<HTMLDivElement | null>(null);
   const hasActiveSearch = activeSearchKeyword.length > 0;
   const showInitialLoading = isLoading && !hasLoaded;
+
+  useEffect(() => {
+    const sentinel = sentinelRef.current;
+    if (!sentinel) {
+      return;
+    }
+
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries.some((entry) => entry.isIntersecting)) {
+          void loadMore();
+        }
+      },
+      {
+        rootMargin: '480px 0px',
+      },
+    );
+
+    observer.observe(sentinel);
+
+    return () => observer.disconnect();
+  }, [loadMore]);
 
   const nextActivity = activities[0] ?? null;
   const nextDeadlineLabel = useMemo(() => {
@@ -492,7 +524,6 @@ export default function ActivityPlazaPage() {
                     </Caption1>
                   </div>
                 }
-                action={<Tag shape="circular">已发布</Tag>}
               />
               <Divider />
               <div className={styles.cardBody}>
@@ -542,6 +573,13 @@ export default function ActivityPlazaPage() {
           ))}
         </div>
       ) : null}
+
+      <div ref={sentinelRef} className={styles.loadMore}>
+        {isLoadingMore ? <Spinner size="tiny" label="加载更多" /> : null}
+        {!hasMore && activities.length > 0 ? (
+          <Caption1 className={styles.muted}>没有更多活动了。</Caption1>
+        ) : null}
+      </div>
     </div>
   );
 }

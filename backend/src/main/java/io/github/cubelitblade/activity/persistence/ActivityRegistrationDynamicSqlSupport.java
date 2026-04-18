@@ -11,8 +11,7 @@ public final class ActivityRegistrationDynamicSqlSupport {
   public static final SqlColumn<Long> accountId = activityRegistrations.accountId;
   public static final SqlColumn<Instant> createdAt = activityRegistrations.createdAt;
 
-  public static final class ActivityRegistrations
-      extends AliasableSqlTable<ActivityRegistrations> {
+  public static final class ActivityRegistrations extends AliasableSqlTable<ActivityRegistrations> {
     public final SqlColumn<Long> activityId = column("activity_id", JDBCType.BIGINT);
     public final SqlColumn<Long> accountId = column("account_id", JDBCType.BIGINT);
     public final SqlColumn<Instant> createdAt =

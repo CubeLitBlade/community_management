@@ -7,10 +7,10 @@ import io.github.cubelitblade.activity.model.ActivityStatus;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.mybatis.dynamic.sql.SqlBuilder;
 import org.mybatis.dynamic.sql.insert.render.InsertStatementProvider;
 import org.mybatis.dynamic.sql.render.RenderingStrategies;
 import org.mybatis.dynamic.sql.select.render.SelectStatementProvider;
-import org.mybatis.dynamic.sql.SqlBuilder;
 import org.mybatis.dynamic.sql.update.render.UpdateStatementProvider;
 import org.springframework.stereotype.Repository;
 import org.springframework.transaction.annotation.Transactional;
@@ -164,6 +164,37 @@ public class ActivityRepository {
   }
 
   @Transactional(readOnly = true)
+  public List<Activity> findApprovedActivities(int count, Long lastId) {
+    SelectStatementProvider selectStatement =
+        select(
+                ActivityDynamicSqlSupport.id,
+                ActivityDynamicSqlSupport.creatorAccountId,
+                ActivityDynamicSqlSupport.title,
+                ActivityDynamicSqlSupport.description,
+                ActivityDynamicSqlSupport.location,
+                ActivityDynamicSqlSupport.registrationDeadline,
+                ActivityDynamicSqlSupport.startTime,
+                ActivityDynamicSqlSupport.endTime,
+                ActivityDynamicSqlSupport.status,
+                ActivityDynamicSqlSupport.approvedBy,
+                ActivityDynamicSqlSupport.approvedAt,
+                ActivityDynamicSqlSupport.rejectedBy,
+                ActivityDynamicSqlSupport.rejectedAt,
+                ActivityDynamicSqlSupport.rejectionReason,
+                ActivityDynamicSqlSupport.createdAt,
+                ActivityDynamicSqlSupport.updatedAt)
+            .from(ActivityDynamicSqlSupport.activities)
+            .where(ActivityDynamicSqlSupport.status, isEqualTo(ActivityStatus.APPROVED.getValue()))
+            .and(ActivityDynamicSqlSupport.id, isLessThanWhenPresent(lastId))
+            .orderBy(ActivityDynamicSqlSupport.id.descending())
+            .limit(count)
+            .build()
+            .render(RenderingStrategies.MYBATIS3);
+
+    return activityMapper.selectMany(selectStatement).stream().map(ActivityPo::toActivity).toList();
+  }
+
+  @Transactional(readOnly = true)
   public List<Activity> searchApprovedActivities(String keyword) {
     String searchPattern = "%" + keyword + "%";
     SelectStatementProvider selectStatement =
@@ -192,6 +223,43 @@ public class ActivityRepository {
                 or(ActivityDynamicSqlSupport.location, isLikeCaseInsensitive(searchPattern)),
                 or(ActivityDynamicSqlSupport.description, isLikeCaseInsensitive(searchPattern)))
             .orderBy(ActivityDynamicSqlSupport.startTime)
+            .build()
+            .render(RenderingStrategies.MYBATIS3);
+
+    return activityMapper.selectMany(selectStatement).stream().map(ActivityPo::toActivity).toList();
+  }
+
+  @Transactional(readOnly = true)
+  public List<Activity> searchApprovedActivities(String keyword, int count, Long lastId) {
+    String searchPattern = "%" + keyword + "%";
+    SelectStatementProvider selectStatement =
+        select(
+                ActivityDynamicSqlSupport.id,
+                ActivityDynamicSqlSupport.creatorAccountId,
+                ActivityDynamicSqlSupport.title,
+                ActivityDynamicSqlSupport.description,
+                ActivityDynamicSqlSupport.location,
+                ActivityDynamicSqlSupport.registrationDeadline,
+                ActivityDynamicSqlSupport.startTime,
+                ActivityDynamicSqlSupport.endTime,
+                ActivityDynamicSqlSupport.status,
+                ActivityDynamicSqlSupport.approvedBy,
+                ActivityDynamicSqlSupport.approvedAt,
+                ActivityDynamicSqlSupport.rejectedBy,
+                ActivityDynamicSqlSupport.rejectedAt,
+                ActivityDynamicSqlSupport.rejectionReason,
+                ActivityDynamicSqlSupport.createdAt,
+                ActivityDynamicSqlSupport.updatedAt)
+            .from(ActivityDynamicSqlSupport.activities)
+            .where(ActivityDynamicSqlSupport.status, isEqualTo(ActivityStatus.APPROVED.getValue()))
+            .and(ActivityDynamicSqlSupport.id, isLessThanWhenPresent(lastId))
+            .and(
+                ActivityDynamicSqlSupport.title,
+                isLikeCaseInsensitive(searchPattern),
+                or(ActivityDynamicSqlSupport.location, isLikeCaseInsensitive(searchPattern)),
+                or(ActivityDynamicSqlSupport.description, isLikeCaseInsensitive(searchPattern)))
+            .orderBy(ActivityDynamicSqlSupport.id.descending())
+            .limit(count)
             .build()
             .render(RenderingStrategies.MYBATIS3);
 

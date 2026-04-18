@@ -42,7 +42,8 @@ public class EventService {
     }
 
     Event event =
-        Event.create(idGenerator.nextId(), Type.from(type), payloadJson, timeProvider.now(), nextRunAt);
+        Event.create(
+            idGenerator.nextId(), Type.from(type), payloadJson, timeProvider.now(), nextRunAt);
 
     eventRepository.save(event);
     return event;

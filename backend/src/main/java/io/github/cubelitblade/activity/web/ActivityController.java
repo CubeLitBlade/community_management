@@ -3,6 +3,8 @@ package io.github.cubelitblade.activity.web;
 import io.github.cubelitblade.account.security.JwtAuthenticatedUser;
 import io.github.cubelitblade.activity.application.ActivityService;
 import io.github.cubelitblade.activity.dto.*;
+import io.github.cubelitblade.common.exception.ApiErrorCode;
+import io.github.cubelitblade.common.exception.ValidationException;
 import java.net.URI;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
@@ -29,10 +31,17 @@ public class ActivityController {
   }
 
   @GetMapping("/api/activities")
-  public ResponseEntity<ActivityListResponse> getActivities(
+  public ResponseEntity<RecentActivitiesResponse> getActivities(
       @AuthenticationPrincipal JwtAuthenticatedUser authenticatedUser,
-      @RequestParam(required = false) String keyword) {
-    return ResponseEntity.ok(activityService.getApprovedActivities(authenticatedUser, keyword));
+      @RequestParam(required = false) String keyword,
+      @RequestParam(defaultValue = "12") int count,
+      @RequestParam(required = false) Long lastId) {
+    if (count <= 0 || count > 50) {
+      throw new ValidationException(ApiErrorCode.INVALID_REQUEST, "Count must be between 1 and 50");
+    }
+
+    return ResponseEntity.ok(
+        activityService.getApprovedActivities(authenticatedUser, keyword, count, lastId));
   }
 
   @GetMapping("/api/activities/{id}")

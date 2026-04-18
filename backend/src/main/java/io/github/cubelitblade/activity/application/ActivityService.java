@@ -66,18 +66,21 @@ public class ActivityService {
   }
 
   @Transactional(readOnly = true)
-  public ActivityListResponse getApprovedActivities(
-      JwtAuthenticatedUser authenticatedUser, String keyword) {
+  public RecentActivitiesResponse getApprovedActivities(
+      JwtAuthenticatedUser authenticatedUser, String keyword, int count, Long lastId) {
+    int fetchSize = count + 1;
     String normalizedKeyword = normalize(keyword);
-    List<Activity> approvedActivities =
+    List<Activity> fetchedActivities =
         normalizedKeyword == null
-            ? activityRepository.findByStatus(ActivityStatus.APPROVED)
-            : activityRepository.searchApprovedActivities(normalizedKeyword);
+            ? activityRepository.findApprovedActivities(fetchSize, lastId)
+            : activityRepository.searchApprovedActivities(normalizedKeyword, fetchSize, lastId);
     List<ActivityView> activities =
-        approvedActivities.stream()
+        fetchedActivities.stream()
+            .limit(count)
             .map(activity -> toView(activity, authenticatedUser))
             .toList();
-    return new ActivityListResponse(activities);
+
+    return new RecentActivitiesResponse(activities, fetchedActivities.size() > count);
   }
 
   @Transactional(readOnly = true)
@@ -181,9 +184,11 @@ public class ActivityService {
     ensureRegistrationAllowed(activity);
 
     try {
-      activityRegistrationRepository.save(activityId, authenticatedUser.accountId(), timeProvider.now());
+      activityRegistrationRepository.save(
+          activityId, authenticatedUser.accountId(), timeProvider.now());
     } catch (DuplicateKeyException e) {
-      throw new ValidationException(ApiErrorCode.INVALID_REQUEST, "Already registered for this activity");
+      throw new ValidationException(
+          ApiErrorCode.INVALID_REQUEST, "Already registered for this activity");
     }
   }
 
@@ -206,7 +211,8 @@ public class ActivityService {
       return;
     }
 
-    List<Long> recipientAccountIds = activityRegistrationRepository.findAccountIdsByActivityId(activityId);
+    List<Long> recipientAccountIds =
+        activityRegistrationRepository.findAccountIdsByActivityId(activityId);
     if (recipientAccountIds.isEmpty()) {
       return;
     }
@@ -220,42 +226,51 @@ public class ActivityService {
     String location = normalize(request.location());
 
     if (title == null || description == null || location == null) {
-      throw new ValidationException(ApiErrorCode.INVALID_REQUEST, "Title, description, and location are required");
+      throw new ValidationException(
+          ApiErrorCode.INVALID_REQUEST, "Title, description, and location are required");
     }
-    if (request.registrationDeadline() == null || request.startTime() == null || request.endTime() == null) {
+    if (request.registrationDeadline() == null
+        || request.startTime() == null
+        || request.endTime() == null) {
       throw new ValidationException(ApiErrorCode.INVALID_REQUEST, "Activity times are required");
     }
     if (!request.registrationDeadline().isBefore(request.startTime())) {
-      throw new ValidationException(ApiErrorCode.INVALID_REQUEST, "Registration deadline must be before the start time");
+      throw new ValidationException(
+          ApiErrorCode.INVALID_REQUEST, "Registration deadline must be before the start time");
     }
     if (!request.endTime().isAfter(request.startTime())) {
-      throw new ValidationException(ApiErrorCode.INVALID_REQUEST, "End time must be after the start time");
+      throw new ValidationException(
+          ApiErrorCode.INVALID_REQUEST, "End time must be after the start time");
     }
   }
 
   private void ensurePending(Activity activity) {
     if (activity.getStatus() != ActivityStatus.PENDING) {
-      throw new ValidationException(ApiErrorCode.INVALID_REQUEST, "Only pending activities can be moderated");
+      throw new ValidationException(
+          ApiErrorCode.INVALID_REQUEST, "Only pending activities can be moderated");
     }
   }
 
   private void ensureNotSelfModeration(Activity activity, JwtAuthenticatedUser moderator) {
     if (moderator.role() != Role.OWNER
         && activity.getCreatorAccountId().equals(moderator.accountId())) {
-      throw new ValidationException(ApiErrorCode.INVALID_REQUEST, "Activity creators cannot moderate their own activities");
+      throw new ValidationException(
+          ApiErrorCode.INVALID_REQUEST, "Activity creators cannot moderate their own activities");
     }
   }
 
   private void ensureRegistrationAllowed(Activity activity) {
     if (activity.getStatus() != ActivityStatus.APPROVED) {
-      throw new ValidationException(ApiErrorCode.INVALID_REQUEST, "Only approved activities can accept registrations");
+      throw new ValidationException(
+          ApiErrorCode.INVALID_REQUEST, "Only approved activities can accept registrations");
     }
     ensureRegistrationWindowOpen(activity);
   }
 
   private void ensureRegistrationWindowOpen(Activity activity) {
     if (!timeProvider.now().isBefore(activity.getRegistrationDeadline())) {
-      throw new ValidationException(ApiErrorCode.INVALID_REQUEST, "Registration deadline has passed");
+      throw new ValidationException(
+          ApiErrorCode.INVALID_REQUEST, "Registration deadline has passed");
     }
   }
 
@@ -268,9 +283,7 @@ public class ActivityService {
     ActivityReminderEventPayload payload = new ActivityReminderEventPayload(activity.getId());
     try {
       eventService.createEvent(
-          Type.ACTIVITY_REMINDER.getValue(),
-          eventPayloadMapper.toJsonNode(payload),
-          remindAt);
+          Type.ACTIVITY_REMINDER.getValue(), eventPayloadMapper.toJsonNode(payload), remindAt);
     } catch (RuntimeException e) {
       log.error("Failed to schedule reminder event for activity #{}.", activity.getId(), e);
     }
@@ -312,11 +325,15 @@ public class ActivityService {
 
   private ActivityView toView(Activity activity, JwtAuthenticatedUser authenticatedUser) {
     String creatorDisplayName =
-        accountRepository.findAccountById(activity.getCreatorAccountId()).map(this::displayName).orElse(null);
+        accountRepository
+            .findAccountById(activity.getCreatorAccountId())
+            .map(this::displayName)
+            .orElse(null);
     long participantCount = activityRegistrationRepository.countByActivityId(activity.getId());
     boolean viewerRegistered =
         authenticatedUser != null
-            && activityRegistrationRepository.exists(activity.getId(), authenticatedUser.accountId());
+            && activityRegistrationRepository.exists(
+                activity.getId(), authenticatedUser.accountId());
     return ActivityView.from(activity, creatorDisplayName, participantCount, viewerRegistered);
   }
 

@@ -30,6 +30,11 @@ export type ActivityListResponse = {
   activities: ActivityView[];
 };
 
+export type RecentActivitiesResponse = {
+  items: ActivityView[];
+  hasMore: boolean;
+};
+
 export type ActivityParticipantListResponse = {
   participants: ActivityParticipantView[];
 };

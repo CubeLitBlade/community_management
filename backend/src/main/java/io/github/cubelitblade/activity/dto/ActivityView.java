@@ -22,7 +22,10 @@ public record ActivityView(
     Instant createdAt,
     Instant updatedAt) {
   public static ActivityView from(
-      Activity activity, String creatorDisplayName, long participantCount, boolean viewerRegistered) {
+      Activity activity,
+      String creatorDisplayName,
+      long participantCount,
+      boolean viewerRegistered) {
     return new ActivityView(
         activity.getId(),
         activity.getCreatorAccountId(),
