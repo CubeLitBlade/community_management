@@ -1,92 +1,118 @@
+import { Suspense, lazy } from 'react';
+import { Spinner, makeStyles, tokens } from '@fluentui/react-components';
 import { createBrowserRouter, RouterProvider } from 'react-router';
-import HomePage from '../pages/HomePage';
-import FeedPage from '../pages/FeedPage';
-import PostDetailPage from '../pages/PostDetailPage';
-import LoginPage from '../pages/LoginPage';
-import RegisterPage from '../pages/RegisterPage';
-import SettingsPage from '../pages/SettingsPage';
-import ChangePasswordPage from '../pages/ChangePasswordPage';
-import SettingsChangePasswordPage from '../pages/SettingsChangePasswordPage';
-import NotificationsPage from '../pages/NotificationsPage';
-import RepliesPage from '../pages/RepliesPage';
-import LikesPage from '../pages/LikesPage';
-import ActivityPlazaPage from '../pages/ActivityPlazaPage';
-import CreateActivityPage from '../pages/CreateActivityPage';
-import ActivityDetailPage from '../pages/ActivityDetailPage';
-import MyActivitiesPage from '../pages/MyActivitiesPage';
-import PendingActivitiesPage from '../pages/PendingActivitiesPage';
 import Layout from '../components/Layout/Layout';
+
+const HomePage = lazy(() => import('../pages/HomePage'));
+const FeedPage = lazy(() => import('../pages/FeedPage'));
+const PostDetailPage = lazy(() => import('../pages/PostDetailPage'));
+const LoginPage = lazy(() => import('../pages/LoginPage'));
+const RegisterPage = lazy(() => import('../pages/RegisterPage'));
+const SettingsPage = lazy(() => import('../pages/SettingsPage'));
+const ChangePasswordPage = lazy(() => import('../pages/ChangePasswordPage'));
+const SettingsChangePasswordPage = lazy(() => import('../pages/SettingsChangePasswordPage'));
+const NotificationsPage = lazy(() => import('../pages/NotificationsPage'));
+const RepliesPage = lazy(() => import('../pages/RepliesPage'));
+const LikesPage = lazy(() => import('../pages/LikesPage'));
+const ActivityPlazaPage = lazy(() => import('../pages/ActivityPlazaPage'));
+const CreateActivityPage = lazy(() => import('../pages/CreateActivityPage'));
+const ActivityDetailPage = lazy(() => import('../pages/ActivityDetailPage'));
+const MyActivitiesPage = lazy(() => import('../pages/MyActivitiesPage'));
+const PendingActivitiesPage = lazy(() => import('../pages/PendingActivitiesPage'));
+
+const useStyles = makeStyles({
+  fallback: {
+    minHeight: '40vh',
+    display: 'grid',
+    placeItems: 'center',
+    color: tokens.colorNeutralForeground2,
+  },
+});
+
+function RouteFallback() {
+  const styles = useStyles();
+
+  return (
+    <div className={styles.fallback}>
+      <Spinner label="正在加载页面" />
+    </div>
+  );
+}
+
+function withSuspense(element: React.ReactNode) {
+  return <Suspense fallback={<RouteFallback />}>{element}</Suspense>;
+}
 
 const router = createBrowserRouter([
   {
     path: '/',
-    element: <Layout />,
+    element: withSuspense(<Layout />),
     children: [
       {
         path: '/',
-        element: <HomePage />,
+        element: withSuspense(<HomePage />),
       },
       {
         path: '/feed',
-        element: <FeedPage />,
+        element: withSuspense(<FeedPage />),
       },
       {
         path: '/posts/:postId',
-        element: <PostDetailPage />,
+        element: withSuspense(<PostDetailPage />),
       },
       {
         path: '/settings',
-        element: <SettingsPage />,
+        element: withSuspense(<SettingsPage />),
       },
       {
         path: '/settings/password',
-        element: <SettingsChangePasswordPage />,
+        element: withSuspense(<SettingsChangePasswordPage />),
       },
       {
         path: '/replies',
-        element: <RepliesPage />,
+        element: withSuspense(<RepliesPage />),
       },
       {
         path: '/likes',
-        element: <LikesPage />,
+        element: withSuspense(<LikesPage />),
       },
       {
         path: '/notifications',
-        element: <NotificationsPage />,
+        element: withSuspense(<NotificationsPage />),
       },
       {
         path: '/activities/plaza',
-        element: <ActivityPlazaPage />,
+        element: withSuspense(<ActivityPlazaPage />),
       },
       {
         path: '/activities/create',
-        element: <CreateActivityPage />,
+        element: withSuspense(<CreateActivityPage />),
       },
       {
         path: '/activities/about-me',
-        element: <MyActivitiesPage />,
+        element: withSuspense(<MyActivitiesPage />),
       },
       {
         path: '/activities/review',
-        element: <PendingActivitiesPage />,
+        element: withSuspense(<PendingActivitiesPage />),
       },
       {
         path: '/activities/:activityId',
-        element: <ActivityDetailPage />,
+        element: withSuspense(<ActivityDetailPage />),
       },
     ],
   },
   {
     path: '/auth/login',
-    element: <LoginPage />,
+    element: withSuspense(<LoginPage />),
   },
   {
     path: '/auth/register',
-    element: <RegisterPage />,
+    element: withSuspense(<RegisterPage />),
   },
   {
     path: '/account/change-password',
-    element: <ChangePasswordPage />,
+    element: withSuspense(<ChangePasswordPage />),
   },
 ]);
 

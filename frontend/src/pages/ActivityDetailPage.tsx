@@ -1,4 +1,7 @@
 import {
+  Breadcrumb,
+  BreadcrumbDivider,
+  BreadcrumbItem,
   Dialog,
   DialogActions,
   DialogBody,
@@ -20,7 +23,6 @@ import {
   Skeleton,
   SkeletonItem,
   Tag,
-  Title2,
   makeStyles,
   tokens,
 } from '@fluentui/react-components';
@@ -31,7 +33,7 @@ import {
   ErrorCircleRegular,
   TimerRegular,
 } from '@fluentui/react-icons';
-import { useMemo, useState } from 'react';
+import { useMemo, useState, useSyncExternalStore } from 'react';
 import { useNavigate, useParams } from 'react-router';
 import useAuth from '../hooks/useAuth';
 import useActivityDetail from '../hooks/useActivityDetail';
@@ -44,6 +46,13 @@ const useStyles = makeStyles({
     padding: `${tokens.spacingVerticalXXL} ${tokens.spacingHorizontalL}`,
     display: 'grid',
     gap: tokens.spacingVerticalXL,
+  },
+  breadcrumb: {
+    alignItems: 'center',
+  },
+  breadcrumbCurrent: {
+    color: tokens.colorNeutralForeground2,
+    fontWeight: tokens.fontWeightSemibold,
   },
   cardBody: {
     padding: tokens.spacingHorizontalL,
@@ -180,6 +189,37 @@ function getStatusIcon(status: string) {
   }
 }
 
+let currentTimestamp = Date.now();
+const nowListeners = new Set<() => void>();
+let nowTimerId: number | null = null;
+
+function emitCurrentTimestamp() {
+  currentTimestamp = Date.now();
+  nowListeners.forEach((listener) => listener());
+}
+
+function subscribeToCurrentTimestamp(listener: () => void) {
+  nowListeners.add(listener);
+
+  if (nowTimerId === null) {
+    nowTimerId = window.setInterval(() => {
+      emitCurrentTimestamp();
+    }, 1000);
+  }
+
+  return () => {
+    nowListeners.delete(listener);
+    if (nowListeners.size === 0 && nowTimerId !== null) {
+      window.clearInterval(nowTimerId);
+      nowTimerId = null;
+    }
+  };
+}
+
+function getCurrentTimestampSnapshot() {
+  return currentTimestamp;
+}
+
 function ActivityDetailSkeleton() {
   const styles = useStyles();
 
@@ -227,10 +267,21 @@ export default function ActivityDetailPage() {
   const navigate = useNavigate();
   const { postId, activityId } = useParams();
   const resolvedId = activityId ?? postId;
+  const currentTime = useSyncExternalStore(
+    subscribeToCurrentTimestamp,
+    getCurrentTimestampSnapshot,
+  );
   const { profile } = useAuth();
   const [isParticipantsOpen, setIsParticipantsOpen] = useState(false);
-  const { activity, isLoading, errorMessage, isSubmitting, submitErrorMessage, register, cancelRegistration } =
-    useActivityDetail(resolvedId);
+  const {
+    activity,
+    isLoading,
+    errorMessage,
+    isSubmitting,
+    submitErrorMessage,
+    register,
+    cancelRegistration,
+  } = useActivityDetail(resolvedId);
   const {
     participants,
     isLoading: isParticipantsLoading,
@@ -238,12 +289,9 @@ export default function ActivityDetailPage() {
     refresh: refreshParticipants,
   } = useActivityParticipants(resolvedId);
 
-  const isDeadlinePassed = useMemo(() => {
-    if (!activity) {
-      return false;
-    }
-    return new Date(activity.registrationDeadline).getTime() <= Date.now();
-  }, [activity]);
+  const isDeadlinePassed = activity
+    ? new Date(activity.registrationDeadline).getTime() <= currentTime
+    : false;
 
   const canViewParticipants = useMemo(() => {
     if (!activity || !profile) {
@@ -256,11 +304,23 @@ export default function ActivityDetailPage() {
     );
   }, [activity, profile]);
 
+  const isCreator = activity?.creatorAccountId === Number(profile?.id);
+
   return (
     <div className={styles.page}>
-      <Button appearance="subtle" onClick={() => navigate(-1)}>
-        返回
-      </Button>
+      <Breadcrumb className={styles.breadcrumb}>
+        <BreadcrumbItem>
+          <Button onClick={() => navigate('/activities/plaza')} appearance="subtle" size="small">
+            活动广场
+          </Button>
+        </BreadcrumbItem>
+        <BreadcrumbDivider />
+        <BreadcrumbItem>
+          <Button className={styles.breadcrumbCurrent} appearance="subtle" size="small" disabled>
+            {activity?.title || '活动详情'}
+          </Button>
+        </BreadcrumbItem>
+      </Breadcrumb>
       {isLoading ? (
         <ActivityDetailSkeleton />
       ) : errorMessage || !activity ? (
@@ -283,7 +343,7 @@ export default function ActivityDetailPage() {
         <Card>
           <CardHeader
             image={<Calendar28Regular />}
-            header={<Title2>{activity.title}</Title2>}
+            header={<Body1>{activity.title}</Body1>}
             description={
               <div className={styles.headerMeta}>
                 <Caption1 className={styles.meta}>
@@ -346,7 +406,7 @@ export default function ActivityDetailPage() {
                   </MessageBarBody>
                 </MessageBar>
               ) : null}
-              {activity.creatorAccountId === Number(profile?.id) ? (
+              {isCreator ? (
                 <Caption1 className={styles.meta}>
                   这是你发起的活动，可在“我的活动”中查看审核状态。
                 </Caption1>
@@ -364,10 +424,13 @@ export default function ActivityDetailPage() {
                       }
                     }}
                   >
-                    <Button appearance="secondary" onClick={async () => {
-                      setIsParticipantsOpen(true);
-                      await refreshParticipants();
-                    }}>
+                    <Button
+                      appearance="secondary"
+                      onClick={async () => {
+                        setIsParticipantsOpen(true);
+                        await refreshParticipants();
+                      }}
+                    >
                       查看报名成员
                     </Button>
                     <DialogSurface>
@@ -399,7 +462,10 @@ export default function ActivityDetailPage() {
                           )}
                         </DialogContent>
                         <DialogActions>
-                          <Button appearance="secondary" onClick={() => setIsParticipantsOpen(false)}>
+                          <Button
+                            appearance="secondary"
+                            onClick={() => setIsParticipantsOpen(false)}
+                          >
                             关闭
                           </Button>
                         </DialogActions>
@@ -407,7 +473,7 @@ export default function ActivityDetailPage() {
                     </DialogSurface>
                   </Dialog>
                 ) : null}
-                {activity.status === 'approved' && !activity.viewerRegistered ? (
+                {activity.status === 'approved' && !activity.viewerRegistered && !isCreator ? (
                   <Button
                     appearance="primary"
                     disabled={isSubmitting || isDeadlinePassed}

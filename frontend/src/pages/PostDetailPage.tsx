@@ -1,4 +1,7 @@
 import {
+  Breadcrumb,
+  BreadcrumbDivider,
+  BreadcrumbItem,
   Body1,
   Body1Strong,
   Button,
@@ -7,13 +10,11 @@ import {
   CardFooter,
   CardHeader,
   Divider,
-  Link,
   Persona,
   Spinner,
   Subtitle2,
   Textarea,
   ToggleButton,
-  Title2,
   makeStyles,
   tokens,
 } from '@fluentui/react-components';
@@ -34,15 +35,12 @@ const useStyles = makeStyles({
     display: 'grid',
     gap: tokens.spacingVerticalXL,
   },
-  hero: {
-    display: 'grid',
-    gap: tokens.spacingVerticalS,
-  },
-  heroMeta: {
-    display: 'flex',
+  breadcrumb: {
     alignItems: 'center',
-    gap: tokens.spacingHorizontalS,
-    flexWrap: 'wrap',
+  },
+  breadcrumbCurrent: {
+    color: tokens.colorNeutralForeground2,
+    fontWeight: tokens.fontWeightSemibold,
   },
   muted: {
     color: tokens.colorNeutralForeground2,
@@ -180,10 +178,6 @@ const useStyles = makeStyles({
     alignItems: 'center',
     gap: tokens.spacingHorizontalS,
     flexWrap: 'wrap',
-  },
-  pageLink: {
-    color: tokens.colorNeutralForeground2,
-    textDecorationLine: 'none',
   },
 });
 
@@ -549,23 +543,19 @@ export default function PostDetailPage() {
 
   return (
     <div className={styles.page}>
-      <div className={styles.hero}>
-        <div className={styles.heroMeta}>
-          <Link
-            href="/feed"
-            className={styles.pageLink}
-            onClick={(event) => {
-              event.preventDefault();
-              navigate('/feed');
-            }}
-          >
+      <Breadcrumb className={styles.breadcrumb}>
+        <BreadcrumbItem>
+          <Button onClick={() => navigate('/feed')} appearance="subtle" size="small">
             新鲜事
-          </Link>
-          <Caption1 className={styles.muted}>/</Caption1>
-          <Caption1 className={styles.muted}>帖子详情</Caption1>
-        </div>
-        <Title2>帖子详情</Title2>
-      </div>
+          </Button>
+        </BreadcrumbItem>
+        <BreadcrumbDivider />
+        <BreadcrumbItem>
+          <Button className={styles.breadcrumbCurrent} appearance="subtle" size="small" disabled>
+            帖子详情
+          </Button>
+        </BreadcrumbItem>
+      </Breadcrumb>
 
       {reactionErrorMessage ? (
         <Caption1 className={styles.muted}>{reactionErrorMessage}</Caption1>

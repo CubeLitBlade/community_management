@@ -65,6 +65,10 @@ const useStyles = makeStyles({
   },
   dashboardCard: {
     minHeight: '100%',
+    boxShadow: tokens.shadow16,
+  },
+  activityCard: {
+    boxShadow: tokens.shadow8,
   },
   cardBody: {
     padding: tokens.spacingHorizontalL,
@@ -466,7 +470,7 @@ export default function ActivityPlazaPage() {
       !errorMessage &&
       activities.length === 0 &&
       !hasActiveSearch ? (
-        <Card appearance="filled-alternative">
+        <Card appearance="filled-alternative" className={styles.activityCard}>
           <div className={styles.fallbackCard}>
             <Body1Strong>暂无已发布活动</Body1Strong>
             <Caption1 className={styles.muted}>
@@ -490,7 +494,7 @@ export default function ActivityPlazaPage() {
       !errorMessage &&
       activities.length === 0 &&
       hasActiveSearch ? (
-        <Card appearance="filled-alternative">
+        <Card appearance="filled-alternative" className={styles.activityCard}>
           <div className={styles.fallbackCard}>
             <Body1Strong>未找到匹配活动</Body1Strong>
             <Caption1 className={styles.muted}>
@@ -510,7 +514,7 @@ export default function ActivityPlazaPage() {
       {!errorMessage && !showInitialLoading && activities.length > 0 ? (
         <div className={styles.activityFeed}>
           {activities.map((activity) => (
-            <Card key={activity.id}>
+            <Card key={activity.id} className={styles.activityCard}>
               <CardHeader
                 image={<Calendar28Regular />}
                 header={<Body1Strong>{activity.title}</Body1Strong>}

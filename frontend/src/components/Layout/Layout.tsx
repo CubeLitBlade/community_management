@@ -62,8 +62,20 @@ const useStyles = makeStyles({
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
-    backgroundColor: tokens.colorNeutralBackground1,
-    backgroundImage: `linear-gradient(180deg, ${tokens.colorBrandBackground2} 0%, ${tokens.colorNeutralBackground1} 28%, ${tokens.colorBrandBackground2} 100%)`,
+    backgroundColor: tokens.colorNeutralBackground2,
+    backgroundImage: `
+  radial-gradient(
+    circle at top left,
+    ${tokens.colorNeutralBackground3} 0%,
+    transparent 45%
+  ),
+  linear-gradient(
+    180deg,
+    ${tokens.colorNeutralBackground1} 0%,
+    ${tokens.colorNeutralBackground2} 60%,
+    ${tokens.colorNeutralBackground3} 100%
+  )
+`,
   },
   contentBody: {
     flex: '1',

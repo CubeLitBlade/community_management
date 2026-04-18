@@ -15,22 +15,35 @@ import {
   DialogTitle,
   Field,
   Input,
-  Link,
+  MessageBar,
+  MessageBarBody,
+  MessageBarTitle,
   Menu,
   MenuItem,
   MenuList,
   MenuPopover,
   MenuTrigger,
   Persona,
+  Popover,
+  PopoverSurface,
+  PopoverTrigger,
   Spinner,
   Subtitle2,
   Textarea,
-  ToggleButton,
   Title2,
   makeStyles,
   tokens,
 } from '@fluentui/react-components';
-import { DeleteRegular, MoreHorizontalRegular, SlideTextEditRegular } from '@fluentui/react-icons';
+import {
+  CommentRegular,
+  DeleteRegular,
+  DismissRegular,
+  MoreHorizontalRegular,
+  SlideTextEditRegular,
+  SlideTextTitleAddRegular,
+  ThumbLikeRegular,
+  WarningRegular,
+} from '@fluentui/react-icons';
 import { useEffect, useRef, useState, type SubmitEvent } from 'react';
 import { useNavigate } from 'react-router';
 import useAccount from '../hooks/useAccount';
@@ -50,6 +63,13 @@ const useStyles = makeStyles({
     display: 'grid',
     gap: tokens.spacingVerticalS,
   },
+  heroHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'start',
+    gap: tokens.spacingHorizontalM,
+    flexWrap: 'wrap',
+  },
   muted: {
     color: tokens.colorNeutralForeground2,
   },
@@ -57,6 +77,9 @@ const useStyles = makeStyles({
     padding: tokens.spacingHorizontalL,
     display: 'grid',
     gap: tokens.spacingVerticalL,
+  },
+  composerCard: {
+    boxShadow: tokens.shadow16,
   },
   formFields: {
     display: 'grid',
@@ -72,11 +95,19 @@ const useStyles = makeStyles({
     display: 'flex',
     justifyContent: 'space-between',
     gap: tokens.spacingHorizontalM,
-    alignItems: 'center',
+    alignItems: 'end',
+    flexWrap: 'wrap',
+  },
+  feedHeaderText: {
+    display: 'grid',
+    gap: tokens.spacingVerticalXXS,
   },
   postList: {
     display: 'grid',
     gap: tokens.spacingVerticalL,
+  },
+  postCard: {
+    boxShadow: tokens.shadow8,
   },
   postBody: {
     display: 'grid',
@@ -90,8 +121,21 @@ const useStyles = makeStyles({
   actionsEnd: {
     display: 'flex',
     justifyContent: 'flex-end',
+    alignItems: 'center',
     gap: tokens.spacingHorizontalM,
     flexWrap: 'wrap',
+  },
+  composerFooter: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'space-between',
+    gap: tokens.spacingHorizontalM,
+    flexWrap: 'wrap',
+    padding: `${tokens.spacingVerticalS} ${tokens.spacingHorizontalL} ${tokens.spacingVerticalL}`,
+  },
+  composerActionHint: {
+    textAlign: 'left',
+    flex: '1 1 16rem',
   },
   loadMore: {
     display: 'flex',
@@ -100,26 +144,65 @@ const useStyles = makeStyles({
     minHeight: '2rem',
   },
   postFooter: {
-    display: 'flex',
-    justifyContent: 'space-between',
-    alignItems: 'center',
+    display: 'grid',
+    gridTemplateColumns: 'minmax(0, 1fr) auto',
     gap: tokens.spacingHorizontalM,
+    alignItems: 'center',
+    '@media (max-width: 720px)': {
+      gridTemplateColumns: '1fr',
+    },
   },
-  footerMeta: {
+  footerPrimaryActions: {
     display: 'flex',
     alignItems: 'center',
     gap: tokens.spacingHorizontalM,
     flexWrap: 'wrap',
     minWidth: 0,
   },
+  footerSecondaryActions: {
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'flex-end',
+    gap: tokens.spacingHorizontalS,
+    flexWrap: 'wrap',
+  },
   reactionList: {
     display: 'flex',
     alignItems: 'center',
     gap: tokens.spacingHorizontalS,
     flexWrap: 'wrap',
+    minWidth: 0,
+  },
+  reactionSummaryList: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalXS,
+    flexWrap: 'wrap',
+    minWidth: 0,
+  },
+  reactionSummaryItem: {
+    display: 'inline-flex',
+    alignItems: 'center',
+    gap: '0.25rem',
+    padding: `0 ${tokens.spacingHorizontalSNudge}`,
+    borderRadius: tokens.borderRadiusCircular,
+    backgroundColor: tokens.colorNeutralBackground2,
+    color: tokens.colorNeutralForeground2,
   },
   reactionButton: {
-    minWidth: '3.25rem',
+    minWidth: '5.5rem',
+  },
+  reactionTray: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalXS,
+    padding: tokens.spacingHorizontalXS,
+  },
+  reactionTrayButton: {
+    minWidth: '2.5rem',
+  },
+  commentButton: {
+    minWidth: '5rem',
   },
   reactionButtonContent: {
     display: 'inline-flex',
@@ -138,12 +221,23 @@ const useStyles = makeStyles({
   commentSection: {
     display: 'grid',
     gap: tokens.spacingVerticalM,
+    paddingTop: tokens.spacingVerticalS,
   },
   commentHeader: {
     display: 'flex',
     justifyContent: 'space-between',
     alignItems: 'center',
     gap: tokens.spacingHorizontalM,
+    flexWrap: 'wrap',
+  },
+  commentHeaderText: {
+    display: 'grid',
+    gap: tokens.spacingVerticalXXS,
+  },
+  commentHeaderMeta: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalS,
     flexWrap: 'wrap',
   },
   commentList: {
@@ -156,6 +250,24 @@ const useStyles = makeStyles({
     padding: tokens.spacingHorizontalM,
     borderRadius: tokens.borderRadiusLarge,
     backgroundColor: tokens.colorNeutralBackground2,
+    boxShadow: tokens.shadow2,
+  },
+  commentCardHeader: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'start',
+    gap: tokens.spacingHorizontalM,
+    flexWrap: 'wrap',
+  },
+  commentAuthorBlock: {
+    display: 'grid',
+    gap: tokens.spacingVerticalXXS,
+  },
+  commentMetaBlock: {
+    display: 'flex',
+    alignItems: 'center',
+    gap: tokens.spacingHorizontalS,
+    flexWrap: 'wrap',
   },
   commentContent: {
     whiteSpace: 'pre-wrap',
@@ -172,10 +284,18 @@ const useStyles = makeStyles({
   },
   previewActions: {
     display: 'flex',
-    justifyContent: 'space-between',
+    justifyContent: 'flex-end',
     alignItems: 'center',
     gap: tokens.spacingHorizontalM,
     flexWrap: 'wrap',
+  },
+  statusCard: {
+    boxShadow: tokens.shadow8,
+  },
+  emptyState: {
+    display: 'grid',
+    gap: tokens.spacingVerticalS,
+    justifyItems: 'start',
   },
 });
 
@@ -239,6 +359,18 @@ function getReactionIcon(reactionType: string) {
   }
 }
 
+function getReactionButtonIcon(reactionType: string | null) {
+  if (!reactionType) {
+    return <ThumbLikeRegular />;
+  }
+
+  return <span aria-hidden="true">{getReactionIcon(reactionType)}</span>;
+}
+
+function getCommentButtonLabel(commentCount: number) {
+  return commentCount > 0 ? String(commentCount) : '评论';
+}
+
 const REACTION_OPTIONS = ['like', 'love', 'laugh', 'sad'] as const;
 
 function sortReactions(reactions?: PostReactionView[]) {
@@ -292,6 +424,7 @@ export default function FeedPage() {
   const [showEditTitle, setShowEditTitle] = useState(true);
   const [editPostId, setEditPostId] = useState<number | null>(null);
   const [confirmDeletePostId, setConfirmDeletePostId] = useState<number | null>(null);
+  const [expandedCommentPostIds, setExpandedCommentPostIds] = useState<Set<number>>(new Set());
   const sentinelRef = useRef<HTMLDivElement | null>(null);
 
   useEffect(() => {
@@ -384,6 +517,17 @@ export default function FeedPage() {
 
   const isAdmin = profile?.role === 'admin' || profile?.role === 'owner';
   const profileId = profile ? Number(profile.id) : Number.NaN;
+  const toggleCommentPreview = (postId: number) => {
+    setExpandedCommentPostIds((current) => {
+      const next = new Set(current);
+      if (next.has(postId)) {
+        next.delete(postId);
+      } else {
+        next.add(postId);
+      }
+      return next;
+    });
+  };
   const handleReactionClick = async (
     postId: number,
     currentReaction: string | null,
@@ -401,12 +545,14 @@ export default function FeedPage() {
   return (
     <div className={styles.page}>
       <div className={styles.hero}>
-        <Title2>新鲜事</Title2>
-        <Body1 className={styles.muted}>分享精彩瞬间。</Body1>
+        <div className={styles.heroHeader}>
+          <Title2>新鲜事</Title2>
+        </div>
+        <Body1 className={styles.muted}>分享社区里的近况、观点和瞬间，让讨论和互动自然发生。</Body1>
       </div>
 
       {profile ? (
-        <Card>
+        <Card className={styles.composerCard}>
           <div className={styles.cardBody}>
             <CardHeader
               image={
@@ -416,10 +562,6 @@ export default function FeedPage() {
                   size="small"
                   textAlignment="center"
                 />
-              }
-              header={<Body1Strong>发布新鲜事</Body1Strong>}
-              description={
-                <Caption1 className={styles.muted}>你的动态会展示在公开信息流中</Caption1>
               }
             />
             <Divider />
@@ -444,36 +586,49 @@ export default function FeedPage() {
               {publishErrorMessage ? (
                 <Caption1 className={styles.muted}>{publishErrorMessage}</Caption1>
               ) : null}
-              <div className={styles.actionsEnd}>
-                <Button
-                  appearance="subtle"
-                  type="button"
-                  onClick={() => {
-                    setTitle('');
-                    setContent('');
-                  }}
-                >
-                  清空
-                </Button>
-                <Button
-                  type="submit"
-                  appearance="primary"
-                  disabled={isPublishing || content.trim() === ''}
-                >
-                  {isPublishing ? '发布中' : '发布'}
-                </Button>
+              <Divider />
+              <div className={styles.composerFooter}>
+                <Caption1 className={`${styles.muted} ${styles.composerActionHint}`}>
+                  你的动态会展示在公开信息流中。可以记录近况、分享观察，或抛出一个值得讨论的话题。
+                </Caption1>
+                <div className={styles.actionsEnd}>
+                  <Button
+                    appearance="subtle"
+                    type="button"
+                    icon={<DismissRegular />}
+                    onClick={() => {
+                      setTitle('');
+                      setContent('');
+                    }}
+                  >
+                    清空
+                  </Button>
+                  <Button
+                    type="submit"
+                    icon={<SlideTextTitleAddRegular />}
+                    appearance="primary"
+                    disabled={isPublishing || content.trim() === ''}
+                  >
+                    {isPublishing ? '发布中' : '发布'}
+                  </Button>
+                </div>
               </div>
             </form>
           </div>
         </Card>
       ) : (
-        <Card>
+        <Card appearance="filled-alternative" className={styles.composerCard}>
           <div className={styles.cardBody}>
             <Subtitle2>登录后参与互动</Subtitle2>
-            <Body1 className={styles.muted}>当前未登录，登录后即可分享新鲜事。</Body1>
+            <Body1 className={styles.muted}>
+              当前未登录。登录后即可发布动态、表达回应，并在详情页参与评论讨论。
+            </Body1>
             <div className={styles.row}>
               <Button appearance="primary" onClick={() => navigate('/auth/login')}>
                 去登录
+              </Button>
+              <Button appearance="secondary" onClick={() => navigate('/')}>
+                返回首页
               </Button>
             </div>
           </div>
@@ -481,27 +636,53 @@ export default function FeedPage() {
       )}
 
       <div className={styles.rowBetween}>
-        <Subtitle2>最新</Subtitle2>
+        <div className={styles.feedHeaderText}>
+          <Subtitle2>最新动态</Subtitle2>
+          <Caption1 className={styles.muted}>按时间倒序展示社区里的最新帖子与互动预览。</Caption1>
+        </div>
         {isInitialLoading ? <Spinner size="tiny" label="加载中" /> : null}
       </div>
 
       {deleteErrorMessage ? (
-        <Caption1 className={styles.muted}>{deleteErrorMessage}</Caption1>
+        <MessageBar intent="error">
+          <MessageBarBody>
+            <MessageBarTitle>删除失败</MessageBarTitle>
+            {deleteErrorMessage}
+          </MessageBarBody>
+        </MessageBar>
       ) : null}
 
-      {editErrorMessage ? <Caption1 className={styles.muted}>{editErrorMessage}</Caption1> : null}
+      {editErrorMessage ? (
+        <MessageBar intent="error">
+          <MessageBarBody>
+            <MessageBarTitle>编辑失败</MessageBarTitle>
+            {editErrorMessage}
+          </MessageBarBody>
+        </MessageBar>
+      ) : null}
 
       {reactionErrorMessage ? (
-        <Caption1 className={styles.muted}>{reactionErrorMessage}</Caption1>
+        <MessageBar intent="warning">
+          <MessageBarBody>
+            <MessageBarTitle>互动未完成</MessageBarTitle>
+            {reactionErrorMessage}
+          </MessageBarBody>
+        </MessageBar>
       ) : null}
 
       {commentErrorMessage ? (
-        <Caption1 className={styles.muted}>{commentErrorMessage}</Caption1>
+        <MessageBar intent="warning">
+          <MessageBarBody>
+            <MessageBarTitle>评论加载受限</MessageBarTitle>
+            {commentErrorMessage}
+          </MessageBarBody>
+        </MessageBar>
       ) : null}
 
       {errorMessage ? (
-        <Card>
+        <Card appearance="filled-alternative" className={styles.statusCard}>
           <div className={styles.cardBody}>
+            <Subtitle2>动态加载失败</Subtitle2>
             <Body1 className={styles.muted}>{errorMessage}</Body1>
             <div className={styles.row}>
               <Button appearance="primary" onClick={() => void refresh()}>
@@ -513,9 +694,14 @@ export default function FeedPage() {
       ) : null}
 
       {!isInitialLoading && posts.length === 0 && !errorMessage ? (
-        <Card>
+        <Card appearance="filled-alternative" className={styles.statusCard}>
           <div className={styles.cardBody}>
-            <Body1 className={styles.muted}>还没有帖子。</Body1>
+            <div className={styles.emptyState}>
+              <Body1Strong>还没有帖子</Body1Strong>
+              <Caption1 className={styles.muted}>
+                第一条动态会出现在这里。可以先发一条近况、一个问题，或者一段值得讨论的内容。
+              </Caption1>
+            </div>
           </div>
         </Card>
       ) : null}
@@ -526,17 +712,17 @@ export default function FeedPage() {
           const authorNickname = post.authorNickname?.trim() || '已注销用户';
           const authorUsername = post.authorUsername?.trim() || '';
           const reactions = sortReactions(post.reactions);
-          const reactionCountByType = new Map(
-            reactions.map((reaction) => [reaction.reactionType, reaction.count]),
-          );
+          const visibleReactionSummaries = reactions.filter((reaction) => reaction.count > 0);
           const viewerReaction = post.viewerReaction ?? null;
+          const commentCount = (commentsByPostId[post.id] ?? []).length;
+          const isCommentPreviewExpanded = expandedCommentPostIds.has(post.id);
           const isAuthor = !Number.isNaN(profileId) && profileId === post.authorId;
           const canEdit = isAuthor;
           const canDelete = Boolean(profile) && (isAdmin || isAuthor);
           const canManagePost = canEdit || canDelete;
 
           return (
-            <Card key={post.id}>
+            <Card key={post.id} className={styles.postCard}>
               <div className={styles.cardBody}>
                 <CardHeader
                   image={
@@ -560,38 +746,69 @@ export default function FeedPage() {
                 </div>
                 <Divider />
                 <CardFooter className={styles.postFooter}>
-                  <div className={styles.footerMeta}>
-                    <Caption1 className={styles.muted}>社区动态</Caption1>
+                  <div className={styles.footerPrimaryActions}>
                     <div className={styles.reactionList} aria-label="帖子互动统计">
-                      {REACTION_OPTIONS.map((reactionType) => {
-                        const reactionCount = reactionCountByType.get(reactionType) ?? 0;
-                        const isSelected = viewerReaction === reactionType;
-
-                        return (
-                          <ToggleButton
-                            key={reactionType}
-                            size="small"
-                            shape="circular"
-                            checked={isSelected}
+                      <Popover withArrow positioning="below-start">
+                        <PopoverTrigger disableButtonEnhancement>
+                          <Button
+                            appearance="subtle"
+                            icon={getReactionButtonIcon(viewerReaction)}
                             className={styles.reactionButton}
-                            title={`${getReactionLabel(reactionType)} ${reactionCount}`}
-                            onClick={() =>
-                              void handleReactionClick(post.id, viewerReaction, reactionType)
-                            }
-                            isAccessible
+                            disabled={false}
                           >
-                            <span className={styles.reactionButtonContent}>
-                              <span className={styles.reactionIcon} aria-hidden="true">
-                                {getReactionIcon(reactionType)}
-                              </span>
-                              <span className={styles.reactionCount}>{reactionCount}</span>
-                            </span>
-                          </ToggleButton>
-                        );
-                      })}
+                            回应
+                          </Button>
+                        </PopoverTrigger>
+                        <PopoverSurface>
+                          <div className={styles.reactionTray}>
+                            {REACTION_OPTIONS.map((reactionType) => {
+                              const isSelected = viewerReaction === reactionType;
+
+                              return (
+                                <Button
+                                  key={reactionType}
+                                  appearance={isSelected ? 'primary' : 'subtle'}
+                                  size="small"
+                                  shape="circular"
+                                  className={styles.reactionTrayButton}
+                                  aria-label={getReactionLabel(reactionType)}
+                                  onClick={() =>
+                                    void handleReactionClick(post.id, viewerReaction, reactionType)
+                                  }
+                                >
+                                  <span className={styles.reactionIcon} aria-hidden="true">
+                                    {getReactionIcon(reactionType)}
+                                  </span>
+                                </Button>
+                              );
+                            })}
+                          </div>
+                        </PopoverSurface>
+                      </Popover>
                     </div>
+                    {visibleReactionSummaries.length > 0 ? (
+                      <div className={styles.reactionSummaryList}>
+                        {visibleReactionSummaries.map((reaction) => (
+                          <Caption1
+                            key={reaction.reactionType}
+                            className={styles.reactionSummaryItem}
+                          >
+                            <span aria-hidden="true">{getReactionIcon(reaction.reactionType)}</span>
+                            <span>{reaction.count}</span>
+                          </Caption1>
+                        ))}
+                      </div>
+                    ) : null}
                   </div>
-                  {canManagePost ? (
+                  <div className={styles.footerSecondaryActions}>
+                    <Button
+                      appearance="subtle"
+                      icon={<CommentRegular />}
+                      className={styles.commentButton}
+                      onClick={() => toggleCommentPreview(post.id)}
+                    >
+                      {getCommentButtonLabel(commentCount)}
+                    </Button>
                     <Menu>
                       <MenuTrigger disableButtonEnhancement>
                         <Button
@@ -603,6 +820,7 @@ export default function FeedPage() {
                       </MenuTrigger>
                       <MenuPopover>
                         <MenuList>
+                          <MenuItem icon={<WarningRegular />}>举报</MenuItem>
                           {canEdit ? (
                             <MenuItem
                               icon={<SlideTextEditRegular />}
@@ -612,71 +830,81 @@ export default function FeedPage() {
                               {updatingPostId === post.id ? '编辑中' : '编辑'}
                             </MenuItem>
                           ) : null}
-                          <MenuItem
-                            icon={<DeleteRegular />}
-                            onClick={() => setConfirmDeletePostId(post.id)}
-                            disabled={deletingPostId === post.id}
-                          >
-                            {deletingPostId === post.id ? '删除中' : '删除'}
-                          </MenuItem>
+                          {canManagePost ? (
+                            <MenuItem
+                              icon={<DeleteRegular />}
+                              onClick={() => setConfirmDeletePostId(post.id)}
+                              disabled={deletingPostId === post.id}
+                            >
+                              {deletingPostId === post.id ? '删除中' : '删除'}
+                            </MenuItem>
+                          ) : null}
                         </MenuList>
                       </MenuPopover>
                     </Menu>
-                  ) : null}
+                  </div>
                 </CardFooter>
-                <Divider />
-                <div className={styles.commentSection}>
-                  <div className={styles.commentHeader}>
-                    <Subtitle2>评论</Subtitle2>
-                    <Caption1 className={styles.muted}>
-                      {(commentsByPostId[post.id] ?? []).length} 条主评论
-                    </Caption1>
-                  </div>
-                  {loadingPosts[post.id] && !(commentsByPostId[post.id] ?? []).length ? (
-                    <Spinner size="tiny" label="加载评论" />
-                  ) : null}
-                  {(commentsByPostId[post.id] ?? []).length > 0 ? (
-                    <div className={styles.commentList}>
-                      {(commentsByPostId[post.id] ?? []).slice(0, 2).map((comment) => {
-                        const authorNickname = comment.authorNickname || '已注销用户';
-                        const authorUsername = comment.authorUsername?.trim() || '';
+                {isCommentPreviewExpanded ? (
+                  <>
+                    <Divider />
+                    <div className={styles.commentSection}>
+                      <div className={styles.commentHeader}>
+                        <div className={styles.commentHeaderText}>
+                          <Subtitle2>评论</Subtitle2>
+                        </div>
+                        <div className={styles.commentHeaderMeta}>
+                          <Caption1 className={styles.muted}>{commentCount} 条主评论</Caption1>
+                        </div>
+                      </div>
+                      {loadingPosts[post.id] && commentCount === 0 ? (
+                        <Spinner size="tiny" label="加载评论" />
+                      ) : null}
+                      {commentCount > 0 ? (
+                        <div className={styles.commentList}>
+                          {(commentsByPostId[post.id] ?? []).slice(0, 2).map((comment) => {
+                            const authorNickname = comment.authorNickname || '已注销用户';
+                            const authorUsername = comment.authorUsername?.trim() || '';
 
-                        return (
-                          <div key={comment.id} className={styles.commentItem}>
-                            <div className={styles.commentMeta}>
-                              <Body1Strong>{authorNickname}</Body1Strong>
-                              {authorUsername ? (
-                                <Caption1 className={styles.muted}>@{authorUsername}</Caption1>
-                              ) : null}
-                              <Caption1 className={styles.muted}>
-                                {getPostTimeLabel(comment.createdAt, comment.updatedAt)}
-                              </Caption1>
-                            </div>
-                            <Body1 className={styles.commentContent}>{comment.content}</Body1>
-                          </div>
-                        );
-                      })}
+                            return (
+                              <div key={comment.id} className={styles.commentItem}>
+                                <div className={styles.commentCardHeader}>
+                                  <div className={styles.commentAuthorBlock}>
+                                    <Body1Strong>{authorNickname}</Body1Strong>
+                                    <div className={styles.commentMetaBlock}>
+                                      {authorUsername ? (
+                                        <Caption1 className={styles.muted}>
+                                          @{authorUsername}
+                                        </Caption1>
+                                      ) : null}
+                                      <Caption1 className={styles.muted}>主评论</Caption1>
+                                    </div>
+                                  </div>
+                                  <Caption1 className={styles.muted}>
+                                    {getPostTimeLabel(comment.createdAt, comment.updatedAt)}
+                                  </Caption1>
+                                </div>
+                                <Body1 className={styles.commentContent}>{comment.content}</Body1>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      ) : !loadingPosts[post.id] ? (
+                        <Caption1 className={styles.emptyCommentState}>
+                          还没有评论，来留下第一条吧。
+                        </Caption1>
+                      ) : null}
+                      <div className={styles.previewActions}>
+                        <Button
+                          appearance="subtle"
+                          size="small"
+                          onClick={() => navigate(`/posts/${post.id}`)}
+                        >
+                          查看详情
+                        </Button>
+                      </div>
                     </div>
-                  ) : !loadingPosts[post.id] ? (
-                    <Caption1 className={styles.emptyCommentState}>
-                      还没有评论，来留下第一条吧。
-                    </Caption1>
-                  ) : null}
-                  <div className={styles.previewActions}>
-                    <Caption1 className={styles.muted}>
-                      {profile ? '' : '登录后可在详情页参与评论。'}
-                    </Caption1>
-                    <Link
-                      href={`/posts/${post.id}`}
-                      onClick={(event) => {
-                        event.preventDefault();
-                        navigate(`/posts/${post.id}`);
-                      }}
-                    >
-                      详情
-                    </Link>
-                  </div>
-                </div>
+                  </>
+                ) : null}
               </div>
             </Card>
           );

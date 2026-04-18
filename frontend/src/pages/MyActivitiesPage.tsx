@@ -217,6 +217,56 @@ const useStyles = makeStyles({
     display: 'grid',
     gap: tokens.spacingVerticalM,
   },
+  fallbackSurface: {
+    position: 'relative',
+    overflow: 'hidden',
+    padding: tokens.spacingHorizontalXL,
+    display: 'grid',
+    gap: tokens.spacingVerticalXL,
+    borderRadius: tokens.borderRadiusXLarge,
+    backgroundColor: tokens.colorNeutralBackground1,
+    backgroundImage: `
+      radial-gradient(circle at top right, ${tokens.colorBrandBackground2} 0%, transparent 32%),
+      linear-gradient(180deg, ${tokens.colorNeutralBackground1} 0%, ${tokens.colorNeutralBackground2} 100%)
+    `,
+    boxShadow: tokens.shadow16,
+  },
+  fallbackHero: {
+    display: 'grid',
+    gap: tokens.spacingVerticalM,
+  },
+  fallbackKicker: {
+    color: tokens.colorBrandForeground2,
+  },
+  fallbackTitleRow: {
+    display: 'flex',
+    justifyContent: 'space-between',
+    alignItems: 'start',
+    gap: tokens.spacingHorizontalL,
+    flexWrap: 'wrap',
+  },
+  fallbackTitleBlock: {
+    display: 'grid',
+    gap: tokens.spacingVerticalS,
+    maxWidth: '34rem',
+  },
+  fallbackFeatureGrid: {
+    display: 'grid',
+    gridTemplateColumns: 'repeat(3, minmax(0, 1fr))',
+    gap: tokens.spacingHorizontalM,
+    '@media (max-width: 900px)': {
+      gridTemplateColumns: '1fr',
+    },
+  },
+  fallbackFeature: {
+    display: 'grid',
+    gap: tokens.spacingVerticalXS,
+    padding: `${tokens.spacingVerticalM} ${tokens.spacingHorizontalM}`,
+    borderRadius: tokens.borderRadiusLarge,
+    backgroundColor: tokens.colorNeutralBackground1,
+    border: `1px solid ${tokens.colorNeutralStroke2}`,
+    backdropFilter: 'blur(12px)',
+  },
   fallbackActions: {
     display: 'flex',
     gap: tokens.spacingHorizontalM,
@@ -319,11 +369,46 @@ export default function MyActivitiesPage() {
           <Title2>我的活动</Title2>
           <Body1 className={styles.muted}>登录后查看我发起的活动和报名记录。</Body1>
         </div>
-        <Card>
-          <div className={styles.cardBody}>
-            <Button appearance="primary" onClick={() => navigate('/auth/login')}>
-              登录后查看
-            </Button>
+        <Card className={styles.fallbackSurface}>
+          <div className={styles.fallbackHero}>
+            <Caption1 className={styles.fallbackKicker}>PERSONAL ACTIVITY HUB</Caption1>
+            <div className={styles.fallbackTitleRow}>
+              <div className={styles.fallbackTitleBlock}>
+                <Body1Strong>登录后解锁你的活动工作台</Body1Strong>
+                <Body1 className={styles.muted}>
+                  在这里统一查看自己发起的活动、报名进度与审核状态，重要安排会集中展示，不用再分散查找。
+                </Body1>
+              </div>
+            </div>
+            <div className={styles.fallbackActions}>
+              <Button appearance="primary" onClick={() => navigate('/auth/login')}>
+                立即登录
+              </Button>
+              <Button appearance="secondary" onClick={() => navigate('/activities/plaza')}>
+                先去活动广场
+              </Button>
+            </div>
+          </div>
+          <div className={styles.fallbackFeatureGrid}>
+            <div className={styles.fallbackFeature}>
+              <Caption1 className={styles.detailLabel}>发起管理</Caption1>
+              <Body1Strong>跟踪审核与发布状态</Body1Strong>
+              <Caption1 className={styles.muted}>
+                待审核、已发布、已归档都会在一个面板里汇总。
+              </Caption1>
+            </div>
+            <div className={styles.fallbackFeature}>
+              <Caption1 className={styles.detailLabel}>报名记录</Caption1>
+              <Body1Strong>快速回看参与安排</Body1Strong>
+              <Caption1 className={styles.muted}>已报名活动的时间、地点和详情会集中呈现。</Caption1>
+            </div>
+            <div className={styles.fallbackFeature}>
+              <Caption1 className={styles.detailLabel}>下一步</Caption1>
+              <Body1Strong>创建或加入感兴趣的活动</Body1Strong>
+              <Caption1 className={styles.muted}>
+                登录后可直接发起活动，也能继续浏览并报名公开活动。
+              </Caption1>
+            </div>
           </div>
         </Card>
       </div>
