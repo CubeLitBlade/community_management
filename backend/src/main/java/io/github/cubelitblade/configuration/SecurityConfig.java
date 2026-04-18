@@ -69,6 +69,8 @@ public class SecurityConfig {
                         "/api/posts/recent",
                         "/error")
                     .permitAll()
+                    .requestMatchers(HttpMethod.GET, "/api/activities")
+                    .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/posts/*")
                     .permitAll()
                     .requestMatchers(HttpMethod.GET, "/api/comments")

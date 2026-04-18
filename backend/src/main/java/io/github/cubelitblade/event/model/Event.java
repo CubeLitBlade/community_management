@@ -26,6 +26,10 @@ public class Event {
   private Integer version;
 
   public static Event create(Long id, Type type, JsonNode payload, Instant now) {
+    return create(id, type, payload, now, now);
+  }
+
+  public static Event create(Long id, Type type, JsonNode payload, Instant now, Instant nextRunAt) {
     Event event = new Event();
 
     event.id = id;
@@ -34,7 +38,7 @@ public class Event {
     event.status = Status.WAITING;
     event.retryCount = 0;
     event.createdAt = now;
-    event.nextRunAt = now;
+    event.nextRunAt = nextRunAt;
     event.updatedAt = now;
     event.version = 0;
 

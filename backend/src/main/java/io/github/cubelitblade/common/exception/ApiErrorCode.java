@@ -35,8 +35,10 @@ public enum ApiErrorCode {
   ACCOUNT_STATE_ARCHIVED(Category.ACCOUNT_STATE, HttpStatus.CONFLICT, "Invalid account state"),
 
   ACCOUNT_NOT_FOUND(Category.NOT_FOUND, HttpStatus.NOT_FOUND, "Account not found"),
+  ACTIVITY_NOT_FOUND(Category.NOT_FOUND, HttpStatus.NOT_FOUND, "Activity not found"),
   NOTIFICATION_NOT_FOUND(Category.NOT_FOUND, HttpStatus.NOT_FOUND, "Notification not found"),
   POST_NOT_FOUND(Category.NOT_FOUND, HttpStatus.NOT_FOUND, "Post not found"),
+  ACTIVITY_FORBIDDEN(Category.FORBIDDEN, HttpStatus.FORBIDDEN, "Not allowed to access"),
   POST_FORBIDDEN(Category.FORBIDDEN, HttpStatus.FORBIDDEN, "Not allowed to access");
 
   private final Category category;

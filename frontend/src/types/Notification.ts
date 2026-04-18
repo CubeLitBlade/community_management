@@ -21,6 +21,8 @@ export type NotificationView = {
   content: string;
   postTitle: string | null;
   postSummary: string | null;
+  activityTitle: string | null;
+  activitySummary: string | null;
   isRead: boolean;
   readAt: string | null;
   createdAt: string;

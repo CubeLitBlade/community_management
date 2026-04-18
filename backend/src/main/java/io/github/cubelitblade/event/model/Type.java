@@ -9,7 +9,8 @@ import lombok.Getter;
 public enum Type {
   EVENT("event"),
   DEMO_EVENT("demo"),
-  NOTIFICATION_DELIVERY("notification_delivery");
+  NOTIFICATION_DELIVERY("notification_delivery"),
+  ACTIVITY_REMINDER("activity_reminder");
 
   private static final Map<String, Type> map =
       Arrays.stream(Type.values()).collect(Collectors.toMap(Type::getValue, v -> v));

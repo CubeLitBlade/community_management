@@ -8,7 +8,9 @@ import lombok.Getter;
 @Getter
 public enum NotificationType {
   POST_COMMENT("post_comment"),
-  POST_REACTION("post_reaction");
+  POST_REACTION("post_reaction"),
+  ACTIVITY_REMINDER("activity_reminder"),
+  ACTIVITY_UPDATE("activity_update");
 
   private static final Map<String, NotificationType> map =
       Arrays.stream(NotificationType.values())

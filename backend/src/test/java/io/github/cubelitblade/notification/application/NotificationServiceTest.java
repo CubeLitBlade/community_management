@@ -11,6 +11,8 @@ import static org.mockito.Mockito.verify;
 import static org.mockito.Mockito.verifyNoInteractions;
 
 import io.github.cubelitblade.account.persistence.AccountRepository;
+import io.github.cubelitblade.activity.model.Activity;
+import io.github.cubelitblade.activity.persistence.ActivityRepository;
 import io.github.cubelitblade.comment.model.Comment;
 import io.github.cubelitblade.common.id.SnowflakeIdGenerator;
 import io.github.cubelitblade.common.time.TimeProvider;
@@ -19,7 +21,6 @@ import io.github.cubelitblade.event.infra.sse.SseService;
 import io.github.cubelitblade.event.model.Type;
 import io.github.cubelitblade.event.model.payload.EventPayloadMapper;
 import io.github.cubelitblade.event.model.payload.NotificationDeliveryEventPayload;
-import io.github.cubelitblade.account.persistence.AccountRepository;
 import io.github.cubelitblade.notification.dto.NotificationListResponse;
 import io.github.cubelitblade.notification.dto.NotificationUnreadCountResponse;
 import io.github.cubelitblade.notification.exception.NotificationNotFoundException;
@@ -49,6 +50,7 @@ class NotificationServiceTest {
 
   @Mock private NotificationRepository notificationRepository;
   @Mock private AccountRepository accountRepository;
+  @Mock private ActivityRepository activityRepository;
   @Mock private PostRepository postRepository;
   @Mock private SnowflakeIdGenerator idGenerator;
   @Mock private TimeProvider timeProvider;
@@ -64,6 +66,7 @@ class NotificationServiceTest {
         new NotificationService(
             notificationRepository,
             accountRepository,
+            activityRepository,
             postRepository,
             idGenerator,
             timeProvider,
@@ -169,6 +172,34 @@ class NotificationServiceTest {
     NotificationUnreadCountResponse response = notificationService.getUnreadCount(1L);
 
     assertThat(response.count()).isEqualTo(3L);
+  }
+
+  @Test
+  @DisplayName("List: should include dedicated activity notifications in notifications scope")
+  void should_return_activity_notifications_for_notification_scope() {
+    Notification notification =
+        Notification.create(
+            101L, 1L, 9L, NotificationType.ACTIVITY_UPDATE, "activity", 55L, "approved", NOW);
+    Activity activity =
+        Activity.reconstitute(
+            Activity.Snapshot.builder()
+                .id(55L)
+                .creatorAccountId(1L)
+                .title("社区跑步")
+                .location("体育馆")
+                .build());
+    given(notificationRepository.findByRecipientAccountIdAndTypes(eq(1L), anyList()))
+        .willReturn(List.of(NotificationPo.of(notification)));
+    given(activityRepository.findById(55L)).willReturn(Optional.of(activity));
+
+    NotificationListResponse response =
+        notificationService.getNotifications(
+            1L, io.github.cubelitblade.notification.model.NotificationScope.NOTIFICATIONS);
+
+    assertThat(response.notifications()).hasSize(1);
+    assertThat(response.notifications().getFirst().type())
+        .isEqualTo(NotificationType.ACTIVITY_UPDATE.getValue());
+    assertThat(response.notifications().getFirst().activityTitle()).isEqualTo("社区跑步");
   }
 
   @Test

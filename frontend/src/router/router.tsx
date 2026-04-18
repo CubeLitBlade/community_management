@@ -10,6 +10,11 @@ import SettingsChangePasswordPage from '../pages/SettingsChangePasswordPage';
 import NotificationsPage from '../pages/NotificationsPage';
 import RepliesPage from '../pages/RepliesPage';
 import LikesPage from '../pages/LikesPage';
+import ActivityPlazaPage from '../pages/ActivityPlazaPage';
+import CreateActivityPage from '../pages/CreateActivityPage';
+import ActivityDetailPage from '../pages/ActivityDetailPage';
+import MyActivitiesPage from '../pages/MyActivitiesPage';
+import PendingActivitiesPage from '../pages/PendingActivitiesPage';
 import Layout from '../components/Layout/Layout';
 
 const router = createBrowserRouter([
@@ -48,6 +53,26 @@ const router = createBrowserRouter([
       {
         path: '/notifications',
         element: <NotificationsPage />,
+      },
+      {
+        path: '/activities/plaza',
+        element: <ActivityPlazaPage />,
+      },
+      {
+        path: '/activities/create',
+        element: <CreateActivityPage />,
+      },
+      {
+        path: '/activities/about-me',
+        element: <MyActivitiesPage />,
+      },
+      {
+        path: '/activities/review',
+        element: <PendingActivitiesPage />,
+      },
+      {
+        path: '/activities/:activityId',
+        element: <ActivityDetailPage />,
       },
     ],
   },

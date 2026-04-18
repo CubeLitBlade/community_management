@@ -4,6 +4,7 @@ import io.github.cubelitblade.common.id.SnowflakeIdGenerator;
 import io.github.cubelitblade.common.time.TimeProvider;
 import io.github.cubelitblade.event.model.Event;
 import io.github.cubelitblade.event.model.Type;
+import io.github.cubelitblade.event.model.payload.ActivityReminderEventPayload;
 import io.github.cubelitblade.event.model.payload.DemoEventPayload;
 import io.github.cubelitblade.event.model.payload.EventPayload;
 import io.github.cubelitblade.event.model.payload.NotificationDeliveryEventPayload;
@@ -32,12 +33,16 @@ public class EventService {
   }
 
   public Event createEvent(String type, JsonNode payloadJson) {
+    return createEvent(type, payloadJson, timeProvider.now());
+  }
+
+  public Event createEvent(String type, JsonNode payloadJson, Instant nextRunAt) {
     if (getPayloadClass(type) == null) {
       throw new IllegalArgumentException("Unknown event type: " + type);
     }
 
     Event event =
-        Event.create(idGenerator.nextId(), Type.from(type), payloadJson, timeProvider.now());
+        Event.create(idGenerator.nextId(), Type.from(type), payloadJson, timeProvider.now(), nextRunAt);
 
     eventRepository.save(event);
     return event;
@@ -53,6 +58,7 @@ public class EventService {
 
   private Class<? extends EventPayload> getPayloadClass(String type) {
     return switch (type) {
+      case "activity_reminder" -> ActivityReminderEventPayload.class;
       case "demo" -> DemoEventPayload.class;
       case "notification_delivery" -> NotificationDeliveryEventPayload.class;
       default -> null;

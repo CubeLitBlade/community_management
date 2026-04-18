@@ -14,11 +14,18 @@ public record NotificationResponse(
     String content,
     String postTitle,
     String postSummary,
+    String activityTitle,
+    String activitySummary,
     boolean isRead,
     Instant readAt,
     Instant createdAt) {
   public static NotificationResponse from(
-      Notification notification, String actorDisplayName, String postTitle, String postSummary) {
+      Notification notification,
+      String actorDisplayName,
+      String postTitle,
+      String postSummary,
+      String activityTitle,
+      String activitySummary) {
     return new NotificationResponse(
         notification.getId(),
         notification.getRecipientAccountId(),
@@ -30,6 +37,8 @@ public record NotificationResponse(
         notification.getContent(),
         postTitle,
         postSummary,
+        activityTitle,
+        activitySummary,
         notification.isRead(),
         notification.getReadAt(),
         notification.getCreatedAt());

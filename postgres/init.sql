@@ -10,6 +10,10 @@ drop table if exists "comment" cascade;
 
 drop table if exists "reactions" cascade;
 
+drop table if exists "activity_registrations" cascade;
+
+drop table if exists "activities" cascade;
+
 create sequence event_id_seq;
 
 create sequence account_id_seq;
@@ -91,6 +95,54 @@ create index if not exists idx_notifications_recipient_created
 
 create index if not exists idx_notifications_recipient_unread
 	on notifications (recipient_account_id, is_read);
+
+create table if not exists activities
+(
+	id bigint not null
+		constraint pk_activities
+			primary key,
+	creator_account_id bigint not null,
+	title varchar(120) not null,
+	description text not null,
+	location varchar(255) not null,
+	registration_deadline timestamp with time zone not null,
+	start_time timestamp with time zone not null,
+	end_time timestamp with time zone not null,
+	status varchar(20) default 'pending'::character varying not null
+		constraint chk_activity_status
+			check ((status)::text = ANY (ARRAY[('pending'::character varying)::text, ('approved'::character varying)::text, ('rejected'::character varying)::text, ('archived'::character varying)::text])),
+	approved_by bigint,
+	approved_at timestamp with time zone,
+	rejected_by bigint,
+	rejected_at timestamp with time zone,
+	rejection_reason text,
+	created_at timestamp with time zone default CURRENT_TIMESTAMP not null,
+	updated_at timestamp with time zone default CURRENT_TIMESTAMP not null
+);
+
+create index if not exists idx_activities_public_list
+	on activities (status asc, start_time asc);
+
+create index if not exists idx_activities_pending
+	on activities (status asc, created_at asc);
+
+create index if not exists idx_activities_creator
+	on activities (creator_account_id, created_at desc);
+
+create table if not exists activity_registrations
+(
+	activity_id bigint not null,
+	account_id bigint not null,
+	created_at timestamp with time zone default CURRENT_TIMESTAMP not null,
+	constraint pk_activity_registrations
+		primary key (activity_id, account_id)
+);
+
+create index if not exists idx_activity_registrations_activity
+	on activity_registrations (activity_id, created_at asc);
+
+create index if not exists idx_activity_registrations_account
+	on activity_registrations (account_id, created_at desc);
 
 create table if not exists accounts
 (

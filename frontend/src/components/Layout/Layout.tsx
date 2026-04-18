@@ -61,7 +61,8 @@ const useStyles = makeStyles({
     display: 'flex',
     flexDirection: 'column',
     overflow: 'hidden',
-    backgroundColor: tokens.colorNeutralBackground2,
+    backgroundColor: tokens.colorNeutralBackground1,
+    backgroundImage: `linear-gradient(180deg, ${tokens.colorBrandBackground2} 0%, ${tokens.colorNeutralBackground1} 28%, ${tokens.colorBrandBackground2} 100%)`,
   },
   contentBody: {
     flex: '1',
@@ -172,12 +173,11 @@ export default function Layout() {
             <NavCategory value="/activities">
               <NavCategoryItem icon={<CalendarMultipleIcon />}>活动</NavCategoryItem>
               <NavSubItemGroup>
-                <NavSubItem value="/activities/plaza" disabled>
-                  广场
-                </NavSubItem>
-                <NavSubItem value="/activities/about-me" disabled>
-                  我的
-                </NavSubItem>
+                <NavSubItem value="/activities/plaza">广场</NavSubItem>
+                <NavSubItem value="/activities/about-me">我的</NavSubItem>
+                {profile?.role === 'admin' || profile?.role === 'owner' ? (
+                  <NavSubItem value="/activities/review">审核</NavSubItem>
+                ) : null}
               </NavSubItemGroup>
             </NavCategory>
             <NavSectionHeader>与我相关</NavSectionHeader>

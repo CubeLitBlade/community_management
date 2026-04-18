@@ -6,5 +6,9 @@
   "scripts": {
     "format": "prettier --write .",
     "format:check": "prettier --check ."
+  },
+  "dependencies": {
+    "@fluentui/react-datepicker-compat": "^0.6.30",
+    "@fluentui/react-timepicker-compat": "^0.4.33"
   }
 }

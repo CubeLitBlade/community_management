@@ -22,7 +22,10 @@ public enum NotificationScope {
       case ALL -> Arrays.stream(NotificationType.values()).map(NotificationType::getValue).toList();
       case REPLIES -> List.of(NotificationType.POST_COMMENT.getValue());
       case REACTIONS -> List.of(NotificationType.POST_REACTION.getValue());
-      case NOTIFICATIONS -> List.of();
+      case NOTIFICATIONS ->
+          List.of(
+              NotificationType.ACTIVITY_REMINDER.getValue(),
+              NotificationType.ACTIVITY_UPDATE.getValue());
     };
   }
 }

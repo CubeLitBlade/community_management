@@ -62,6 +62,7 @@ function getReactionVerb(value: string | null) {
 export function toNotificationItem(notification: NotificationView): NotificationItem {
   const actor = notification.actorDisplayName?.trim() || '有人';
   const postContext = notification.postTitle || notification.postSummary || null;
+  const activityContext = notification.activityTitle || notification.activitySummary || null;
 
   switch (notification.type) {
     case 'post_comment':
@@ -105,15 +106,19 @@ export function toNotificationItem(notification: NotificationView): Notification
         id: notification.id,
         title: '活动提醒',
         summary: notification.content ?? '查看活动提醒',
+        contextSummary: activityContext,
         time: formatNotificationTime(notification.createdAt),
+        href: notification.targetType === 'activity' ? `/activities/${notification.targetId}` : undefined,
         unread: !notification.isRead,
       };
     case 'activity_update':
       return {
         id: notification.id,
-        title: '活动更新',
+        title: `${actor} 处理了你的活动`,
         summary: notification.content ?? '查看活动更新',
+        contextSummary: activityContext,
         time: formatNotificationTime(notification.createdAt),
+        href: notification.targetType === 'activity' ? `/activities/${notification.targetId}` : undefined,
         unread: !notification.isRead,
       };
     case 'task_reminder':

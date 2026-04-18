@@ -1,6 +1,8 @@
 package io.github.cubelitblade.notification.application;
 
 import io.github.cubelitblade.account.persistence.AccountRepository;
+import io.github.cubelitblade.activity.model.Activity;
+import io.github.cubelitblade.activity.persistence.ActivityRepository;
 import io.github.cubelitblade.comment.model.Comment;
 import io.github.cubelitblade.common.id.SnowflakeIdGenerator;
 import io.github.cubelitblade.common.time.TimeProvider;
@@ -35,6 +37,7 @@ import org.springframework.web.servlet.mvc.method.annotation.SseEmitter;
 public class NotificationService {
   private final NotificationRepository notificationRepository;
   private final AccountRepository accountRepository;
+  private final ActivityRepository activityRepository;
   private final PostRepository postRepository;
   private final SnowflakeIdGenerator idGenerator;
   private final TimeProvider timeProvider;
@@ -133,6 +136,42 @@ public class NotificationService {
                     reaction.getReactionType().getValue()));
   }
 
+  public void notifyActivityApproved(Activity activity, Long actorAccountId) {
+    createAndQueueNotification(
+        activity.getCreatorAccountId(),
+        actorAccountId,
+        NotificationType.ACTIVITY_UPDATE,
+        "activity",
+        activity.getId(),
+        "你的活动已通过审核");
+  }
+
+  public void notifyActivityRejected(Activity activity, Long actorAccountId) {
+    String content =
+        activity.getRejectionReason() == null
+            ? "你的活动未通过审核"
+            : "你的活动未通过审核：" + activity.getRejectionReason();
+    createAndQueueNotification(
+        activity.getCreatorAccountId(),
+        actorAccountId,
+        NotificationType.ACTIVITY_UPDATE,
+        "activity",
+        activity.getId(),
+        content);
+  }
+
+  public void notifyActivityReminder(Activity activity, List<Long> recipientAccountIds) {
+    for (Long recipientAccountId : recipientAccountIds) {
+      createAndQueueNotification(
+          recipientAccountId,
+          activity.getCreatorAccountId(),
+          NotificationType.ACTIVITY_REMINDER,
+          "activity",
+          activity.getId(),
+          "你报名的活动即将开始");
+    }
+  }
+
   @Transactional(readOnly = true)
   public NotificationResponse getNotification(Long notificationId, Long recipientAccountId) {
     return notificationRepository
@@ -198,15 +237,24 @@ public class NotificationService {
 
     String postTitle = null;
     String postSummary = null;
+    String activityTitle = null;
+    String activitySummary = null;
     if ("post".equals(notification.getTargetType())) {
       Post post = postRepository.getPost(notification.getTargetId()).orElse(null);
       if (post != null) {
         postTitle = normalize(post.getTitle());
         postSummary = summarizePost(post);
       }
+    } else if ("activity".equals(notification.getTargetType())) {
+      Activity activity = activityRepository.findById(notification.getTargetId()).orElse(null);
+      if (activity != null) {
+        activityTitle = normalize(activity.getTitle());
+        activitySummary = summarizeActivity(activity);
+      }
     }
 
-    return NotificationResponse.from(notification, actorDisplayName, postTitle, postSummary);
+    return NotificationResponse.from(
+        notification, actorDisplayName, postTitle, postSummary, activityTitle, activitySummary);
   }
 
   private String summarizePost(Post post) {
@@ -222,6 +270,17 @@ public class NotificationService {
     }
 
     return content;
+  }
+
+  private String summarizeActivity(Activity activity) {
+    String title = normalize(activity.getTitle());
+    String location = normalize(activity.getLocation());
+
+    if (location == null) {
+      return title;
+    }
+
+    return title == null ? location : title + " · " + location;
   }
 
   private String normalize(String value) {
