@@ -19,6 +19,7 @@ const CreateActivityPage = lazy(() => import('../pages/CreateActivityPage'));
 const ActivityDetailPage = lazy(() => import('../pages/ActivityDetailPage'));
 const MyActivitiesPage = lazy(() => import('../pages/MyActivitiesPage'));
 const PendingActivitiesPage = lazy(() => import('../pages/PendingActivitiesPage'));
+const AccountsManagementPage = lazy(() => import('../pages/AccountsManagementPage'));
 
 const useStyles = makeStyles({
   fallback: {
@@ -99,6 +100,10 @@ const router = createBrowserRouter([
       {
         path: '/activities/:activityId',
         element: withSuspense(<ActivityDetailPage />),
+      },
+      {
+        path: '/management/accounts',
+        element: withSuspense(<AccountsManagementPage />),
       },
     ],
   },

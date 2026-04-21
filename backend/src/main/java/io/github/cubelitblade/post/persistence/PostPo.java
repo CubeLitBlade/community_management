@@ -14,6 +14,8 @@ public record PostPo(
     String status,
     Instant createdAt,
     Instant updatedAt) {
+
+  // 从 Post 扁平化到 PostPo
   public static PostPo of(Post post) {
     if (post == null) {
       return null;
@@ -30,6 +32,7 @@ public record PostPo(
         .build();
   }
 
+  // 从 PostPo 结构化到 Post 快照，再通过 reconstitute 方法重建 Post
   public Post toPost() {
     Post.Snapshot snapshot =
         Post.Snapshot.builder()

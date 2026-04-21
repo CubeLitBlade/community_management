@@ -69,13 +69,13 @@ class AccountPoMappingTest {
     // Then
     assertThat(restored)
         .extracting(
-            AccountPo::getUsername,
-            AccountPo::getPasswordHash,
-            AccountPo::getMustChangePassword,
-            AccountPo::getEmail,
-            AccountPo::getPhone,
-            AccountPo::getRole,
-            AccountPo::getStatus)
+            AccountPo::username,
+            AccountPo::passwordHash,
+            AccountPo::mustChangePassword,
+            AccountPo::email,
+            AccountPo::phone,
+            AccountPo::role,
+            AccountPo::status)
         .containsExactly(
             "round_trip", "hash", true, "rt@test.com", "13800138000", "user", "normal");
   }

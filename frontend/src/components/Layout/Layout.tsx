@@ -206,9 +206,11 @@ export default function Layout() {
                 活动审批
               </NavItem>
             ) : null}
-            <NavItem icon={<LayerDiagonalPersonIcon />} value="/management/accounts" disabled>
-              用户管理
-            </NavItem>
+            {profile?.role === 'admin' || profile?.role === 'owner' ? (
+              <NavItem icon={<LayerDiagonalPersonIcon />} value="/management/accounts">
+                用户管理
+              </NavItem>
+            ) : null}
           </div>
           <div>
             <NavDivider />

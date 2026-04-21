@@ -12,6 +12,19 @@ export type Profile = {
   mustChangePassword: boolean;
 };
 
+export type ManagedAccount = {
+  id: number;
+  username: string;
+  nickname: string;
+  role: Role;
+  status: Status;
+  mustChangePassword: boolean;
+};
+
+export type ManagedAccountListResponse = {
+  accounts: ManagedAccount[];
+};
+
 export type LoginRequest = {
   username: string;
   password: string;
@@ -37,4 +50,8 @@ export type RegisterRequest = {
   password: string;
   email: string | null;
   phone: string | null;
+};
+
+export type ResetManagedAccountPasswordRequest = {
+  newPassword: string;
 };
