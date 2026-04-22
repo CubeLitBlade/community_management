@@ -2,6 +2,8 @@ drop table if exists "events" cascade;
 
 drop table if exists "notifications" cascade;
 
+drop table if exists "private_messages" cascade;
+
 drop table if exists "account" cascade;
 
 drop table if exists "posts" cascade;
@@ -95,6 +97,28 @@ create index if not exists idx_notifications_recipient_created
 
 create index if not exists idx_notifications_recipient_unread
 	on notifications (recipient_account_id, is_read);
+
+create table if not exists private_messages
+(
+	id bigint not null
+		constraint pk_private_messages
+			primary key,
+	sender_account_id bigint not null,
+	recipient_account_id bigint not null,
+	content text not null,
+	is_read boolean default false not null,
+	read_at timestamp with time zone,
+	created_at timestamp with time zone default CURRENT_TIMESTAMP not null
+);
+
+create index if not exists idx_private_messages_sender_created
+	on private_messages (sender_account_id, created_at desc);
+
+create index if not exists idx_private_messages_recipient_created
+	on private_messages (recipient_account_id, created_at desc);
+
+create index if not exists idx_private_messages_recipient_unread
+	on private_messages (recipient_account_id, sender_account_id, is_read);
 
 create table if not exists activities
 (

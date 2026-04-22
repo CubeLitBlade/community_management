@@ -5,6 +5,8 @@ import {
   CalendarCheckmarkCenter20Regular,
   CalendarMultiple20Filled,
   CalendarMultiple20Regular,
+  Chat20Filled,
+  Chat20Regular,
   CommentBadge20Filled,
   CommentBadge20Regular,
   Home20Filled,
@@ -42,6 +44,7 @@ export const ThumbLikeIcon = bundleIcon(
   ThumbLike20Filled as FluentIcon,
   ThumbLike20Regular as FluentIcon,
 );
+export const ChatIcon = bundleIcon(Chat20Filled as FluentIcon, Chat20Regular as FluentIcon);
 export const MailInboxAllIcon = bundleIcon(
   MailInboxAll20Filled as FluentIcon,
   MailInboxAll20Regular as FluentIcon,

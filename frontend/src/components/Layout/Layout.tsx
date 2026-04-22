@@ -22,6 +22,7 @@ import { useLocation, useNavigate, Outlet } from 'react-router';
 import {
   CalendarCheckmarkCenterIcon,
   CalendarMultipleIcon,
+  ChatIcon,
   CommentBadgeIcon,
   HomeIcon,
   LayerDiagonalPersonIcon,
@@ -196,6 +197,9 @@ export default function Layout() {
             </NavItem>
             <NavItem icon={<ThumbLikeIcon />} value="/likes">
               收到回应
+            </NavItem>
+            <NavItem icon={<ChatIcon />} value="/messages">
+              私信
             </NavItem>
             <NavItem icon={<MailInboxAllIcon />} value="/notifications">
               通知

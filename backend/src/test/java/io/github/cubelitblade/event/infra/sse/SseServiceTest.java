@@ -37,6 +37,8 @@ class SseServiceTest {
             "content",
             "Post title",
             "Post summary",
+            null,
+            null,
             false,
             null,
             Instant.now());
@@ -72,6 +74,8 @@ class SseServiceTest {
             "content",
             "Post title",
             "Post summary",
+            null,
+            null,
             false,
             null,
             Instant.now());

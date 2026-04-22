@@ -14,6 +14,7 @@ const SettingsChangePasswordPage = lazy(() => import('../pages/SettingsChangePas
 const NotificationsPage = lazy(() => import('../pages/NotificationsPage'));
 const RepliesPage = lazy(() => import('../pages/RepliesPage'));
 const LikesPage = lazy(() => import('../pages/LikesPage'));
+const MessagesPage = lazy(() => import('../pages/MessagesPage'));
 const ActivityPlazaPage = lazy(() => import('../pages/ActivityPlazaPage'));
 const CreateActivityPage = lazy(() => import('../pages/CreateActivityPage'));
 const ActivityDetailPage = lazy(() => import('../pages/ActivityDetailPage'));
@@ -76,6 +77,10 @@ const router = createBrowserRouter([
       {
         path: '/likes',
         element: withSuspense(<LikesPage />),
+      },
+      {
+        path: '/messages',
+        element: withSuspense(<MessagesPage />),
       },
       {
         path: '/notifications',

@@ -3,6 +3,7 @@ package io.github.cubelitblade.account.web;
 import io.github.cubelitblade.account.application.AccountService;
 import io.github.cubelitblade.account.dto.AccountMeResponse;
 import io.github.cubelitblade.account.dto.ChangePasswordRequest;
+import io.github.cubelitblade.account.dto.ContactAccountListResponse;
 import io.github.cubelitblade.account.exception.AccountNotFoundException;
 import io.github.cubelitblade.account.security.JwtAuthenticatedUser;
 import lombok.RequiredArgsConstructor;
@@ -29,6 +30,12 @@ public class AccountController {
         .map(AccountMeResponse::from)
         .map(ResponseEntity::ok)
         .orElseThrow(AccountNotFoundException::notFound);
+  }
+
+  @GetMapping("/contacts")
+  public ResponseEntity<ContactAccountListResponse> contacts(
+      @AuthenticationPrincipal JwtAuthenticatedUser authenticatedUser) {
+    return ResponseEntity.ok(accountService.getContacts(authenticatedUser.accountId()));
   }
 
   @PostMapping("/change-password")

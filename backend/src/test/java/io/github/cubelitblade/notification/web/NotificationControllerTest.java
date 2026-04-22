@@ -66,6 +66,8 @@ class NotificationControllerTest {
                         "New comment on your post",
                         "Community update",
                         "Alice commented on your post",
+                        null,
+                        null,
                         false,
                         null,
                         Instant.parse("2026-04-15T08:00:00Z")))));

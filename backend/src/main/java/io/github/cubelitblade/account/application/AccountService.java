@@ -1,17 +1,19 @@
 package io.github.cubelitblade.account.application;
 
 import io.github.cubelitblade.account.application.validation.*;
-import io.github.cubelitblade.account.dto.AdminAccountListResponse;
-import io.github.cubelitblade.account.dto.AdminAccountView;
 import io.github.cubelitblade.account.dto.AccountLoginRequest;
 import io.github.cubelitblade.account.dto.AccountRegisterRequest;
+import io.github.cubelitblade.account.dto.AdminAccountListResponse;
+import io.github.cubelitblade.account.dto.AdminAccountView;
 import io.github.cubelitblade.account.dto.ChangePasswordRequest;
+import io.github.cubelitblade.account.dto.ContactAccountListResponse;
+import io.github.cubelitblade.account.dto.ContactAccountView;
 import io.github.cubelitblade.account.dto.RegisterFieldsCheckRequest;
 import io.github.cubelitblade.account.dto.RegisterFieldsCheckResponse;
 import io.github.cubelitblade.account.dto.ResetPasswordRequest;
 import io.github.cubelitblade.account.dto.TokenResponse;
-import io.github.cubelitblade.account.exception.AccountForbiddenException;
 import io.github.cubelitblade.account.exception.AccountConflictException;
+import io.github.cubelitblade.account.exception.AccountForbiddenException;
 import io.github.cubelitblade.account.exception.AccountInputException;
 import io.github.cubelitblade.account.exception.AccountNotFoundException;
 import io.github.cubelitblade.account.exception.AccountStateException;
@@ -160,6 +162,14 @@ public class AccountService {
   @Transactional(readOnly = true)
   public Optional<Account> findAccount(Long accountId) {
     return accountRepository.findAccountById(accountId);
+  }
+
+  @Transactional(readOnly = true)
+  public ContactAccountListResponse getContacts(Long accountId) {
+    return new ContactAccountListResponse(
+        accountRepository.findNormalContactsExcluding(accountId).stream()
+            .map(ContactAccountView::from)
+            .toList());
   }
 
   @Transactional(readOnly = true)

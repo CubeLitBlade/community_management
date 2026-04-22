@@ -25,6 +25,16 @@ export type ManagedAccountListResponse = {
   accounts: ManagedAccount[];
 };
 
+export type ContactAccount = {
+  id: number;
+  username: string;
+  nickname: string | null;
+};
+
+export type ContactAccountListResponse = {
+  accounts: ContactAccount[];
+};
+
 export type LoginRequest = {
   username: string;
   password: string;

@@ -8,6 +8,9 @@ importers:
 
   .:
     dependencies:
+      '@fluentui-contrib/react-chat':
+        specifier: ^0.2.2
+        version: 0.2.2(@fluentui/react-components@9.73.7(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(scheduler@0.27.0))(@fluentui/react-icons@2.0.323(react@19.2.5))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)
       '@fluentui/react-charts':
         specifier: ^9.3.17
         version: 9.3.17(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(scheduler@0.27.0)
@@ -214,6 +217,16 @@ packages:
 
   '@floating-ui/utils@0.2.11':
     resolution: {integrity: sha512-RiB/yIh78pcIxl6lLMG0CgBXAZ2Y0eVHqMPYugu+9U0AeT6YBeiJpf7lbdJNIugFP5SIjwNRgo4DhR1Qxi26Gg==}
+
+  '@fluentui-contrib/react-chat@0.2.2':
+    resolution: {integrity: sha512-bU2sK5qVMGKc3+abecs2Gg5q2SwIo2CfUu7LDDXnpL8ORZZaZYHZ+u1aqn3WvqbRy6z5o/tnfcTrToq98ehzpQ==}
+    peerDependencies:
+      '@fluentui/react-components': '>=9.70.0 <10.0.0'
+      '@fluentui/react-icons': '>=2.0.204 <3.0.0'
+      '@types/react': '>=16.8.0 <20.0.0'
+      '@types/react-dom': '>=16.8.0 <20.0.0'
+      react: '>=16.8.0 <20.0.0'
+      react-dom: '>=16.8.0 <20.0.0'
 
   '@fluentui/chart-utilities@1.1.38':
     resolution: {integrity: sha512-MK2jwYjlZPr7/Y6T+Du445bito+6+RK/H3WTtBaIcUC2WTqOqaVDmV0aUCMl01kIMlWl3epz9DK/Wj/h3ZJMvQ==}
@@ -1967,6 +1980,17 @@ snapshots:
       '@floating-ui/utils': 0.2.11
 
   '@floating-ui/utils@0.2.11': {}
+
+  '@fluentui-contrib/react-chat@0.2.2(@fluentui/react-components@9.73.7(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(scheduler@0.27.0))(@fluentui/react-icons@2.0.323(react@19.2.5))(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)':
+    dependencies:
+      '@fluentui/react-components': 9.73.7(@types/react-dom@19.2.3(@types/react@19.2.14))(@types/react@19.2.14)(react-dom@19.2.5(react@19.2.5))(react@19.2.5)(scheduler@0.27.0)
+      '@fluentui/react-icons': 2.0.323(react@19.2.5)
+      '@fluentui/react-jsx-runtime': 9.4.1(@types/react@19.2.14)(react@19.2.5)
+      '@swc/helpers': 0.5.21
+      '@types/react': 19.2.14
+      '@types/react-dom': 19.2.3(@types/react@19.2.14)
+      react: 19.2.5
+      react-dom: 19.2.5(react@19.2.5)
 
   '@fluentui/chart-utilities@1.1.38':
     dependencies:

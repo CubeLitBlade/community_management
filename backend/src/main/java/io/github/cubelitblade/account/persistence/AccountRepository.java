@@ -2,13 +2,17 @@ package io.github.cubelitblade.account.persistence;
 
 import static org.mybatis.dynamic.sql.SqlBuilder.insert;
 import static org.mybatis.dynamic.sql.SqlBuilder.isEqualTo;
+import static org.mybatis.dynamic.sql.SqlBuilder.isIn;
+import static org.mybatis.dynamic.sql.SqlBuilder.isNotEqualTo;
 import static org.mybatis.dynamic.sql.SqlBuilder.select;
 import static org.mybatis.dynamic.sql.SqlBuilder.update;
 
 import io.github.cubelitblade.account.model.Account;
+import io.github.cubelitblade.account.model.Status;
 import java.util.List;
 import java.util.Optional;
 import lombok.RequiredArgsConstructor;
+import org.mybatis.dynamic.sql.BasicColumn;
 import org.mybatis.dynamic.sql.insert.render.InsertStatementProvider;
 import org.mybatis.dynamic.sql.render.RenderingStrategies;
 import org.mybatis.dynamic.sql.select.render.SelectStatementProvider;
@@ -19,6 +23,23 @@ import org.springframework.transaction.annotation.Transactional;
 @Repository
 @RequiredArgsConstructor
 public class AccountRepository {
+  private static final BasicColumn[] SELECT_COLUMNS = {
+    AccountDynamicSqlSupport.id,
+    AccountDynamicSqlSupport.username,
+    AccountDynamicSqlSupport.passwordHash,
+    AccountDynamicSqlSupport.mustChangePassword,
+    AccountDynamicSqlSupport.nickname,
+    AccountDynamicSqlSupport.email,
+    AccountDynamicSqlSupport.phone,
+    AccountDynamicSqlSupport.profile,
+    AccountDynamicSqlSupport.role,
+    AccountDynamicSqlSupport.status,
+    AccountDynamicSqlSupport.createdAt,
+    AccountDynamicSqlSupport.updatedAt,
+    AccountDynamicSqlSupport.lastLoginAt,
+    AccountDynamicSqlSupport.lastLoginIp
+  };
+
   private final AccountMapper accountMapper;
 
   @Transactional(readOnly = true)
@@ -46,6 +67,36 @@ public class AccountRepository {
                 AccountDynamicSqlSupport.lastLoginIp)
             .from(AccountDynamicSqlSupport.accounts)
             .orderBy(AccountDynamicSqlSupport.id)
+            .build()
+            .render(RenderingStrategies.MYBATIS3);
+
+    return accountMapper.selectMany(selectStatement).stream().map(AccountPo::toDomain).toList();
+  }
+
+  @Transactional(readOnly = true)
+  public List<Account> findNormalContactsExcluding(Long accountId) {
+    SelectStatementProvider selectStatement =
+        select(SELECT_COLUMNS)
+            .from(AccountDynamicSqlSupport.accounts)
+            .where(AccountDynamicSqlSupport.status, isEqualTo(Status.NORMAL.getValue()))
+            .and(AccountDynamicSqlSupport.id, isNotEqualTo(accountId))
+            .orderBy(AccountDynamicSqlSupport.username)
+            .build()
+            .render(RenderingStrategies.MYBATIS3);
+
+    return accountMapper.selectMany(selectStatement).stream().map(AccountPo::toDomain).toList();
+  }
+
+  @Transactional(readOnly = true)
+  public List<Account> findAccountsByIds(List<Long> ids) {
+    if (ids == null || ids.isEmpty()) {
+      return List.of();
+    }
+
+    SelectStatementProvider selectStatement =
+        select(SELECT_COLUMNS)
+            .from(AccountDynamicSqlSupport.accounts)
+            .where(AccountDynamicSqlSupport.id, isIn(ids))
             .build()
             .render(RenderingStrategies.MYBATIS3);
 
@@ -152,28 +203,15 @@ public class AccountRepository {
 
   private <T> SelectStatementProvider selectAllColumnsWhere(
       org.mybatis.dynamic.sql.SqlColumn<T> column, T value) {
-    return select(
-            AccountDynamicSqlSupport.id,
-            AccountDynamicSqlSupport.username,
-            AccountDynamicSqlSupport.passwordHash,
-            AccountDynamicSqlSupport.mustChangePassword,
-            AccountDynamicSqlSupport.nickname,
-            AccountDynamicSqlSupport.email,
-            AccountDynamicSqlSupport.phone,
-            AccountDynamicSqlSupport.profile,
-            AccountDynamicSqlSupport.role,
-            AccountDynamicSqlSupport.status,
-            AccountDynamicSqlSupport.createdAt,
-            AccountDynamicSqlSupport.updatedAt,
-            AccountDynamicSqlSupport.lastLoginAt,
-            AccountDynamicSqlSupport.lastLoginIp)
+    return select(SELECT_COLUMNS)
         .from(AccountDynamicSqlSupport.accounts)
         .where(column, isEqualTo(value))
         .build()
         .render(RenderingStrategies.MYBATIS3);
   }
 
-  private <T> Optional<AccountPo> selectOneBy(org.mybatis.dynamic.sql.SqlColumn<T> column, T value) {
+  private <T> Optional<AccountPo> selectOneBy(
+      org.mybatis.dynamic.sql.SqlColumn<T> column, T value) {
     return accountMapper.selectOne(selectAllColumnsWhere(column, value));
   }
 }
