@@ -62,7 +62,9 @@ class AdminAccountControllerTest {
         .bodyJson()
         .satisfies(
             json ->
-                assertThat(json).extractingPath("$.accounts[1].mustChangePassword").isEqualTo(true));
+                assertThat(json)
+                    .extractingPath("$.accounts[1].mustChangePassword")
+                    .isEqualTo(true));
   }
 
   @Test
@@ -83,8 +85,7 @@ class AdminAccountControllerTest {
                 .content(serialize(request)))
         .hasStatus(HttpStatus.OK)
         .bodyJson()
-        .satisfies(
-            json -> assertThat(json).extractingPath("$.mustChangePassword").isEqualTo(true));
+        .satisfies(json -> assertThat(json).extractingPath("$.mustChangePassword").isEqualTo(true));
   }
 
   @Test
@@ -150,8 +151,7 @@ class AdminAccountControllerTest {
     JwtAuthenticatedUser authenticatedUser = new JwtAuthenticatedUser(1L, Role.OWNER);
     when(jwtTokenProvider.parseToken("valid-token")).thenReturn(authenticatedUser);
     when(accountService.archiveAccount(authenticatedUser, 3L))
-        .thenReturn(
-            new AdminAccountView(3L, "user#archived_3", "user", "user", "archived", false));
+        .thenReturn(new AdminAccountView(3L, "user#archived_3", "user", "user", "archived", false));
 
     assertThat(
             mvc.post()

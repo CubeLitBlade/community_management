@@ -30,10 +30,26 @@ public interface AccountMapper
   @Results(id = "AccountResult")
   @ConstructorArgs({
     @Arg(column = "id", name = "id", javaType = Long.class, jdbcType = JdbcType.BIGINT, id = true),
-    @Arg(column = "username", name = "username", javaType = String.class, jdbcType = JdbcType.VARCHAR),
-    @Arg(column = "password_hash", name = "passwordHash", javaType = String.class, jdbcType = JdbcType.VARCHAR),
-    @Arg(column = "must_change_password", name = "mustChangePassword", javaType = Boolean.class, jdbcType = JdbcType.BOOLEAN),
-    @Arg(column = "nickname", name = "nickname", javaType = String.class, jdbcType = JdbcType.VARCHAR),
+    @Arg(
+        column = "username",
+        name = "username",
+        javaType = String.class,
+        jdbcType = JdbcType.VARCHAR),
+    @Arg(
+        column = "password_hash",
+        name = "passwordHash",
+        javaType = String.class,
+        jdbcType = JdbcType.VARCHAR),
+    @Arg(
+        column = "must_change_password",
+        name = "mustChangePassword",
+        javaType = Boolean.class,
+        jdbcType = JdbcType.BOOLEAN),
+    @Arg(
+        column = "nickname",
+        name = "nickname",
+        javaType = String.class,
+        jdbcType = JdbcType.VARCHAR),
     @Arg(column = "email", name = "email", javaType = String.class, jdbcType = JdbcType.VARCHAR),
     @Arg(column = "phone", name = "phone", javaType = String.class, jdbcType = JdbcType.VARCHAR),
     @Arg(
