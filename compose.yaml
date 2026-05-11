@@ -8,7 +8,7 @@ services:
       POSTGRES_PASSWORD: ${DB_PASSWORD}
       POSTGRES_DB: ${DB_NAME}
     ports:
-      - '${DB_EXTERNAL_PORT}:5432'
+      - '127.0.0.1:${DB_EXTERNAL_PORT}:5432'
     volumes:
       - postgres_data_vol:/var/lib/postgresql/data
       - ./postgres:/docker-entrypoint-initdb.d:ro,Z
@@ -25,7 +25,7 @@ services:
     restart: always
     command: ["redis-server", "--appendonly", "yes"]
     ports:
-      - '${REDIS_EXTERNAL_PORT}:6379'
+      - '127.0.0.1:${REDIS_EXTERNAL_PORT}:6379'
     volumes:
       - redis_data_vol:/data
     healthcheck:

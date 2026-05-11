@@ -2,12 +2,19 @@ services:
   app:
     image: ghcr.io/cubelitblade/community_management:latest
     environment:
+      - DB_HOST=db
       - DB_NAME=${DB_NAME}
+      - DB_PORT=5432
       - DB_USER=${DB_USER}
       - DB_PASSWORD=${DB_PASSWORD}
       - JWT_SECRET=${JWT_SECRET}
-      - REDIS_HOST=${REDIS_HOST}
+      - REDIS_HOST=redis
       - REDIS_PORT=${REDIS_PORT}
+      - SPRING_DATASOURCE_URL=jdbc:postgresql://db:5432/${DB_NAME}
+      - SPRING_DATA_REDIS_HOST=redis
+      - SPRING_DATA_REDIS_PORT=6379
+    ports:
+      - '${APP_EXTERNAL_PORT:-8080}:8080'
     depends_on:
       db:
         condition: service_healthy

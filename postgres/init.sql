@@ -4,11 +4,11 @@ drop table if exists "notifications" cascade;
 
 drop table if exists "private_messages" cascade;
 
-drop table if exists "account" cascade;
+drop table if exists "accounts" cascade;
 
 drop table if exists "posts" cascade;
 
-drop table if exists "comment" cascade;
+drop table if exists "comments" cascade;
 
 drop table if exists "reactions" cascade;
 
@@ -16,13 +16,13 @@ drop table if exists "activity_registrations" cascade;
 
 drop table if exists "activities" cascade;
 
-create sequence event_id_seq;
+drop sequence if exists event_id_seq;
 
-create sequence account_id_seq;
+drop sequence if exists account_id_seq;
 
-create sequence post_id_seq;
+drop sequence if exists post_id_seq;
 
-create sequence comment_id_seq;
+drop sequence if exists comment_id_seq;
 
 create sequence event_id_seq;
 
