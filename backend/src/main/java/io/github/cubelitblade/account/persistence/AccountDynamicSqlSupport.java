@@ -2,6 +2,7 @@ package io.github.cubelitblade.account.persistence;
 
 import io.github.cubelitblade.account.model.Profile;
 import io.github.cubelitblade.common.typehandler.InetAddressTypeHandler;
+import io.github.cubelitblade.common.typehandler.JsonbTypeHandler;
 import java.sql.JDBCType;
 import org.mybatis.dynamic.sql.AliasableSqlTable;
 import org.mybatis.dynamic.sql.SqlColumn;
@@ -32,7 +33,10 @@ public class AccountDynamicSqlSupport {
     public final SqlColumn<String> nickname = column("nickname", JDBCType.VARCHAR);
     public final SqlColumn<String> email = column("email", JDBCType.VARCHAR);
     public final SqlColumn<String> phone = column("phone", JDBCType.VARCHAR);
-    public final SqlColumn<Profile> profile = column("profile", JDBCType.OTHER);
+    public final SqlColumn<Profile> profile =
+        column("profile", JDBCType.OTHER)
+            .withTypeHandler(JsonbTypeHandler.class.getName())
+            .withJavaType(Profile.class);
     public final SqlColumn<String> role = column("role", JDBCType.VARCHAR);
     public final SqlColumn<String> status = column("status", JDBCType.VARCHAR);
     public final SqlColumn<java.time.Instant> createdAt =

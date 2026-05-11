@@ -60,12 +60,12 @@ class EventHandlerTest {
     String reason = "for testing purposes";
     given(event.getStatus()).willReturn(Status.RUNNING);
     given(event.getId()).willReturn(42L);
-    willThrow(new Exception(reason)).given(handler).process(event);
+    willThrow(new RuntimeException(reason)).given(handler).process(event);
 
     // When
     assertThatThrownBy(() -> handler.handleEvent(event))
         .isInstanceOf(EventExecutionException.class)
-        .hasCauseInstanceOf(Exception.class)
+        .hasCauseInstanceOf(RuntimeException.class)
         .hasMessageContaining(reason);
   }
 

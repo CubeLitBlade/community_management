@@ -100,6 +100,7 @@ export default function Layout() {
   const navigate = useNavigate();
   const { profile, isLoading } = useAuth();
   const { dispatchToast } = useToastController(APP_TOASTER_ID);
+  const canModerate = profile?.role === 'admin' || profile?.role === 'owner';
 
   useEffect(() => {
     if (isLoading || !profile?.mustChangePassword) {
@@ -204,16 +205,16 @@ export default function Layout() {
             <NavItem icon={<MailInboxAllIcon />} value="/notifications">
               通知
             </NavItem>
-            <NavSectionHeader>管理</NavSectionHeader>
-            {profile?.role === 'admin' || profile?.role === 'owner' ? (
-              <NavItem icon={<CalendarCheckmarkCenterIcon />} value="/activities/review">
-                活动审批
-              </NavItem>
-            ) : null}
-            {profile?.role === 'admin' || profile?.role === 'owner' ? (
-              <NavItem icon={<LayerDiagonalPersonIcon />} value="/management/accounts">
-                用户管理
-              </NavItem>
+            {canModerate ? (
+              <>
+                <NavSectionHeader>管理</NavSectionHeader>
+                <NavItem icon={<CalendarCheckmarkCenterIcon />} value="/activities/review">
+                  活动审批
+                </NavItem>
+                <NavItem icon={<LayerDiagonalPersonIcon />} value="/management/accounts">
+                  用户管理
+                </NavItem>
+              </>
             ) : null}
           </div>
           <div>

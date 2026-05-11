@@ -4,8 +4,10 @@ import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.mockito.BDDMockito.given;
 import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
 import static org.mockito.Mockito.verify;
 
+import io.github.cubelitblade.account.exception.AccountNotFoundException;
 import io.github.cubelitblade.account.model.Account;
 import io.github.cubelitblade.account.model.Role;
 import io.github.cubelitblade.account.model.Status;
@@ -79,6 +81,36 @@ class PrivateMessageServiceTest {
   }
 
   @Test
+  @DisplayName("Send: should reject missing recipient")
+  void should_reject_missing_recipient() {
+    assertThatThrownBy(() -> privateMessageService.sendMessage(1L, null))
+        .isInstanceOf(ValidationException.class);
+    assertThatThrownBy(
+            () ->
+                privateMessageService.sendMessage(1L, new SendPrivateMessageRequest(null, "hello")))
+        .isInstanceOf(ValidationException.class);
+
+    verify(privateMessageRepository, never()).save(org.mockito.ArgumentMatchers.any());
+  }
+
+  @Test
+  @DisplayName("Send: should reject unknown or inactive recipient")
+  void should_reject_unknown_or_inactive_recipient() {
+    given(accountRepository.findAccountById(2L)).willReturn(Optional.empty());
+    given(accountRepository.findAccountById(3L))
+        .willReturn(Optional.of(account(3L, "bob", Status.SUSPENDED)));
+
+    assertThatThrownBy(
+            () -> privateMessageService.sendMessage(1L, new SendPrivateMessageRequest(2L, "hello")))
+        .isInstanceOf(AccountNotFoundException.class);
+    assertThatThrownBy(
+            () -> privateMessageService.sendMessage(1L, new SendPrivateMessageRequest(3L, "hello")))
+        .isInstanceOf(ValidationException.class);
+
+    verify(privateMessageRepository, never()).save(org.mockito.ArgumentMatchers.any());
+  }
+
+  @Test
   @DisplayName("Send: should reject blank content")
   void should_reject_blank_content() {
     given(accountRepository.findAccountById(2L)).willReturn(Optional.of(account(2L, "alice")));
@@ -86,6 +118,20 @@ class PrivateMessageServiceTest {
     assertThatThrownBy(
             () -> privateMessageService.sendMessage(1L, new SendPrivateMessageRequest(2L, " ")))
         .isInstanceOf(ValidationException.class);
+  }
+
+  @Test
+  @DisplayName("Send: should reject content longer than limit")
+  void should_reject_too_long_content() {
+    given(accountRepository.findAccountById(2L)).willReturn(Optional.of(account(2L, "alice")));
+
+    assertThatThrownBy(
+            () ->
+                privateMessageService.sendMessage(
+                    1L, new SendPrivateMessageRequest(2L, "x".repeat(1001))))
+        .isInstanceOf(ValidationException.class);
+
+    verify(privateMessageRepository, never()).save(org.mockito.ArgumentMatchers.any());
   }
 
   @Test
@@ -116,6 +162,40 @@ class PrivateMessageServiceTest {
   }
 
   @Test
+  @DisplayName("List: should sort conversations and filter missing contacts")
+  void should_sort_conversations_and_filter_missing_contacts() {
+    PrivateMessage olderContact = PrivateMessage.create(1L, 1L, 2L, "older", NOW.plusSeconds(10));
+    PrivateMessage newerContact =
+        PrivateMessage.reconstitute(
+            PrivateMessage.Snapshot.builder()
+                .id(2L)
+                .senderAccountId(3L)
+                .recipientAccountId(1L)
+                .content("newer")
+                .read(false)
+                .createdAt(NOW.plusSeconds(30))
+                .build());
+    PrivateMessage missingContact =
+        PrivateMessage.create(3L, 1L, 4L, "missing", NOW.plusSeconds(40));
+    given(privateMessageRepository.findByParticipantAccountId(1L))
+        .willReturn(
+            List.of(
+                PrivateMessagePo.of(olderContact),
+                PrivateMessagePo.of(newerContact),
+                PrivateMessagePo.of(missingContact)));
+    given(accountRepository.findAccountsByIds(List.of(2L, 3L, 4L)))
+        .willReturn(List.of(account(2L, "alice"), account(3L, "bob")));
+
+    PrivateConversationListResponse response = privateMessageService.getConversations(1L);
+
+    assertThat(response.conversations())
+        .extracting("contactAccountId", "lastMessage", "unreadCount")
+        .containsExactly(
+            org.assertj.core.groups.Tuple.tuple(3L, "newer", 1L),
+            org.assertj.core.groups.Tuple.tuple(2L, "older", 0L));
+  }
+
+  @Test
   @DisplayName("Conversation: should mark contact messages read before returning history")
   void should_mark_conversation_read() {
     given(accountRepository.findAccountById(2L)).willReturn(Optional.of(account(2L, "alice")));
@@ -130,14 +210,45 @@ class PrivateMessageServiceTest {
     assertThat(response.messages().getFirst().content()).isEqualTo("hello");
   }
 
+  @Test
+  @DisplayName("Conversation: should reject missing contact")
+  void should_reject_missing_contact_when_getting_conversation() {
+    given(accountRepository.findAccountById(404L)).willReturn(Optional.empty());
+
+    assertThatThrownBy(() -> privateMessageService.getConversation(1L, 404L))
+        .isInstanceOf(AccountNotFoundException.class);
+
+    verify(privateMessageRepository, never())
+        .markConversationRead(
+            org.mockito.ArgumentMatchers.anyLong(),
+            org.mockito.ArgumentMatchers.anyLong(),
+            org.mockito.ArgumentMatchers.any());
+  }
+
+  @Test
+  @DisplayName("Mark read: should require existing contact")
+  void should_mark_conversation_read_for_existing_contact() {
+    given(accountRepository.findAccountById(2L)).willReturn(Optional.of(account(2L, "alice")));
+
+    privateMessageService.markConversationRead(1L, 2L);
+
+    verify(privateMessageRepository).markConversationRead(1L, 2L, NOW);
+    assertThatThrownBy(() -> privateMessageService.markConversationRead(1L, null))
+        .isInstanceOf(ValidationException.class);
+  }
+
   private Account account(Long id, String username) {
+    return account(id, username, Status.NORMAL);
+  }
+
+  private Account account(Long id, String username, Status status) {
     return Account.reconstitute(
         Account.Snapshot.builder()
             .id(id)
             .username(Username.reconstitute(username))
             .nickname(username)
             .role(Role.USER)
-            .status(Status.NORMAL)
+            .status(status)
             .createdAt(NOW)
             .updatedAt(NOW)
             .build());

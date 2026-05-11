@@ -1,5 +1,6 @@
 plugins {
     id("java")
+    id("jacoco")
     alias(libs.plugins.spotless)
     alias(libs.plugins.spring.boot)
     alias(libs.plugins.spring.dependency.management)
@@ -67,6 +68,10 @@ spotless {
     }
 }
 
+jacoco {
+    toolVersion = "0.8.14"
+}
+
 tasks.test {
     useJUnitPlatform()
 
@@ -83,4 +88,15 @@ tasks.test {
     })
 
     jvmArgs("-Xshare:off")
+    finalizedBy(tasks.jacocoTestReport)
+}
+
+tasks.jacocoTestReport {
+    dependsOn(tasks.test)
+
+    reports {
+        xml.required = true
+        html.required = true
+        csv.required = false
+    }
 }
