@@ -172,8 +172,7 @@ public class NotificationService {
     }
   }
 
-  @Transactional(readOnly = true)
-  public NotificationResponse getNotification(Long notificationId, Long recipientAccountId) {
+  public NotificationResponse findNotification(Long notificationId, Long recipientAccountId) {
     return notificationRepository
         .findOwnedById(notificationId, recipientAccountId)
         .map(NotificationPo::toNotification)
@@ -181,8 +180,13 @@ public class NotificationService {
         .orElseThrow(NotificationNotFoundException::notFound);
   }
 
+  @Transactional(readOnly = true)
+  public NotificationResponse getNotification(Long notificationId, Long recipientAccountId) {
+    return findNotification(notificationId, recipientAccountId);
+  }
+
   public void emitNotification(Long notificationId, Long recipientAccountId) {
-    NotificationResponse notification = getNotification(notificationId, recipientAccountId);
+    NotificationResponse notification = findNotification(notificationId, recipientAccountId);
     sseService.sendToUser(recipientAccountId, notification);
   }
 

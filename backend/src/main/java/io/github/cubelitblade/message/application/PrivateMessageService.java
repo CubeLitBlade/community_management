@@ -17,11 +17,7 @@ import io.github.cubelitblade.message.model.PrivateMessage;
 import io.github.cubelitblade.message.persistence.PrivateMessagePo;
 import io.github.cubelitblade.message.persistence.PrivateMessageRepository;
 import java.time.Instant;
-import java.util.ArrayList;
-import java.util.Comparator;
-import java.util.LinkedHashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 import lombok.RequiredArgsConstructor;
@@ -87,7 +83,7 @@ public class PrivateMessageService {
     List<PrivateConversationResponse> conversations =
         messagesByContact.entrySet().stream()
             .map(entry -> toConversation(accountId, entry.getKey(), entry.getValue(), contactsById))
-            .filter(conversation -> conversation != null)
+            .filter(Objects::nonNull)
             .sorted(Comparator.comparing(PrivateConversationResponse::lastMessageAt).reversed())
             .toList();
 

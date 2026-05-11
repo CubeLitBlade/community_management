@@ -195,8 +195,10 @@ public class ActivityRepository {
   }
 
   @Transactional(readOnly = true)
-  public void searchApprovedActivities(String keyword) {
-    String searchPattern = "%" + keyword + "%";
+  public List<Activity> searchApprovedActivities(String keyword) {
+    String normalizedKeyword = keyword == null ? "" : keyword.trim();
+    String searchPattern = "%" + normalizedKeyword + "%";
+
     SelectStatementProvider selectStatement =
         select(
                 ActivityDynamicSqlSupport.id,
@@ -226,7 +228,7 @@ public class ActivityRepository {
             .build()
             .render(RenderingStrategies.MYBATIS3);
 
-    activityMapper.selectMany(selectStatement).stream().map(ActivityPo::toActivity).toList();
+    return activityMapper.selectMany(selectStatement).stream().map(ActivityPo::toActivity).toList();
   }
 
   @Transactional(readOnly = true)

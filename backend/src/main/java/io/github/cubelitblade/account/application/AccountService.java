@@ -33,6 +33,7 @@ import java.net.InetAddress;
 import java.time.Duration;
 import java.time.Instant;
 import java.util.List;
+import java.util.Objects;
 import java.util.Optional;
 import java.util.function.Predicate;
 import java.util.stream.Stream;
@@ -211,7 +212,8 @@ public class AccountService {
 
     Account target = getRequiredAccount(targetAccountId);
     ensureResetPasswordAllowed(authenticatedUser, target);
-    target.resetPassword(request.newPassword(), passwordHasher, timeProvider.now());
+    target.resetPassword(
+        Objects.requireNonNull(request).newPassword(), passwordHasher, timeProvider.now());
     accountRepository.updateAccount(target);
     return AdminAccountView.from(target);
   }
@@ -402,6 +404,7 @@ public class AccountService {
     }
   }
 
+  @SuppressWarnings("BooleanMethodIsAlwaysInverted")
   private boolean canManage(JwtAuthenticatedUser authenticatedUser, Account targetAccount) {
     if (authenticatedUser.accountId().equals(targetAccount.getId())
         || targetAccount.getRole() == Role.OWNER) {
